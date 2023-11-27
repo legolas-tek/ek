@@ -1,0 +1,18 @@
+# IDE
+.idea/
+.vscode/
+
+# Stack
+.stack-work/
+*.cabal
+
+# Project
+glados
+
+# Temp files
+*~
+*.hi
+*.o
+
+# Coverage
+test/coverage/
