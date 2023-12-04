@@ -16,6 +16,14 @@ tests = test
       parseChar 'a' "aaaa" @?= Right ('a', "aaa")
       parseChar 'a' "def"  @?= Left "Expected 'a' but found 'd'"
       parseChar 'a' ""     @?= Left "Expected 'a' but found EOF"
+  , "parseAnyChar" ~: do
+      parseAnyChar "bca" "abcd" @?= Right ('a', "bcd")
+      parseAnyChar "xyz" "abcd" @?= Left "Expected one of 'xyz' but found 'a'"
+      parseAnyChar "bca" "cdef" @?= Right ('c', "def")
+  , "parseOr" ~: do
+      parseOr (parseChar 'a') (parseChar 'b') "abcd" @?= Right ('a', "bcd")
+      parseOr (parseChar 'a') (parseChar 'b') "bcda" @?= Right ('b', "cda")
+      parseOr (parseChar 'a') (parseChar 'b') "xyz"  @?= Left "Expected 'a' but found 'x' or Expected 'b' but found 'x'"
   ]
 
 main :: IO Counts
