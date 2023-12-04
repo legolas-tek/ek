@@ -24,6 +24,11 @@ tests = test
       parseOr (parseChar 'a') (parseChar 'b') "abcd" @?= Right ('a', "bcd")
       parseOr (parseChar 'a') (parseChar 'b') "bcda" @?= Right ('b', "cda")
       parseOr (parseChar 'a') (parseChar 'b') "xyz"  @?= Left "Expected 'a' but found 'x' or Expected 'b' but found 'x'"
+  , "parseAnd" ~: do
+      parseAnd (parseChar 'a') (parseChar 'b') "abcd" @?= Right (('a', 'b'), "cd")
+      parseAnd (parseChar 'a') (parseChar 'b') "bcda" @?= Left "Expected 'a' but found 'b'"
+      parseAnd (parseChar 'a') (parseChar 'b') "acd"  @?= Left "Expected 'b' but found 'c'"
+      parseAnd (parseChar 'a') (parseChar 'b') "xyz"  @?= Left "Expected 'a' but found 'x'"
   ]
 
 main :: IO Counts

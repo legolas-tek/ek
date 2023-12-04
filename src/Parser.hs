@@ -30,3 +30,8 @@ parseOr p1 p2 input = p1 input `combine` p2 input
     combine (Left _) (Right ok) = (Right ok)
     combine (Right ok) _        = (Right ok)
     combine (Left err1) (Left err2) = Left $ err1 ++ " or " ++ err2
+
+parseAnd :: Parser a -> Parser b -> Parser (a, b)
+parseAnd p1 p2 input = p1 input >>= applyNext
+  where applyNext (ok1, rest) = p2 rest >>= finish ok1
+        finish ok1 (ok2, rest) = Right ((ok1, ok2), rest)
