@@ -35,3 +35,7 @@ parseAnd :: Parser a -> Parser b -> Parser (a, b)
 parseAnd p1 p2 input = p1 input >>= applyNext
   where applyNext (ok1, rest) = p2 rest >>= finish ok1
         finish ok1 (ok2, rest) = Right ((ok1, ok2), rest)
+
+parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
+parseAndWith f p1 p2 input = parseAnd p1 p2 input >>= apply
+  where apply ((ok1, ok2), rest) = Right (f ok1 ok2, rest)

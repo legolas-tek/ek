@@ -29,6 +29,8 @@ tests = test
       parseAnd (parseChar 'a') (parseChar 'b') "bcda" @?= Left "Expected 'a' but found 'b'"
       parseAnd (parseChar 'a') (parseChar 'b') "acd"  @?= Left "Expected 'b' but found 'c'"
       parseAnd (parseChar 'a') (parseChar 'b') "xyz"  @?= Left "Expected 'a' but found 'x'"
+  , "parseAndWith" ~: do
+      parseAndWith (\ x y -> [x, y]) (parseChar 'a') (parseChar 'b') "abcd" @?= Right ("ab", "cd")
   ]
 
 main :: IO Counts
