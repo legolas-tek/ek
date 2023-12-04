@@ -39,3 +39,7 @@ parseAnd p1 p2 input = p1 input >>= applyNext
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
 parseAndWith f p1 p2 input = parseAnd p1 p2 input >>= apply
   where apply ((ok1, ok2), rest) = Right (f ok1 ok2, rest)
+
+parseMany :: Parser a -> Parser [a]
+parseMany p = parseOr (parseAndWith (:) p (parseMany p)) parseZero
+  where parseZero input = Right ([], input)
