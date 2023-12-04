@@ -43,3 +43,6 @@ parseAndWith f p1 p2 input = parseAnd p1 p2 input >>= apply
 parseMany :: Parser a -> Parser [a]
 parseMany p = parseOr (parseAndWith (:) p (parseMany p)) parseZero
   where parseZero input = Right ([], input)
+
+parseSome :: Parser a -> Parser [a]
+parseSome p = parseAndWith (:) p (parseMany p)

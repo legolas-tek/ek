@@ -34,6 +34,9 @@ tests = test
   , "parseMany" ~: do
       parseMany (parseChar ' ') "      foobar" @?= Right ("      ", "foobar")
       parseMany (parseChar ' ') "foobar      " @?= Right ("", "foobar      ")
+  , "parseSome" ~: do
+      parseSome (parseAnyChar ['0'..'9']) "42foobar" @?= Right ("42", "foobar")
+      parseSome (parseAnyChar ['0'..'9']) "foobar42" @?= Left "Expected one of '0123456789' but found 'f'"
   ]
 
 main :: IO Counts
