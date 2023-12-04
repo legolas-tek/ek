@@ -46,3 +46,12 @@ parseMany p = parseOr (parseAndWith (:) p (parseMany p)) parseZero
 
 parseSome :: Parser a -> Parser [a]
 parseSome p = parseAndWith (:) p (parseMany p)
+
+parseUInt :: Parser Integer
+parseUInt input = parseSome (parseAnyChar ['0'..'9']) input >>= convert
+  where convert (digits, rest) = Right (read digits, rest)
+
+parseInt :: Parser Integer
+parseInt input = parseOr parseNegative parseUInt input
+  where parseNegative = parseAndWith negate (parseChar '-') parseUInt
+        negate c i = -i

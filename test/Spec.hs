@@ -6,6 +6,7 @@
 -}
 
 import Test.HUnit
+import Data.Either (isLeft)
 
 import Parser
 
@@ -37,6 +38,20 @@ tests = test
   , "parseSome" ~: do
       parseSome (parseAnyChar ['0'..'9']) "42foobar" @?= Right ("42", "foobar")
       parseSome (parseAnyChar ['0'..'9']) "foobar42" @?= Left "Expected one of '0123456789' but found 'f'"
+  , "parseUInt" ~: do
+      parseUInt "42foobar" @?= Right (42, "foobar")
+      parseUInt "23894732foobar" @?= Right (23894732, "foobar")
+      parseUInt "0a" @?= Right (0, "a")
+      parseUInt "foobar42" @?= Left "Expected one of '0123456789' but found 'f'"
+  , "parseInt" ~: do
+      parseInt "42foobar" @?= Right (42, "foobar")
+      parseInt "-42foobar" @?= Right (-42, "foobar")
+      parseInt "23894732foobar" @?= Right (23894732, "foobar")
+      parseInt "-23894732foobar" @?= Right (-23894732, "foobar")
+      parseInt "0a" @?= Right (0, "a")
+      parseInt "-0a" @?= Right (0, "a")
+      (isLeft $ parseInt "foobar42") @?= True
+      (isLeft $ parseInt "--42foobar") @?= True
   ]
 
 main :: IO Counts
