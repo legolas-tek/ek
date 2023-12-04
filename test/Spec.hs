@@ -52,6 +52,8 @@ tests = test
       parseInt "-0a" @?= Right (0, "a")
       (isLeft $ parseInt "foobar42") @?= True
       (isLeft $ parseInt "--42foobar") @?= True
+  , "parsePair" ~: do
+      parsePair parseInt "(123 456)foo bar" @?= Right ((123, 456), "foo bar")
   ]
 
 main :: IO Counts

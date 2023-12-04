@@ -55,3 +55,12 @@ parseInt :: Parser Integer
 parseInt input = parseOr parseNegative parseUInt input
   where parseNegative = parseAndWith negate (parseChar '-') parseUInt
         negate c i = -i
+
+parsePair :: Parser a -> Parser (a, a)
+parsePair p input = do
+  (_, next) <- parseChar '(' input
+  (x, next) <- p next
+  (_, next) <- parseMany (parseChar ' ') next
+  (y, next) <- p next
+  (_, next) <- parseChar ')' next
+  return ((x, y), next)
