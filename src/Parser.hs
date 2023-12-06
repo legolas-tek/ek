@@ -7,8 +7,8 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Parser where
-import Control.Monad ( (>=>) )
-import Control.Applicative (Applicative(liftA2), Alternative ((<|>)))
+import Control.Monad ( (>=>), MonadPlus )
+import Control.Applicative (Applicative(liftA2), Alternative ((<|>), some, many))
 import GHC.Base (Alternative(empty))
 
 type ParserError = String
@@ -43,15 +43,8 @@ parseAndWith' :: (a -> b -> c) -> Parser' a -> Parser' b -> Parser' c
 parseAndWith' f p1 p2 input = parseAnd' p1 p2 input >>= apply
   where apply ((ok1, ok2), rest) = Right (f ok1 ok2, rest)
 
-parseMany :: Parser a -> Parser [a]
-parseMany p = parseSome p <|> parseZero
-  where parseZero = pure []
-
-parseSome :: Parser a -> Parser [a]
-parseSome p = p >>= \n -> (n:) <$> parseMany p
-
 parseUInt :: Parser Integer
-parseUInt = read <$> parseSome (parseAnyChar ['0'..'9'])
+parseUInt = read <$> some (parseAnyChar ['0'..'9'])
 
 parseInt :: Parser Integer
 parseInt = (parseChar '-' >> negate <$> parseUInt) <|> parseUInt
@@ -60,7 +53,7 @@ parsePair :: Parser a -> Parser (a, a)
 parsePair p = do
   _ <- parseChar '('
   x <- p
-  _ <- parseMany (parseChar ' ')
+  _ <- many (parseChar ' ')
   y <- p
   _ <- parseChar ')'
   return (x, y)
@@ -68,7 +61,7 @@ parsePair p = do
 parseList :: Parser a -> Parser [a]
 parseList p = do
   _ <- parseChar '('
-  x <- parseMany (parseMany (parseChar ' ') >> p)
+  x <- many (many (parseChar ' ') >> p)
   _ <- parseChar ')'
   return x
 
@@ -92,3 +85,9 @@ instance Alternative Parser where
 
 instance Monad Parser where
   p >>= fct = Parser $ runParser p >=> \(a, rest) -> runParser (fct a) rest
+
+instance MonadFail Parser where
+  fail err = Parser $ \_ -> Left err
+
+instance MonadPlus Parser where
+  -- default
