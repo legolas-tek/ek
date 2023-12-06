@@ -4,9 +4,11 @@
 -- File description:
 -- parser
 -}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Parser where
 import Control.Monad ( (>=>) )
+import Control.Applicative (Applicative(liftA2))
 
 type ParserError = String
 
@@ -87,4 +89,8 @@ newtype Parser a = Parser { runParser :: Parser' a }
 instance Functor Parser where
   fmap fct p = Parser $ runParser p >=> Right . mapFst fct
     where mapFst f (x, y) = (f x, y)
+
+instance Applicative Parser where
+  pure x = Parser $ \input -> Right (x, input)
+  liftA2 fct p1 p2 = Parser $ parseAndWith fct (runParser p1) (runParser p2)
 
