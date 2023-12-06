@@ -22,16 +22,14 @@ parseOneIf predicate (x:xs)
   | otherwise   = Left $ "found '" ++ [x] ++ "'"
 
 parseChar :: Char -> Parser Char
-parseChar expected = (("Expected '" ++ [expected] ++ "' but ") ++) `mapError` Parser (parseOneIf (== expected))
+parseChar expected
+  = (("Expected '" ++ [expected] ++ "' but ") ++)
+    `mapError` Parser (parseOneIf (== expected))
 
 parseAnyChar :: String -> Parser Char
-parseAnyChar allowed = (("Expected one of '" ++ allowed ++ "' but ") ++) `mapError` Parser (parseOneIf (`elem` allowed))
-
-parseOr' :: Parser' a -> Parser' a -> Parser' a
-parseOr' p1 p2 input = p1 input `combine` p2 input
-  where
-    combine (Right ok) _        = Right ok
-    combine (Left _) rhs = rhs
+parseAnyChar allowed
+  = (("Expected one of '" ++ allowed ++ "' but ") ++)
+    `mapError` Parser (parseOneIf (`elem` allowed))
 
 parseUInt :: Parser Integer
 parseUInt = read <$> some (parseAnyChar ['0'..'9'])
@@ -74,7 +72,7 @@ instance Applicative Parser where
 instance Alternative Parser where
   -- empty should be an empty production, but we can't generalize it
   empty = Parser $ \_ -> Left "Empty parser"
-  p1 <|> p2 = Parser $ runParser p1 `parseOr'` runParser p2
+  p1 <|> p2 = Parser $ \input -> runParser p1 input <> runParser p2 input
 
 instance Monad Parser where
   p >>= fct = Parser $ runParser p >=> \(a, rest) -> runParser (fct a) rest
