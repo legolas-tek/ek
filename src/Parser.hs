@@ -16,23 +16,22 @@ type ParserError = String
 type Parser' a = String -> Either ParserError (a, String)
 
 parseOneIf :: (Char -> Bool) -> Parser' Char
-parseOneIf _ [] = Left "Unexpected EOF"
+parseOneIf _ [] = Left "found EOF"
 parseOneIf predicate (x:xs)
   | predicate x = Right (x, xs)
-  | otherwise   = Left $ "Unexpected '" ++ [x] ++ "'"
+  | otherwise   = Left $ "found '" ++ [x] ++ "'"
 
 parseChar :: Char -> Parser Char
-parseChar expected = Parser $ parseOneIf (== expected)
+parseChar expected = (("Expected '" ++ [expected] ++ "' but ") ++) `mapError` Parser (parseOneIf (== expected))
 
 parseAnyChar :: String -> Parser Char
-parseAnyChar allowed = Parser $ parseOneIf (`elem` allowed)
+parseAnyChar allowed = (("Expected one of '" ++ allowed ++ "' but ") ++) `mapError` Parser (parseOneIf (`elem` allowed))
 
 parseOr' :: Parser' a -> Parser' a -> Parser' a
 parseOr' p1 p2 input = p1 input `combine` p2 input
   where
-    combine (Left _) (Right ok) = Right ok
     combine (Right ok) _        = Right ok
-    combine (Left err1) (Left err2) = Left $ err1 ++ " or " ++ err2
+    combine (Left _) rhs = rhs
 
 parseUInt :: Parser Integer
 parseUInt = read <$> some (parseAnyChar ['0'..'9'])
@@ -40,11 +39,14 @@ parseUInt = read <$> some (parseAnyChar ['0'..'9'])
 parseInt :: Parser Integer
 parseInt = (parseChar '-' >> negate <$> parseUInt) <|> parseUInt
 
+spaces :: Parser [Char]
+spaces = many (parseChar ' ')
+
 parsePair :: Parser a -> Parser (a, a)
 parsePair p = do
   _ <- parseChar '('
   x <- p
-  _ <- many (parseChar ' ')
+  _ <- spaces
   y <- p
   _ <- parseChar ')'
   return (x, y)
@@ -52,7 +54,7 @@ parsePair p = do
 parseList :: Parser a -> Parser [a]
 parseList p = do
   _ <- parseChar '('
-  x <- many (many (parseChar ' ') >> p)
+  x <- many (spaces >> p)
   _ <- parseChar ')'
   return x
 
@@ -82,3 +84,8 @@ instance MonadFail Parser where
 
 instance MonadPlus Parser where
   -- default
+
+mapError :: (ParserError -> ParserError) -> Parser a -> Parser a
+mapError fct p = Parser $ \input -> mapError' (runParser p input)
+  where mapError' (Left err) = Left $ fct err
+        mapError' ok         = ok

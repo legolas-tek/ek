@@ -9,56 +9,59 @@ import Test.HUnit
 import Data.Either (isLeft)
 
 import Parser
+import Control.Applicative ((<|>), Alternative (some))
 
 tests :: Test
 tests = test
   [ "parseChar" ~: do
-      parseChar 'a' "abc"  @?= Right ('a', "bc")
-      parseChar 'a' "aaaa" @?= Right ('a', "aaa")
-      parseChar 'a' "def"  @?= Left "Expected 'a' but found 'd'"
-      parseChar 'a' ""     @?= Left "Expected 'a' but found EOF"
+      let p = parseChar 'a'
+      runParser p "abc"  @?= Right ('a', "bc")
+      runParser p "aaaa" @?= Right ('a', "aaa")
+      runParser p "def"  @?= Left "Expected 'a' but found 'd'"
+      runParser p ""     @?= Left "Expected 'a' but found EOF"
   , "parseAnyChar" ~: do
-      parseAnyChar "bca" "abcd" @?= Right ('a', "bcd")
-      parseAnyChar "xyz" "abcd" @?= Left "Expected one of 'xyz' but found 'a'"
-      parseAnyChar "bca" "cdef" @?= Right ('c', "def")
+      runParser (parseAnyChar "bca") "abcd" @?= Right ('a', "bcd")
+      runParser (parseAnyChar "xyz") "abcd" @?= Left "Expected one of 'xyz' but found 'a'"
+      runParser (parseAnyChar "bca") "cdef" @?= Right ('c', "def")
   , "parseOr" ~: do
-      parseOr (parseChar 'a') (parseChar 'b') "abcd" @?= Right ('a', "bcd")
-      parseOr (parseChar 'a') (parseChar 'b') "bcda" @?= Right ('b', "cda")
-      parseOr (parseChar 'a') (parseChar 'b') "xyz"  @?= Left "Expected 'a' but found 'x' or Expected 'b' but found 'x'"
+      let p = parseChar 'a' <|> parseChar 'b'
+      runParser p "abcd" @?= Right ('a', "bcd")
+      runParser p "bcda" @?= Right ('b', "cda")
+      runParser p "xyz"  @?= Left "Expected 'b' but found 'x'"
   , "parseAnd" ~: do
-      parseAnd (parseChar 'a') (parseChar 'b') "abcd" @?= Right (('a', 'b'), "cd")
-      parseAnd (parseChar 'a') (parseChar 'b') "bcda" @?= Left "Expected 'a' but found 'b'"
-      parseAnd (parseChar 'a') (parseChar 'b') "acd"  @?= Left "Expected 'b' but found 'c'"
-      parseAnd (parseChar 'a') (parseChar 'b') "xyz"  @?= Left "Expected 'a' but found 'x'"
-  , "parseAndWith" ~: do
-      parseAndWith (\ x y -> [x, y]) (parseChar 'a') (parseChar 'b') "abcd" @?= Right ("ab", "cd")
-  , "parseMany" ~: do
-      parseMany (parseChar ' ') "      foobar" @?= Right ("      ", "foobar")
-      parseMany (parseChar ' ') "foobar      " @?= Right ("", "foobar      ")
+      let p = parseChar 'a' >>= \a -> parseChar 'b' >>= \b -> return (a, b)
+      runParser p "abcd" @?= Right (('a', 'b'), "cd")
+      runParser p "bcda" @?= Left "Expected 'a' but found 'b'"
+      runParser p "acd"  @?= Left "Expected 'b' but found 'c'"
+      runParser p "xyz"  @?= Left "Expected 'a' but found 'x'"
+  , "spaces" ~: do
+      runParser spaces "      foobar" @?= Right ("      ", "foobar")
+      runParser spaces "foobar      " @?= Right ("", "foobar      ")
   , "parseSome" ~: do
-      parseSome (parseAnyChar ['0'..'9']) "42foobar" @?= Right ("42", "foobar")
-      parseSome (parseAnyChar ['0'..'9']) "foobar42" @?= Left "Expected one of '0123456789' but found 'f'"
+      let digits = some (parseAnyChar ['0'..'9'])
+      runParser digits "42foobar" @?= Right ("42", "foobar")
+      runParser digits "foobar42" @?= Left "Expected one of '0123456789' but found 'f'"
   , "parseUInt" ~: do
-      parseUInt "42foobar" @?= Right (42, "foobar")
-      parseUInt "23894732foobar" @?= Right (23894732, "foobar")
-      parseUInt "0a" @?= Right (0, "a")
-      parseUInt "foobar42" @?= Left "Expected one of '0123456789' but found 'f'"
+      runParser parseUInt "42foobar" @?= Right (42, "foobar")
+      runParser parseUInt "23894732foobar" @?= Right (23894732, "foobar")
+      runParser parseUInt "0a" @?= Right (0, "a")
+      runParser parseUInt "foobar42" @?= Left "Expected one of '0123456789' but found 'f'"
   , "parseInt" ~: do
-      parseInt "42foobar" @?= Right (42, "foobar")
-      parseInt "-42foobar" @?= Right (-42, "foobar")
-      parseInt "23894732foobar" @?= Right (23894732, "foobar")
-      parseInt "-23894732foobar" @?= Right (-23894732, "foobar")
-      parseInt "0a" @?= Right (0, "a")
-      parseInt "-0a" @?= Right (0, "a")
-      isLeft (parseInt "foobar42") @?= True
-      isLeft (parseInt "--42foobar") @?= True
+      runParser parseInt "42foobar" @?= Right (42, "foobar")
+      runParser parseInt "-42foobar" @?= Right (-42, "foobar")
+      runParser parseInt "23894732foobar" @?= Right (23894732, "foobar")
+      runParser parseInt "-23894732foobar" @?= Right (-23894732, "foobar")
+      runParser parseInt "0a" @?= Right (0, "a")
+      runParser parseInt "-0a" @?= Right (0, "a")
+      isLeft (runParser parseInt "foobar42") @?= True
+      isLeft (runParser parseInt "--42foobar") @?= True
   , "parsePair" ~: do
-      parsePair parseInt "(123 456)foo bar" @?= Right ((123, 456), "foo bar")
+      runParser (parsePair parseInt) "(123 456)foo bar" @?= Right ((123, 456), "foo bar")
   , "parseList" ~: do
-      parseList parseInt "(123 456)foo bar" @?= Right ([123, 456], "foo bar")
-      parseList parseInt "(1 2 3 5 7 11 13 17)" @?= Right ([1, 2, 3, 5, 7, 11, 13, 17], "")
+      runParser (parseList parseInt) "(123 456)foo bar" @?= Right ([123, 456], "foo bar")
+      runParser (parseList parseInt) "(1 2 3 5 7 11 13 17)" @?= Right ([1, 2, 3, 5, 7, 11, 13, 17], "")
   ]
 
-main :: IO Counts
-main = runTestTT tests
+main :: IO ()
+main = runTestTTAndExit tests
 
