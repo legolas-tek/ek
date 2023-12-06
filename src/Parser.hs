@@ -99,3 +99,6 @@ instance Alternative Parser where
   -- empty should be an empty production, but we can't generalize it
   empty = Parser $ \_ -> Left "Empty parser"
   p1 <|> p2 = Parser $ runParser p1 `parseOr` runParser p2
+
+instance Monad Parser where
+  p >>= fct = Parser $ runParser p >=> \(a, rest) -> runParser (fct a) rest
