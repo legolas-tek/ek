@@ -8,7 +8,8 @@
 
 module Parser where
 import Control.Monad ( (>=>) )
-import Control.Applicative (Applicative(liftA2))
+import Control.Applicative (Applicative(liftA2), Alternative ((<|>)))
+import GHC.Base (Alternative(empty))
 
 type ParserError = String
 
@@ -94,3 +95,7 @@ instance Applicative Parser where
   pure x = Parser $ \input -> Right (x, input)
   liftA2 fct p1 p2 = Parser $ parseAndWith fct (runParser p1) (runParser p2)
 
+instance Alternative Parser where
+  -- empty should be an empty production, but we can't generalize it
+  empty = Parser $ \_ -> Left "Empty parser"
+  p1 <|> p2 = Parser $ runParser p1 `parseOr` runParser p2
