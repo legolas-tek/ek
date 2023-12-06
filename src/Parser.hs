@@ -27,8 +27,8 @@ parseAnyChar allowed (x:xs)
 parseOr :: Parser a -> Parser a -> Parser a
 parseOr p1 p2 input = p1 input `combine` p2 input
   where
-    combine (Left _) (Right ok) = (Right ok)
-    combine (Right ok) _        = (Right ok)
+    combine (Left _) (Right ok) = Right ok
+    combine (Right ok) _        = Right ok
     combine (Left err1) (Left err2) = Left $ err1 ++ " or " ++ err2
 
 parseAnd :: Parser a -> Parser b -> Parser (a, b)
@@ -52,9 +52,9 @@ parseUInt input = parseSome (parseAnyChar ['0'..'9']) input >>= convert
   where convert (digits, rest) = Right (read digits, rest)
 
 parseInt :: Parser Integer
-parseInt input = parseOr parseNegative parseUInt input
+parseInt = parseOr parseNegative parseUInt
   where parseNegative = parseAndWith negate (parseChar '-') parseUInt
-        negate c i = -i
+        negate _ i = -i
 
 parsePair :: Parser a -> Parser (a, a)
 parsePair p input = do
@@ -64,3 +64,19 @@ parsePair p input = do
   (y, next) <- p next
   (_, next) <- parseChar ')' next
   return ((x, y), next)
+
+parseList :: Parser a -> Parser [a]
+parseList p input = do
+  (_, next) <- parseChar '(' input
+  (x, next) <- parseSeparatedValues (parseMany (parseChar ' ')) p next
+  (_, next) <- parseChar ')' next
+  return (x, next)
+
+-- Parse a list of values separated by a separator, without the parenthesis
+parseSeparatedValues :: Parser b -> Parser a -> Parser [a]
+parseSeparatedValues sep p = parseAndWith sec sep (parseOr parseNonEmpty parseEmpty)
+  where parseEmpty next = Right ([], next)
+        parseNonEmpty = parseAndWith (:) p (parseSeparatedValues sep p)
+
+sec :: a -> b -> b
+sec _ b = b

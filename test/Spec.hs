@@ -50,10 +50,13 @@ tests = test
       parseInt "-23894732foobar" @?= Right (-23894732, "foobar")
       parseInt "0a" @?= Right (0, "a")
       parseInt "-0a" @?= Right (0, "a")
-      (isLeft $ parseInt "foobar42") @?= True
-      (isLeft $ parseInt "--42foobar") @?= True
+      isLeft (parseInt "foobar42") @?= True
+      isLeft (parseInt "--42foobar") @?= True
   , "parsePair" ~: do
       parsePair parseInt "(123 456)foo bar" @?= Right ((123, 456), "foo bar")
+  , "parseList" ~: do
+      parseList parseInt "(123 456)foo bar" @?= Right ([123, 456], "foo bar")
+      parseList parseInt "(1 2 3 5 7 11 13 17)" @?= Right ([1, 2, 3, 5, 7, 11, 13, 17], "")
   ]
 
 main :: IO Counts
