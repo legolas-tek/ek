@@ -34,15 +34,6 @@ parseOr' p1 p2 input = p1 input `combine` p2 input
     combine (Right ok) _        = Right ok
     combine (Left err1) (Left err2) = Left $ err1 ++ " or " ++ err2
 
-parseAnd' :: Parser' a -> Parser' b -> Parser' (a, b)
-parseAnd' p1 p2 input = p1 input >>= applyNext
-  where applyNext (ok1, rest) = p2 rest >>= finish ok1
-        finish ok1 (ok2, rest) = Right ((ok1, ok2), rest)
-
-parseAndWith' :: (a -> b -> c) -> Parser' a -> Parser' b -> Parser' c
-parseAndWith' f p1 p2 input = parseAnd' p1 p2 input >>= apply
-  where apply ((ok1, ok2), rest) = Right (f ok1 ok2, rest)
-
 parseUInt :: Parser Integer
 parseUInt = read <$> some (parseAnyChar ['0'..'9'])
 
@@ -76,7 +67,7 @@ instance Functor Parser where
 
 instance Applicative Parser where
   pure x = Parser $ \input -> Right (x, input)
-  liftA2 fct p1 p2 = Parser $ parseAndWith' fct (runParser p1) (runParser p2)
+  liftA2 fct p1 p2 = p1 >>= \x -> fct x <$> p2
 
 instance Alternative Parser where
   -- empty should be an empty production, but we can't generalize it
