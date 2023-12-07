@@ -14,6 +14,7 @@ import GHC.Base (Alternative(empty))
 type ParserError = String
 
 type Parser' a = String -> Either ParserError (a, String)
+newtype Parser a = Parser { runParser :: Parser' a }
 
 parseOneIf :: (Char -> Bool) -> Parser' Char
 parseOneIf _ [] = Left "found EOF"
@@ -40,26 +41,12 @@ parseInt = (parseChar '-' >> negate <$> parseUInt) <|> parseUInt
 spaces :: Parser [Char]
 spaces = many (parseChar ' ')
 
-parsePair :: Parser a -> Parser (a, a)
-parsePair p = do
-  _ <- parseChar '('
-  x <- p
-  _ <- spaces
-  y <- p
-  _ <- parseChar ')'
-  return (x, y)
-
 parseList :: Parser a -> Parser [a]
 parseList p = do
   _ <- parseChar '('
   x <- many (spaces >> p)
   _ <- parseChar ')'
   return x
-
-sec :: a -> b -> b
-sec _ b = b
-
-newtype Parser a = Parser { runParser :: Parser' a }
 
 instance Functor Parser where
   fmap fct p = Parser $ runParser p >=> Right . mapFst fct
@@ -70,7 +57,6 @@ instance Applicative Parser where
   liftA2 fct p1 p2 = p1 >>= \x -> fct x <$> p2
 
 instance Alternative Parser where
-  -- empty should be an empty production, but we can't generalize it
   empty = Parser $ \_ -> Left "Empty parser"
   p1 <|> p2 = Parser $ \input -> runParser p1 input <> runParser p2 input
 

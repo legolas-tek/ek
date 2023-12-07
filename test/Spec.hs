@@ -55,8 +55,6 @@ tests = test
       runParser parseInt "-0a" @?= Right (0, "a")
       isLeft (runParser parseInt "foobar42") @?= True
       isLeft (runParser parseInt "--42foobar") @?= True
-  , "parsePair" ~: do
-      runParser (parsePair parseInt) "(123 456)foo bar" @?= Right ((123, 456), "foo bar")
   , "parseList" ~: do
       runParser (parseList parseInt) "(123 456)foo bar" @?= Right ([123, 456], "foo bar")
       runParser (parseList parseInt) "(1 2 3 5 7 11 13 17)" @?= Right ([1, 2, 3, 5, 7, 11, 13, 17], "")
