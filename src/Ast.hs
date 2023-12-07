@@ -19,7 +19,6 @@ sexprToAST :: SExpr -> Maybe Ast
 sexprToAST (Symbol s) = Just (AstSymbol s)
 sexprToAST (Integer i) = Just (IntegerLit i)
 sexprToAST (List [Symbol "define", Symbol s, v]) = sexprToAST v >>= \e -> Just (Define s e)
--- using do notation
 sexprToAST (List [Symbol "lambda", List args, List expr]) = do
   argsList <- mapM extractString args
   body <- mapM sexprToAST expr
