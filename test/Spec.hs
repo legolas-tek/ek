@@ -9,7 +9,6 @@ import Test.HUnit
 import Data.Either (isLeft)
 
 import Parser
-import Control.Applicative ((<|>), Alternative (some))
 
 tests :: Test
 tests = test

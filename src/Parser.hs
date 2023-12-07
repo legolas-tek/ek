@@ -6,10 +6,25 @@
 -}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
-module Parser where
-import Control.Monad ( (>=>), MonadPlus )
-import Control.Applicative (Applicative(liftA2), Alternative ((<|>), some, many))
-import GHC.Base (Alternative(empty))
+module Parser
+  ( Parser(..)
+  , parseChar
+  , parseAnyChar
+  , parseInt
+  , parseUInt
+  , spaces
+  , parseList
+  , mapError
+  , some
+  , many
+  , (<|>)
+  ) where
+
+import Control.Applicative
+  ( Applicative(liftA2)
+  , Alternative((<|>), some, many, empty)
+  )
+import Control.Monad((>=>), MonadPlus)
 
 type ParserError = String
 
