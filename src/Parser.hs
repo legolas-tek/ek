@@ -4,7 +4,6 @@
 -- File description:
 -- parser
 -}
-{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Parser
   ( Parser(..)
