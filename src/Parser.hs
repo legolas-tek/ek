@@ -24,6 +24,7 @@ import Control.Applicative
   , Alternative((<|>), some, many, empty)
   )
 import Control.Monad((>=>), MonadPlus)
+import Text.Printf (printf)
 
 type ParserError = String
 
@@ -38,12 +39,12 @@ parseOneIf predicate (x:xs)
 
 parseChar :: Char -> Parser Char
 parseChar expected
-  = (("Expected '" ++ [expected] ++ "' but ") ++)
+  = printf "Expected '%c' but %s" expected
     `mapError` Parser (parseOneIf (== expected))
 
 parseAnyChar :: String -> Parser Char
 parseAnyChar allowed
-  = (("Expected one of '" ++ allowed ++ "' but ") ++)
+  = printf "Expected one of '%s' but %s" allowed
     `mapError` Parser (parseOneIf (`elem` allowed))
 
 parseUInt :: Parser Integer
