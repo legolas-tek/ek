@@ -54,14 +54,10 @@ parseInt :: Parser Integer
 parseInt = (parseChar '-' >> negate <$> parseUInt) <|> parseUInt
 
 spaces :: Parser [Char]
-spaces = many (parseChar ' ')
+spaces = many $ parseChar ' '
 
 parseList :: Parser a -> Parser [a]
-parseList p = do
-  _ <- parseChar '('
-  x <- many (spaces >> p)
-  _ <- parseChar ')'
-  return x
+parseList p = parseChar '(' *> many (spaces >> p) <* parseChar ')'
 
 instance Functor Parser where
   fmap fct p = Parser $ runParser p >=> Right . mapFst fct
