@@ -2,26 +2,24 @@ module Ast
     ( Ast(..)
     ) where
 
-import SExpr
+import qualified SExpr
 
 data Ast = Define String Ast
-          | IntegerLit Int
-          | AstSymbol String
+          | IntegerLit Integer
+          | Symbol String
           | Lambda [String] [Ast]
           | Call Ast [Ast]
           deriving Show
 
-extractString :: SExpr -> Maybe String
-extractString (Symbol s) = Just s
-extractString _ = Nothing
+type AstError = String
 
-sexprToAST :: SExpr -> Maybe Ast
-sexprToAST (Symbol s) = Just (AstSymbol s)
-sexprToAST (Integer i) = Just (IntegerLit i)
-sexprToAST (List [Symbol "define", Symbol s, v]) = sexprToAST v >>= \e -> Just (Define s e)
-sexprToAST (List [Symbol "lambda", List args, List expr]) = do
-  argsList <- mapM extractString args
-  body <- mapM sexprToAST expr
-  return (Lambda argsList body)
-sexprToAST (List (Symbol x:xs)) = mapM sexprToAST xs >>= \e -> Just (Call (AstSymbol x) e)
-sexprToAST _ = Nothing
+sexprToAST :: SExpr.SExpr -> Either AstError Ast
+sexprToAST (SExpr.Symbol s) = Right (Ast.Symbol s)
+sexprToAST (SExpr.IntegerLit i) = Right (Ast.IntegerLit i)
+sexprToAST (SExpr.List [SExpr.Symbol "define", SExpr.Symbol s, v]) = sexprToAST v >>= \e -> Right (Ast.Define s e)
+sexprToAST (SExpr.List (SExpr.Symbol "lambda":(SExpr.List args):xs)) = do
+  argsList <- mapM SExpr.getSymbol args
+  body <- mapM sexprToAST xs
+  return (Ast.Lambda argsList body)
+sexprToAST (SExpr.List (SExpr.Symbol x:xs)) = mapM sexprToAST xs >>= \e -> Right (Call (Ast.Symbol x) e)
+sexprToAST _ = Left "Not a valid AST"

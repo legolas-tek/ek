@@ -1,22 +1,20 @@
 module SExpr
-  ( SExpr (Integer, Symbol, List),
-    getSymbol,
-    printTree
+  ( SExpr(..)
+  , getSymbol
+  , printTree
   ) where
 
-data SExpr = Integer Int
+data SExpr = IntegerLit Integer
            | Symbol String
            | List [SExpr]
-          deriving Show
 
-type Error = String
+type SexprError = String
 
-getSymbol :: SExpr -> Maybe String
-getSymbol (Symbol s) = Just s
-getSymbol _ = Nothing
+getSymbol :: SExpr -> Either SexprError String
+getSymbol (Symbol s) = Right s
+getSymbol _ = Left "Not a symbol"
 
-printTree :: SExpr -> Either Error String
+printTree :: SExpr -> Either SexprError String
 printTree (Symbol s) = Right ("a Symbol " ++ s)
-printTree(Integer i) = Right ("a Number " ++ show i)
+printTree(IntegerLit i) = Right ("a Number " ++ show i)
 printTree(List l) = mapM printTree l >>= \e -> Right ("a List with " ++ unwords e)
-
