@@ -5,41 +5,82 @@
 -- parser
 -}
 
-module Parser where
+module Parser
+  ( Parser(..)
+  , parseChar
+  , parseAnyChar
+  , parseInt
+  , parseUInt
+  , spaces
+  , parseList
+  , mapError
+  , some
+  , many
+  , (<|>)
+  ) where
+
+import Control.Applicative
+  ( Applicative(liftA2)
+  , Alternative((<|>), some, many, empty)
+  )
+import Control.Monad((>=>), MonadPlus)
+import Text.Printf (printf)
 
 type ParserError = String
 
-type Parser a = String -> Either ParserError (a, String)
+type Parser' a = String -> Either ParserError (a, String)
+newtype Parser a = Parser { runParser :: Parser' a }
+
+parseOneIf :: (Char -> Bool) -> Parser' Char
+parseOneIf _ [] = Left "found EOF"
+parseOneIf predicate (x:xs)
+  | predicate x = Right (x, xs)
+  | otherwise   = Left $ "found '" ++ [x] ++ "'"
 
 parseChar :: Char -> Parser Char
-parseChar expected [] = Left $ "Expected '" ++ [expected] ++ "' but found EOF"
-parseChar expected (x:xs)
-    | x == expected = Right (x, xs)
-    | otherwise     = Left $ "Expected '" ++ [expected] ++ "' but found '" ++ [x] ++ "'"
+parseChar expected
+  = printf "Expected '%c' but %s" expected
+    `mapError` Parser (parseOneIf (== expected))
 
 parseAnyChar :: String -> Parser Char
-parseAnyChar allowed []
-  = Left $ "Expected one of '" ++ allowed ++ "' but found EOF"
-parseAnyChar allowed (x:xs)
-  | x `elem` allowed = Right (x, xs)
-  | otherwise        = Left $ "Expected one of '" ++ allowed ++ "' but found '" ++ [x] ++ "'"
+parseAnyChar allowed
+  = printf "Expected one of '%s' but %s" allowed
+    `mapError` Parser (parseOneIf (`elem` allowed))
 
-parseOr :: Parser a -> Parser a -> Parser a
-parseOr p1 p2 input = p1 input `combine` p2 input
-  where
-    combine (Left _) (Right ok) = (Right ok)
-    combine (Right ok) _        = (Right ok)
-    combine (Left err1) (Left err2) = Left $ err1 ++ " or " ++ err2
+parseUInt :: Parser Integer
+parseUInt = read <$> some (parseAnyChar ['0'..'9'])
 
-parseAnd :: Parser a -> Parser b -> Parser (a, b)
-parseAnd p1 p2 input = p1 input >>= applyNext
-  where applyNext (ok1, rest) = p2 rest >>= finish ok1
-        finish ok1 (ok2, rest) = Right ((ok1, ok2), rest)
+parseInt :: Parser Integer
+parseInt = (parseChar '-' >> negate <$> parseUInt) <|> parseUInt
 
-parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
-parseAndWith f p1 p2 input = parseAnd p1 p2 input >>= apply
-  where apply ((ok1, ok2), rest) = Right (f ok1 ok2, rest)
+spaces :: Parser [Char]
+spaces = many $ parseChar ' '
 
-parseMany :: Parser a -> Parser [a]
-parseMany p = parseOr (parseAndWith (:) p (parseMany p)) parseZero
-  where parseZero input = Right ([], input)
+parseList :: Parser a -> Parser [a]
+parseList p = parseChar '(' *> many (spaces >> p) <* parseChar ')'
+
+instance Functor Parser where
+  fmap fct p = Parser $ runParser p >=> Right . mapFst fct
+    where mapFst f (x, y) = (f x, y)
+
+instance Applicative Parser where
+  pure x = Parser $ \input -> Right (x, input)
+  liftA2 fct p1 p2 = p1 >>= \x -> fct x <$> p2
+
+instance Alternative Parser where
+  empty = Parser $ \_ -> Left "Empty parser"
+  p1 <|> p2 = Parser $ \input -> runParser p1 input <> runParser p2 input
+
+instance Monad Parser where
+  p >>= fct = Parser $ runParser p >=> \(a, rest) -> runParser (fct a) rest
+
+instance MonadFail Parser where
+  fail err = Parser $ \_ -> Left err
+
+instance MonadPlus Parser where
+  -- default
+
+mapError :: (ParserError -> ParserError) -> Parser a -> Parser a
+mapError fct p = Parser $ \input -> mapError' (runParser p input)
+  where mapError' (Left err) = Left $ fct err
+        mapError' ok         = ok
