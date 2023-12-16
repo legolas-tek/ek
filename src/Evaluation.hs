@@ -66,6 +66,10 @@ call _ _ _ = Left $ "Cannot call value of non-function type"
 defaultEnv :: Environment
 defaultEnv = [ ("#t", BooleanValue True)
              , ("#f", BooleanValue False)
+             , ("+", arithmeticFn sum)
+             , ("*", arithmeticFn product)
+             , ("-", arithmeticFn difference)
+             , ("/", arithmeticFn quotient)
              ]
 
 instance Eq BuiltinFn where
@@ -73,3 +77,17 @@ instance Eq BuiltinFn where
 
 instance Show BuiltinFn where
   show _ = "Function"
+
+mapIntegers :: [RuntimeValue] -> Either EvalError [Integer]
+mapIntegers = mapM mapInteger
+  where mapInteger (IntegerValue v) = Right v
+        mapInteger _ = Left "Expected an integer"
+
+arithmeticFn :: ([Integer] -> Integer) -> RuntimeValue
+arithmeticFn fn = FunctionValue $ BuiltinFn $ const $ ((IntegerValue . fn) <$>) . mapIntegers
+
+difference :: Num a => [a] -> a
+difference = foldr (-) 0
+
+quotient :: Integral a => [a] -> a
+quotient = foldr div 1
