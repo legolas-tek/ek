@@ -1,5 +1,6 @@
 module Ast
     ( Ast(..)
+    , sexprToAST
     ) where
 
 import qualified SExpr
@@ -9,6 +10,7 @@ data Ast = Define String Ast
           | Symbol String
           | Lambda [String] [Ast]
           | Call Ast [Ast]
+          deriving (Show)
 
 type SyntaxError = String
 
