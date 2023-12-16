@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: sudo apt install libgmp-dev
     - uses: haskell-actions/setup@v2
       with:
         ghc-version: '9.4.7'
