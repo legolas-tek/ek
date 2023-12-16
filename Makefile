@@ -12,11 +12,9 @@ NAME	=	glados
 
 STACK	=	stack
 
-all:        $(NAME)
-
-$(NAME):
+all:
 	$(STACK) build
-	find . -name $(NAME) -type f -exec mv {} . \; -quit
+	cp "`$(STACK) path --local-install-root`/bin/glados" $(NAME)
 
 clean:
 	$(RM) $(SRC:.hs=.hi)
