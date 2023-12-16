@@ -57,7 +57,7 @@ spaces :: Parser [Char]
 spaces = many $ parseChar ' '
 
 parseList :: Parser a -> Parser [a]
-parseList p = parseChar '(' *> many (spaces >> p) <* parseChar ')'
+parseList p = parseChar '(' *> many (spaces >> p) <* spaces <* parseChar ')'
 
 instance Functor Parser where
   fmap fct p = Parser $ runParser p >=> Right . mapFst fct

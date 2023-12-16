@@ -8,10 +8,12 @@
 import Test.HUnit
 
 import qualified Parsing
+import qualified LispParsing
 
 tests :: Test
 tests = test
   [ "Parsing tests" ~: Parsing.tests
+  , "Lisp parsing" ~: LispParsing.tests
   ]
 
 main :: IO ()
