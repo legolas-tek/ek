@@ -28,7 +28,7 @@ data RuntimeValue = IntegerValue Integer
                   | BooleanValue Bool
                   | FunctionValue BuiltinFn
                   | VoidValue
-                  deriving (Eq, Show)
+                  deriving (Eq)
 
 type EvalResult = Either EvalError (Environment, RuntimeValue)
 
@@ -75,8 +75,12 @@ defaultEnv = [ ("#t", BooleanValue True)
 instance Eq BuiltinFn where
   _ == _ = False
 
-instance Show BuiltinFn where
-  show _ = "Function"
+instance Show RuntimeValue where
+  show (IntegerValue v) = show v
+  show (BooleanValue True) = "#t"
+  show (BooleanValue False) = "#f"
+  show (FunctionValue _) = "(lambda)"
+  show VoidValue = ""
 
 mapIntegers :: [RuntimeValue] -> Either EvalError [Integer]
 mapIntegers = mapM mapInteger
