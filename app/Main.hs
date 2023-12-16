@@ -4,17 +4,15 @@ import Parser
 import Lisp
 import Ast
 
-parseLine :: String -> Either String Ast
-parseLine line = do
-    (sexpr, _) <- runParser parseSExpr line
-    ast <- sexprToAST sexpr
-    return ast
+parseLine :: String -> Either String ([Ast], String)
+parseLine line = runParser (many parseSExpr) line >>= \(sexprs, rest) -> (\asts -> (asts, rest)) <$> (mapM sexprToAST sexprs)
+
+handleResult :: Either String ([Ast], String) -> IO ()
+handleResult (Left err) = putStrLn err
+handleResult (Right (asts, _)) = mapM_ print asts
 
 main :: IO ()
 main = do
     line <- getLine
-    case parseLine line of
-        Left err -> putStrLn err
-        Right ast -> print ast
+    handleResult $ parseLine line
     main
-
