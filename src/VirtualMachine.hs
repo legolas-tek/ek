@@ -16,6 +16,7 @@ module VirtualMachine
 
 data VMValue = IntegerValue Integer
              | BooleanValue Bool
+             | OperatorValue Operator
              deriving (Show, Eq)
 
 data Operator = Add
@@ -27,7 +28,7 @@ data Operator = Add
               deriving (Show, Eq)
 
 data Instruction = Push VMValue
-                 | CallOp Operator
+                 | Call
                  | JmpFalse Int
                  | Ret
                  deriving (Show, Eq)
@@ -39,9 +40,10 @@ exec :: Insts -> Stack -> Either String Stack
 exec [] stack = Right stack
 exec (Ret:_) stack = Right stack
 exec (Push v:insts) stack = exec insts (v:stack)
-exec (CallOp op:insts) (v1:v2:stack) = applyOp op v1 v2
+exec (Call:insts) (OperatorValue op:v1:v2:stack) = applyOp op v1 v2
   >>= \result -> exec insts (result:stack)
-exec (CallOp _:_) _ = Left "Not enough arguments for operator"
+exec (Call:_) (OperatorValue _:_) = Left "Not enough arguments for operator"
+exec (Call:_) _ = Left "Cannot call value of non-function type"
 exec (JmpFalse offset:insts) (BooleanValue False:stack)
   = exec (drop offset insts) stack
 exec (JmpFalse _:insts) (BooleanValue True:stack) = exec insts stack
