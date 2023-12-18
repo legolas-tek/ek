@@ -7,6 +7,11 @@
 
 module VirtualMachine
     ( exec
+    , VMValue(..)
+    , Operator(..)
+    , Instruction(..)
+    , Stack
+    , Insts
     ) where
 
 data VMValue = IntegerValue Integer
