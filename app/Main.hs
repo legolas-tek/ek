@@ -5,22 +5,41 @@
 -- Main
 --}
 
+{-# LANGUAGE TupleSections #-}
+
 module Main (main) where
 
 import Parser
 import Lisp
 import Ast
+import Evaluation
 
 parseLine :: String -> Either String ([Ast], String)
 parseLine line = runParser (many parseSExpr) line >>=
-    \(sexprs, rest) -> (\asts -> (asts, rest)) <$> (mapM sexprToAST sexprs)
+    \(sexprs, rest) -> (, rest) <$> mapM sexprToAST sexprs
 
-handleResult :: Either String ([Ast], String) -> IO ()
-handleResult (Left err) = putStrLn err
-handleResult (Right (asts, _)) = mapM_ print asts
+evalAsts :: Environment -> [Ast] -> EvalResult
+evalAsts env [] = Right (env, VoidValue)
+evalAsts env [x] = evalAst env x
+evalAsts env (x:xs) = evalAst env x >>= \(env', _) -> evalAsts env' xs
+
+handleResult :: String -> Environment -> Either EvalError (Environment, RuntimeValue, String)
+handleResult s env = do
+    (asts, rest) <- parseLine s
+    (env', value) <- evalAsts env asts
+    return (env', value, rest)
+    
+printResult :: Environment -> Either EvalError (Environment, RuntimeValue, String) -> IO (Environment, String)
+printResult env (Left err) = putStrLn ("Error: " ++ err) >> return (env, "")
+printResult _ (Right (env, VoidValue, rest)) = return (env, rest)
+printResult _ (Right (env, val, rest)) = putStrLn (show val) >> return (env, rest)
+
+mainLoop :: Environment -> String -> IO ()
+mainLoop env rest = do
+    line <- getLine
+    let result = handleResult (rest ++ line) env
+    (env', rest') <- printResult env result
+    mainLoop env' rest'
 
 main :: IO ()
-main = do
-    line <- getLine
-    handleResult $ parseLine line
-    main
+main = mainLoop defaultEnv ""
