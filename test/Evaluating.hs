@@ -29,6 +29,8 @@ tests = test
       eval (Call (Symbol "+") [IntegerLit 9, IntegerLit 3]) @?= Right (IntegerValue 12)
       eval (Call (Symbol "-") [IntegerLit 6, IntegerLit 7]) @?= Right (IntegerValue (-1))
       eval (Call (Symbol "/") [IntegerLit 42, IntegerLit 7]) @?= Right (IntegerValue 6)
+      eval (Call (Symbol "/") [IntegerLit 42, IntegerLit 0]) @?= Left "Division by zero"
+      eval (Call (Symbol "/") [IntegerLit 42, IntegerLit 3, IntegerLit 3]) @?= Left "List contains more than two elements"
   , "minmax" ~: do
       eval (Call (Symbol "min") [IntegerLit 6, IntegerLit 7]) @?= Right (IntegerValue 6)
       eval (Call (Symbol "max") [IntegerLit 9, IntegerLit 3]) @?= Right (IntegerValue 9)
