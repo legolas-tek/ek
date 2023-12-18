@@ -36,6 +36,9 @@ tests = test
       eval (Call (Symbol "*") [IntegerLit 6, IntegerLit 7, IntegerLit 2]) @?= Right (IntegerValue 84)
       eval (Call (Symbol "+") [IntegerLit 9, IntegerLit 3, IntegerLit (-2)]) @?= Right (IntegerValue 10)
       eval (Call (Symbol "-") [IntegerLit 20, IntegerLit 7, IntegerLit 0, IntegerLit 4]) @?= Right (IntegerValue 9)
+  , "IfEval" ~: do
+      eval (If (Symbol "#t") (IntegerLit 0) (IntegerLit 1)) @?= Right (IntegerValue 0)
+      eval (If (Symbol "#f") (IntegerLit 0) (IntegerLit 1)) @?= Right (IntegerValue 1)
   , "bool" ~: do
       eval (Call (Symbol "and") [Symbol "#t", Symbol "#t"]) @?= Right (BooleanValue True)
       eval (Call (Symbol "and") [Symbol "#t", Symbol "#t", Symbol "#t", Symbol "#t", Symbol "#f"]) @?= Right (BooleanValue False)

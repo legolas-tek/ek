@@ -17,6 +17,7 @@ data Ast = Define String Ast
           | Symbol String
           | Lambda [String] [Ast]
           | Call Ast [Ast]
+          | If Ast Ast Ast
           deriving (Show)
 
 type SyntaxError = String
@@ -24,6 +25,11 @@ type SyntaxError = String
 sexprToAST :: SExpr.SExpr -> Either SyntaxError Ast
 sexprToAST (SExpr.Symbol s) = Right (Ast.Symbol s)
 sexprToAST (SExpr.IntegerLit i) = Right (Ast.IntegerLit i)
+sexprToAST (SExpr.List [SExpr.Symbol "if", cond, trueCase, falseCase]) = do
+  econd <- sexprToAST cond
+  etrueCase <- sexprToAST trueCase
+  efalseCase <- sexprToAST falseCase
+  return (Ast.If econd etrueCase efalseCase)
 sexprToAST (SExpr.List [SExpr.Symbol "define", SExpr.Symbol s, v])
   = sexprToAST v >>= \e -> Right (Ast.Define s e)
 sexprToAST (SExpr.List (SExpr.Symbol "define":_)) = Left "Invalid define"
