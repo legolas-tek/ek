@@ -38,8 +38,8 @@ jobs:
           ${{ runner.os }}-
 
     - name: Build
-      run: stack build
+      run: make
     - name: Run unit tests
-      run: stack test
+      run: make tests_run
     - name: Run functional tests
       run: lit -v ./test/functional/
