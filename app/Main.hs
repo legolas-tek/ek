@@ -9,6 +9,8 @@
 
 module Main (main) where
 
+import System.IO
+
 import Parser
 import Lisp
 import Ast
@@ -36,6 +38,8 @@ printResult _ (Right (env, val, rest)) = putStrLn (show val) >> return (env, res
 
 mainLoop :: Environment -> String -> IO ()
 mainLoop env rest = do
+    putStr "glados> "
+    hFlush stdout
     line <- getLine
     let result = handleResult (rest ++ line) env
     (env', rest') <- printResult env result
