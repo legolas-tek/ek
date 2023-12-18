@@ -24,7 +24,6 @@ jobs:
         with:
             ghc-version: '9.4.7'
             enable-stack: true
-            stack-no-global: true
             stack-version: 'latest'
 
       - uses: actions/cache@v3
