@@ -21,7 +21,7 @@ import Control.Monad (when)
 
 parseLine :: String -> Either String ([Ast], String)
 parseLine line = runParser (many parseSExpr) line >>=
-    \(sexprs, rest) -> (, rest) <$> mapM sexprToAST sexprs
+    \(sexprs, rest) -> (, if null rest then "" else rest ++ "\n") <$> mapM sexprToAST sexprs
 
 evalAsts :: Environment -> [Ast] -> EvalResult
 evalAsts env [] = Right (env, VoidValue)
