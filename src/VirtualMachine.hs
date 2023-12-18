@@ -41,12 +41,14 @@ exec (CallOp op:insts) (v1:v2:stack) = applyOp op v1 v2
 exec (CallOp _:_) _ = Left "Not enough arguments for operator"
 
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
-applyOp op (IntegerValue v1) (IntegerValue v2)
-  = Right $ IntegerValue $ getOp op v1 v2
+applyOp Add (IntegerValue a) (IntegerValue b)
+  = Right $ IntegerValue $ a + b
+applyOp Sub (IntegerValue a) (IntegerValue b)
+  = Right $ IntegerValue $ a - b
+applyOp Mul (IntegerValue a) (IntegerValue b)
+  = Right $ IntegerValue $ a * b
+applyOp Div (IntegerValue _) (IntegerValue 0)
+  = Left "Division by zero"
+applyOp Div (IntegerValue a) (IntegerValue b)
+  = Right $ IntegerValue $ a `div` b
 applyOp _ _ _ = Left "Invalid operands for operator"
-
-getOp :: Operator -> (Integer -> Integer -> Integer)
-getOp Add = (+)
-getOp Sub = (-)
-getOp Mul = (*)
-getOp Div = div
