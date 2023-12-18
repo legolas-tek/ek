@@ -10,8 +10,6 @@ module Executing (tests) where
 import Test.HUnit
 
 import VirtualMachine
-import VirtualMachine
-import VirtualMachine (VMValue(OperatorValue))
 
 tests :: Test
 tests = test
@@ -46,4 +44,26 @@ tests = test
             ]
       exec (conditionalJump True) [] @?= Right [IntegerValue 1]
       exec (conditionalJump False) [] @?= Right [IntegerValue 2]
+  , "function" ~: do
+      let absFn = [ Dup
+                  , Push $ IntegerValue 0
+                  , Push $ OperatorValue Less
+                  , Call
+                  , JmpFalse 1
+                  , Ret
+                  , Push $ IntegerValue (-1)
+                  , Push $ OperatorValue Mul
+                  , Call
+                  , Ret
+                  ]
+      exec [ Push $ IntegerValue (-42)
+           , Push $ FunctionValue absFn
+           , Call
+           , Ret
+           ] [] @?= Right [IntegerValue 42]
+      exec [ Push $ IntegerValue 20
+           , Push $ FunctionValue absFn
+           , Call
+           , Ret
+           ] [] @?= Right [IntegerValue 20]
   ]
