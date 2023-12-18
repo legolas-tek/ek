@@ -45,8 +45,7 @@ mainLoop :: Environment -> String -> IO ()
 mainLoop env rest = do
     printPrompt
     line <- getLine
-    let result = handleResult (rest ++ line) env
-    (env', rest') <- printResult env result
+    (env', rest') <- printResult env (handleResult (rest ++ line) env)
     mainLoop env' rest'
 
 main :: IO ()
