@@ -40,4 +40,6 @@ tests = test
       runParser parseComment "#|test|#abc" @?= Right ("", "abc")
       runParser parseSExpr "(define #|test|#a 1)" @?=
             Right (List [Symbol "define",Symbol "a",IntegerLit 1],"")
+      runParser parseCommentLine ";test" @?= Right ("", "")
+      runParser parseSExpr "test;test" @?= Right (Symbol "test", ";test")
   ]

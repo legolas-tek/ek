@@ -5,7 +5,7 @@
 -- lisp parsing
 -}
 
-module Lisp (parseSExpr, parseComment) where
+module Lisp (parseSExpr, parseComment, parseCommentLine) where
 
 import Parser
 import SExpr
@@ -27,6 +27,9 @@ string = StringLit <$> parseString
 
 parseSExpr :: Parser SExpr
 parseSExpr = parseComment <|> spaces >> integerLit <|> symbol <|> list <|> string
+
+parseCommentLine :: Parser String
+parseCommentLine = spaces >> parseChar ';' >> many (parseAnyButChar '\0') >> return ""
 
 parseComment :: Parser String
 parseComment = parseChar '#' >> parseChar '|' >> many (parseAnyButChar '|')
