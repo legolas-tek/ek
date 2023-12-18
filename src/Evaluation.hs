@@ -88,6 +88,11 @@ defaultEnv = [ ("#t", BooleanValue True)
              , ("or", FunctionValue $ BuiltinFn $ const $ mapBooleans or)
              , ("xor", FunctionValue $ BuiltinFn $ const $ mapTwoBooleans xor)
              , ("eq?", boolOperator (==))
+             , ("<",  compareOperator (<))
+             , (">",  compareOperator (>))
+             , ("<=", compareOperator (<=))
+             , (">=", compareOperator (>=))
+             , ("=", boolOperator (==))
              ]
 
 instance Eq BuiltinFn where
@@ -127,6 +132,13 @@ mapBooleans :: ([Bool] -> Bool) -> [RuntimeValue] -> Either EvalError RuntimeVal
 mapBooleans fn values = BooleanValue . fn <$> mapM mapBoolean' values
   where mapBoolean' (BooleanValue v) = Right v
         mapBoolean' _ = Left "Expected a boolean"
+
+compareOperator :: (Integer -> Integer -> Bool) -> RuntimeValue
+compareOperator fn = FunctionValue $ BuiltinFn $ const $ compareOperatorFn fn
+
+compareOperatorFn :: (Integer -> Integer -> Bool) -> [RuntimeValue] -> Either EvalError RuntimeValue
+compareOperatorFn fn [IntegerValue a, IntegerValue b] = Right $ BooleanValue $ fn a b
+compareOperatorFn _ _ = Left "Expected two integers"
 
 boolOperator :: (RuntimeValue -> RuntimeValue -> Bool) -> RuntimeValue
 boolOperator fn = FunctionValue $ BuiltinFn $ const $ boolOperatorFn fn
