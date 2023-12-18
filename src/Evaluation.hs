@@ -49,8 +49,14 @@ evalLambda closedEnv names body currentEnv args
   | length names /= length args = Left $ "Function expected " ++ show (length names) ++ " arguments but got " ++ show (length args) ++ " arguments"
   | otherwise = snd <$> evalBody ((zip names args) ++ closedEnv ++ currentEnv) body
 
+evalIf :: Environment -> RuntimeValue -> Ast -> Ast -> EvalResult
+evalIf env (BooleanValue condValue) trueCase falseCase | condValue == True = evalAst env trueCase
+                                                       | otherwise = evalAst env falseCase
+evalIf _ _ _ _ = Left "Invalid condition in if"
+
 evalAst :: Environment -> Ast -> EvalResult
 evalAst env (Define name val) = evalAst env val >>= \(_, value) -> Right ((name, value):env, VoidValue)
+evalAst env (If cond trueCase falseCase) = evalAst env cond >>= \(_, condValue) -> evalIf env condValue trueCase falseCase
 evalAst env (IntegerLit i) = Right (env, IntegerValue i)
 evalAst env (Symbol s) = (env,) <$> envLookup env s
 evalAst env (Lambda names body) =
