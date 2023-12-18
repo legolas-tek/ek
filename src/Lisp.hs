@@ -14,7 +14,7 @@ integerLit :: Parser SExpr
 integerLit = IntegerLit <$> parseInt
 
 symbolRef :: Parser String
-symbolRef = some $ parseAnyChar $ ['A'..'Z'] ++ ['a'..'z'] ++ "+-/%$#"
+symbolRef = some $ parseAnyChar $ ['A'..'Z'] ++ ['a'..'z'] ++ "+-*/%$#?"
 
 symbol :: Parser SExpr
 symbol = Symbol <$> symbolRef
