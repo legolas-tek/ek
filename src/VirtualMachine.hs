@@ -22,6 +22,8 @@ data Operator = Add
               | Sub
               | Mul
               | Div
+              | Eq
+              | Less
               deriving (Show, Eq)
 
 data Instruction = Push VMValue
@@ -51,4 +53,7 @@ applyOp Div (IntegerValue _) (IntegerValue 0)
   = Left "Division by zero"
 applyOp Div (IntegerValue a) (IntegerValue b)
   = Right $ IntegerValue $ a `div` b
+applyOp Eq a b = Right $ BooleanValue $ a == b
+applyOp Less (IntegerValue a) (IntegerValue b)
+  = Right $ BooleanValue $ a < b
 applyOp _ _ _ = Left "Invalid operands for operator"

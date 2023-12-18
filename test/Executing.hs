@@ -20,4 +20,9 @@ tests = test
       exec [Push $ IntegerValue 10, CallOp Add, Ret] [] @?= Left "Not enough arguments for operator"
       exec [Push $ IntegerValue 10, Push $ BooleanValue True, CallOp Add, Ret] [] @?= Left "Invalid operands for operator"
       exec [Push $ IntegerValue 0, Push $ IntegerValue 10, CallOp Div, Ret] [] @?= Left "Division by zero"
+  , "comparison" ~: do
+      exec [Push $ IntegerValue 10, Push $ IntegerValue 10, CallOp Eq, Ret] [] @?= Right [BooleanValue True]
+      exec [Push $ IntegerValue 10, Push $ IntegerValue 11, CallOp Eq, Ret] [] @?= Right [BooleanValue False]
+      exec [Push $ IntegerValue 2, Push $ IntegerValue 5, CallOp Less, Ret] [] @?= Right [BooleanValue False]
+      exec [Push $ IntegerValue 5, Push $ IntegerValue 2, CallOp Less, Ret] [] @?= Right [BooleanValue True]
   ]
