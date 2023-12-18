@@ -11,6 +11,7 @@ module Evaluation
   ( RuntimeValue(..)
   , EvalResult
   , EvalError
+  , Environment
   , evalAst
   , defaultEnv
   , evalBody
