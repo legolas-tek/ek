@@ -25,4 +25,15 @@ tests = test
       exec [Push $ IntegerValue 10, Push $ IntegerValue 11, CallOp Eq, Ret] [] @?= Right [BooleanValue False]
       exec [Push $ IntegerValue 2, Push $ IntegerValue 5, CallOp Less, Ret] [] @?= Right [BooleanValue False]
       exec [Push $ IntegerValue 5, Push $ IntegerValue 2, CallOp Less, Ret] [] @?= Right [BooleanValue True]
+  , "conditionalJump" ~: do
+      let conditionalJump v =
+            [ Push $ BooleanValue v
+            , JmpFalse 2
+            , Push $ IntegerValue 1
+            , Ret
+            , Push $ IntegerValue 2
+            , Ret
+            ]
+      exec (conditionalJump True) [] @?= Right [IntegerValue 1]
+      exec (conditionalJump False) [] @?= Right [IntegerValue 2]
   ]

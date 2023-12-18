@@ -28,6 +28,7 @@ data Operator = Add
 
 data Instruction = Push VMValue
                  | CallOp Operator
+                 | JmpFalse Int
                  | Ret
                  deriving (Show, Eq)
 
@@ -41,6 +42,10 @@ exec (Push v:insts) stack = exec insts (v:stack)
 exec (CallOp op:insts) (v1:v2:stack) = applyOp op v1 v2
   >>= \result -> exec insts (result:stack)
 exec (CallOp _:_) _ = Left "Not enough arguments for operator"
+exec (JmpFalse offset:insts) (BooleanValue False:stack)
+  = exec (drop offset insts) stack
+exec (JmpFalse _:insts) (BooleanValue True:stack) = exec insts stack
+exec (JmpFalse _:_) _ = Left "Invalid condition"
 
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)
