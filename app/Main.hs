@@ -10,6 +10,7 @@
 module Main (main) where
 
 import System.IO
+-- import System.Process
 
 import Parser
 import Lisp
@@ -36,10 +37,13 @@ printResult env (Left err) = putStrLn ("Error: " ++ err) >> return (env, "")
 printResult _ (Right (env, VoidValue, rest)) = return (env, rest)
 printResult _ (Right (env, val, rest)) = putStrLn (show val) >> return (env, rest)
 
+printPrompt :: IO ()
+printPrompt = hIsTerminalDevice stdin >>= \isTerm ->
+    if isTerm then putStr "glados> " >> hFlush stdout else return ()
+
 mainLoop :: Environment -> String -> IO ()
 mainLoop env rest = do
-    putStr "glados> "
-    hFlush stdout
+    printPrompt
     line <- getLine
     let result = handleResult (rest ++ line) env
     (env', rest') <- printResult env result
