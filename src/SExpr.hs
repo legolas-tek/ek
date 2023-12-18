@@ -14,6 +14,7 @@ module SExpr
 data SExpr = IntegerLit Integer
            | Symbol String
            | List [SExpr]
+           | StringLit String
            deriving (Eq, Show)
 
 type SexprError = String

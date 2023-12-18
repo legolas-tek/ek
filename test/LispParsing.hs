@@ -31,4 +31,9 @@ tests = test
       runParser parseSExpr "(+ (- 7 2) 3)" @?= Right (List [Symbol "+", (List [Symbol "-", IntegerLit 7, IntegerLit 2]), IntegerLit 3], "")
       runParser parseSExpr "(+(- 7 2)3)" @?= Right (List [Symbol "+", (List [Symbol "-", IntegerLit 7, IntegerLit 2]), IntegerLit 3], "")
       runParser parseSExpr " (+   (- 7 2)  3  )" @?= Right (List [Symbol "+", (List [Symbol "-", IntegerLit 7, IntegerLit 2]), IntegerLit 3], "")
+  , "string" ~: do
+      runParser parseSExpr "\"hello world\"" @?= Right (StringLit "hello world", "")
+      runParser parseSExpr "(funct \"string1\")" @?= Right (List [Symbol "funct", StringLit "string1"], "")
+      runParser parseSExpr "(funct \"string1\" \"string2\")" @?= Right (List [Symbol "funct", StringLit "string1", StringLit "string2"], "")
+
   ]

@@ -16,6 +16,7 @@ data Ast = Define String Ast
           | IntegerLit Integer
           | Symbol String
           | Lambda [String] [Ast]
+          | StringLit String
           | Call Ast [Ast]
           | If Ast Ast Ast
           deriving (Show)
@@ -42,4 +43,5 @@ sexprToAST (SExpr.List (x:xs)) = do
   args <- mapM sexprToAST xs
   fn <- sexprToAST x
   return (Call fn args)
+sexprToAST (SExpr.StringLit s) = Right (Ast.StringLit s)
 sexprToAST _ = Left "Invalid syntax"

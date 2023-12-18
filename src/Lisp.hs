@@ -22,5 +22,8 @@ symbol = Symbol <$> symbolRef
 list :: Parser SExpr
 list = List <$> parseList parseSExpr
 
+string :: Parser SExpr
+string = StringLit <$> parseString
+
 parseSExpr :: Parser SExpr
-parseSExpr = spaces >> integerLit <|> symbol <|> list
+parseSExpr = spaces >> integerLit <|> symbol <|> list <|> string

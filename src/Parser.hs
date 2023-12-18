@@ -13,6 +13,7 @@ module Parser
   , parseUInt
   , spaces
   , parseList
+  , parseString
   , mapError
   , some
   , many
@@ -42,6 +43,11 @@ parseChar expected
   = printf "Expected '%c' but %s" expected
     `mapError` Parser (parseOneIf (== expected))
 
+parseAnyButChar :: Char -> Parser Char
+parseAnyButChar expected
+  = printf "Unexpected '%c'" expected
+    `mapError` Parser (parseOneIf (/= expected))
+
 parseAnyChar :: String -> Parser Char
 parseAnyChar allowed
   = printf "Expected one of '%s' but %s" allowed
@@ -58,6 +64,9 @@ spaces = many $ parseChar ' '
 
 parseList :: Parser a -> Parser [a]
 parseList p = parseChar '(' *> many (spaces >> p) <* spaces <* parseChar ')'
+
+parseString :: Parser String
+parseString = parseChar '"' *> many (parseAnyButChar '"') <* parseChar '"'
 
 instance Functor Parser where
   fmap fct p = Parser $ runParser p >=> Right . mapFst fct

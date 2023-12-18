@@ -31,6 +31,7 @@ data RuntimeValue = IntegerValue Integer
                   | BooleanValue Bool
                   | FunctionValue BuiltinFn
                   | VoidValue
+                  | StringValue String
                   deriving (Eq)
 
 type EvalResult = Either EvalError (Environment, RuntimeValue)
@@ -61,6 +62,7 @@ evalAst env (Define name val) = evalAst env val >>= \(_, value) -> Right ((name,
 evalAst env (If cond trueCase falseCase) = evalAst env cond >>= \(_, condValue) -> evalIf env condValue trueCase falseCase
 evalAst env (IntegerLit i) = Right (env, IntegerValue i)
 evalAst env (Symbol s) = (env,) <$> envLookup env s
+evalAst env (StringLit s) = Right (env, StringValue s)
 evalAst env (Lambda names body) =
   Right (env, FunctionValue $ BuiltinFn $ evalLambda env names body)
 evalAst env (Call fn args) = do
@@ -93,6 +95,7 @@ instance Eq BuiltinFn where
 
 instance Show RuntimeValue where
   show (IntegerValue v) = show v
+  show (StringValue v) = show v
   show (BooleanValue True) = "#t"
   show (BooleanValue False) = "#f"
   show (FunctionValue _) = "(lambda)"
