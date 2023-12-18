@@ -17,6 +17,8 @@ import Lisp
 import Ast
 import Evaluation
 
+import Control.Monad (when)
+
 parseLine :: String -> Either String ([Ast], String)
 parseLine line = runParser (many parseSExpr) line >>=
     \(sexprs, rest) -> (, rest) <$> mapM sexprToAST sexprs
@@ -31,19 +33,19 @@ handleResult s env = do
     (asts, rest) <- parseLine s
     (env', value) <- evalAsts env asts
     return (env', value, rest)
-    
+
 printResult :: Environment -> Either EvalError (Environment, RuntimeValue, String) -> IO (Environment, String)
 printResult env (Left err) = putStrLn ("Error: " ++ err) >> return (env, "")
 printResult _ (Right (env, VoidValue, rest)) = return (env, rest)
-printResult _ (Right (env, val, rest)) = putStrLn (show val) >> return (env, rest)
+printResult _ (Right (env, val, rest)) = print val >> return (env, rest)
 
-printPrompt :: IO ()
-printPrompt = hIsTerminalDevice stdin >>= \isTerm ->
-    if isTerm then putStr "glados> " >> hFlush stdout else return ()
+printPrompt :: Bool -> IO ()
+printPrompt new = hIsTerminalDevice stdin >>= \isTerm ->
+    when isTerm $ putStr (if new then "glados> " else "  ... > ") >> hFlush stdout
 
 mainLoop :: Environment -> String -> IO ()
 mainLoop env rest = do
-    printPrompt
+    printPrompt $ null rest
     line <- getLine
     (env', rest') <- printResult env (handleResult (rest ++ line) env)
     mainLoop env' rest'
