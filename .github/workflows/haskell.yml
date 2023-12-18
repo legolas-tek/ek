@@ -39,5 +39,7 @@ jobs:
 
     - name: Build
       run: stack build
-    - name: Run tests
+    - name: Run unit tests
       run: stack test
+    - name: Run functional tests
+      run: lit -v ./test/functional/
