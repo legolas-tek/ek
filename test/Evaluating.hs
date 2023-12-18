@@ -29,6 +29,9 @@ tests = test
       eval (Call (Symbol "+") [IntegerLit 9, IntegerLit 3]) @?= Right (IntegerValue 12)
       eval (Call (Symbol "-") [IntegerLit 6, IntegerLit 7]) @?= Right (IntegerValue (-1))
       eval (Call (Symbol "/") [IntegerLit 42, IntegerLit 7]) @?= Right (IntegerValue 6)
+  , "minmax" ~: do
+      eval (Call (Symbol "min") [IntegerLit 6, IntegerLit 7]) @?= Right (IntegerValue 6)
+      eval (Call (Symbol "max") [IntegerLit 9, IntegerLit 3]) @?= Right (IntegerValue 9)
   , "mathMultiple" ~: do
       eval (Call (Symbol "*") [IntegerLit 6, IntegerLit 7, IntegerLit 2]) @?= Right (IntegerValue 84)
       eval (Call (Symbol "+") [IntegerLit 9, IntegerLit 3, IntegerLit (-2)]) @?= Right (IntegerValue 10)
@@ -36,6 +39,17 @@ tests = test
   , "IfEval" ~: do
       eval (If (Symbol "#t") (IntegerLit 0) (IntegerLit 1)) @?= Right (IntegerValue 0)
       eval (If (Symbol "#f") (IntegerLit 0) (IntegerLit 1)) @?= Right (IntegerValue 1)
+  , "bool" ~: do
+      eval (Call (Symbol "and") [Symbol "#t", Symbol "#t"]) @?= Right (BooleanValue True)
+      eval (Call (Symbol "and") [Symbol "#t", Symbol "#t", Symbol "#t", Symbol "#t", Symbol "#f"]) @?= Right (BooleanValue False)
+      eval (Call (Symbol "or") [Symbol "#t", Symbol "#t"]) @?= Right (BooleanValue True)
+      eval (Call (Symbol "or") [Symbol "#t", Symbol "#f"]) @?= Right (BooleanValue True)
+      eval (Call (Symbol "or") [Symbol "#f", Symbol "#f"]) @?= Right (BooleanValue False)
+      eval (Call (Symbol "not") [Symbol "#f"]) @?= Right (BooleanValue True)
+      eval (Call (Symbol "not") [Symbol "#t"]) @?= Right (BooleanValue False)
+      eval (Call (Symbol "xor") [Symbol "#t", Symbol "#t"]) @?= Right (BooleanValue False)
+      eval (Call (Symbol "xor") [Symbol "#f", Symbol "#f"]) @?= Right (BooleanValue False)
+      eval (Call (Symbol "xor") [Symbol "#t", Symbol "#f"]) @?= Right (BooleanValue True)
       -- NOTE: division by zero crashes
       --       division with multiple arguments too
       --       odd arguments of (-) are added instead of subtracted

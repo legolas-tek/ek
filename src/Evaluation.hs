@@ -17,6 +17,8 @@ module Evaluation
   , evalBody
   ) where
 
+import Data.Bits (xor)
+
 import Ast
 
 type EvalError = String
@@ -77,6 +79,12 @@ defaultEnv = [ ("#t", BooleanValue True)
              , ("*", arithmeticFn product)
              , ("-", arithmeticFn difference)
              , ("/", arithmeticFn quotient)
+             , ("max", arithmeticFn maximum)
+             , ("min", arithmeticFn minimum)
+             , ("not", FunctionValue $ BuiltinFn $ const $ mapBoolean not)
+             , ("and", FunctionValue $ BuiltinFn $ const $ mapBooleans and)
+             , ("or", FunctionValue $ BuiltinFn $ const $ mapBooleans or)
+             , ("xor", FunctionValue $ BuiltinFn $ const $ mapTwoBooleans xor)
              ]
 
 instance Eq BuiltinFn where
@@ -102,3 +110,16 @@ difference = foldr (-) 0
 
 quotient :: Integral a => [a] -> a
 quotient = foldr div 1
+
+mapBoolean :: (Bool -> Bool) -> [RuntimeValue] -> Either EvalError RuntimeValue
+mapBoolean fn [BooleanValue v] = Right $ BooleanValue $ fn v
+mapBoolean _ _ = Left "Expected a boolean"
+
+mapTwoBooleans :: (Bool -> Bool -> Bool) -> [RuntimeValue] -> Either EvalError RuntimeValue
+mapTwoBooleans fn [BooleanValue v1, BooleanValue v2] = Right $ BooleanValue $ fn v1 v2
+mapTwoBooleans _ _ = Left "Expected two booleans"
+
+mapBooleans :: ([Bool] -> Bool) -> [RuntimeValue] -> Either EvalError RuntimeValue
+mapBooleans fn values = BooleanValue . fn <$> mapM mapBoolean' values
+  where mapBoolean' (BooleanValue v) = Right v
+        mapBoolean' _ = Left "Expected a boolean"
