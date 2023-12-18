@@ -52,8 +52,8 @@ evalLambda closedEnv names body currentEnv args
   | otherwise = snd <$> evalBody ((zip names args) ++ closedEnv ++ currentEnv) body
 
 evalIf :: Environment -> RuntimeValue -> Ast -> Ast -> EvalResult
-evalIf env (BooleanValue condValue) trueCase falseCase | condValue == True = evalAst env trueCase
-                                                       | otherwise = evalAst env falseCase
+evalIf env (BooleanValue True) trueCase _ = evalAst env trueCase
+evalIf env (BooleanValue False) _ falseCase = evalAst env falseCase
 evalIf _ _ _ _ = Left "Invalid condition in if"
 
 evalAst :: Environment -> Ast -> EvalResult
