@@ -31,7 +31,7 @@ handleResult s env = do
     (asts, rest) <- parseLine s
     (env', value) <- evalAsts env asts
     return (env', value, rest)
-    
+
 printResult :: Environment -> Either EvalError (Environment, RuntimeValue, String) -> IO (Environment, String)
 printResult env (Left err) = putStrLn ("Error: " ++ err) >> return (env, "")
 printResult _ (Right (env, VoidValue, rest)) = return (env, rest)

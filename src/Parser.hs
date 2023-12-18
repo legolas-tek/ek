@@ -9,6 +9,7 @@ module Parser
   ( Parser(..)
   , parseChar
   , parseAnyChar
+  , parseAnyButChar
   , parseInt
   , parseUInt
   , spaces

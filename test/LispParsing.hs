@@ -35,5 +35,9 @@ tests = test
       runParser parseSExpr "\"hello world\"" @?= Right (StringLit "hello world", "")
       runParser parseSExpr "(funct \"string1\")" @?= Right (List [Symbol "funct", StringLit "string1"], "")
       runParser parseSExpr "(funct \"string1\" \"string2\")" @?= Right (List [Symbol "funct", StringLit "string1", StringLit "string2"], "")
-
+  , "comments" ~: do
+      runParser parseComment "#|test|#" @?= Right ("", "")
+      runParser parseComment "#|test|#abc" @?= Right ("", "abc")
+      runParser parseSExpr "(define #|test|#a 1)" @?=
+            Right (List [Symbol "define",Symbol "a",IntegerLit 1],"")
   ]
