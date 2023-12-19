@@ -10,7 +10,7 @@
 module Main (main) where
 
 import System.IO
--- import System.Process
+import System.Exit
 
 import Parser
 import Lisp
@@ -46,6 +46,8 @@ printPrompt new = hIsTerminalDevice stdin >>= \isTerm ->
 mainLoop :: Environment -> String -> IO ()
 mainLoop env rest = do
     printPrompt $ null rest
+    eof <- isEOF
+    when eof $ exitWith (ExitSuccess)
     line <- getLine
     (env', rest') <- printResult env (handleResult (rest ++ line) env)
     mainLoop env' rest'

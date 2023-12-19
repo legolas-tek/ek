@@ -16,3 +16,7 @@ glados
 
 # Coverage
 test/coverage/
+
+#Lit
+test/functional/.lit_test_times.txt
+test/functional/Output
