@@ -1,0 +1,40 @@
+name: 🏁 Windows Pack
+
+on:
+  workflow_call:
+
+jobs:
+  release_windows:
+    name: "Release on Windows"
+    runs-on: "windows-latest"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: mkdir -p "./generated_packages/"
+
+      - uses: haskell-actions/setup@v2
+        with:
+            ghc-version: '9.4.7'
+            enable-stack: true
+            stack-no-global: true
+            stack-version: 'latest'
+
+      - uses: actions/cache@v3
+        name: Cache .stack-work
+        with:
+            path: .stack-work
+            key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('**/*.hs') }}
+            restore-keys: |
+              ${{ runner.os }}-stack-work-
+
+      - name: "Build the GLaDOS project"
+        run: stack build
+
+      - name: "Move the generated installer to the dir"
+        run: "cp \"`$(STACK) path --local-install-root`/bin/glados\" generated_packages/glados"
+
+      - uses: actions/upload-artifact@master
+        with:
+          name: windows-release
+          path: "./generated_packages/"

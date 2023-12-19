@@ -1,0 +1,29 @@
+name: 🚀 Release me
+
+on:
+  workflow_call:
+
+jobs:
+  create_release:
+    name: "Create release"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@master
+        with:
+          name: windows-release
+          path: "./generated_packages/"
+
+      - uses: actions/download-artifact@master
+        with:
+          name: linux-release
+          path: "./generated_packages/"
+
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "./generated_packages/glados.exe, ./generated_packages/glados"
+          generateReleaseNotes: true
+          tag: "v${{  github.ref_name }}-stable"
