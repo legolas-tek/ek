@@ -1,29 +1,27 @@
-name: Build & Test
+name: 🐧 Linux Builds & Tests
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
-  build:
-
+  build_ubuntu:
+    name: "Build on Ubuntu latest"
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install dependencies
+      - name: "Install needed dependencies"
         run: sudo apt-get update && sudo apt-get install -y libgmp-dev
 
       - uses: haskell-actions/setup@v2
         with:
             ghc-version: '9.4.7'
             enable-stack: true
+            stack-no-global: true
             stack-version: 'latest'
 
       - uses: actions/cache@v3
@@ -34,8 +32,8 @@ jobs:
             restore-keys: |
               ${{ runner.os }}-stack-work-
 
-      - name: Build
+      - name: "Build the GLaDOS project"
         run: stack build
 
-      - name: Run tests
+      - name: "Run the GLaDOS unit tests"
         run: stack test
