@@ -37,10 +37,10 @@ jobs:
               ${{ runner.os }}-stack-work-
 
       - name: "Build the GLaDOS project"
-        run: stack build
+        run: make
 
       - name: "Run the GLaDOS unit tests"
-        run: stack test
+        run: make tests_run
 
       - name: "Run the GLaDOS functional tests"
         run: lit -v ./test/functional/
