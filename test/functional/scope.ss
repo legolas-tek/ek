@@ -8,7 +8,7 @@
 		(define bb (* b b))
 		(+ aa bb))))
 
-; CHECK: <lambda>
+; CHECK: (lambda)
 (sqsum 57)
 
 ; CHECK-NEXT: Error
