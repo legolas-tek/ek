@@ -32,7 +32,7 @@ pip install lit && bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 For Fedora:
 
 ```sh
-pip install lit && sudo dnf install llvm"
+pip install lit && sudo dnf install llvm
 ```
 
 For macOS:
