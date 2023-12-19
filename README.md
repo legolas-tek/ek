@@ -5,7 +5,7 @@
 
     ![Static Badge](https://img.shields.io/badge/glados-programming_language-blue)
 
-    <p>The goal of this project is to implement a programming language of our own design in Haskell.</p>
+    The goal of this project is to implement a programming language of our own design in Haskell.
 
 </div>
 
