@@ -60,7 +60,7 @@ parseInt :: Parser Integer
 parseInt = (parseChar '-' >> negate <$> parseUInt) <|> parseUInt
 
 spaces :: Parser [Char]
-spaces = many $ parseChar ' '
+spaces = many $ parseAnyChar " \t\n"
 
 parseList :: Parser a -> Parser [a]
 parseList p = parseChar '(' *> many (spaces >> p) <* spaces <* parseChar ')'
