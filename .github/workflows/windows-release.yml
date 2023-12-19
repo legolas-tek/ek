@@ -32,7 +32,7 @@ jobs:
         run: stack build
 
       - name: "Move the generated installer to the dir"
-        run: "cp \"$(stack path --local-install-root)/bin/glados\" generated_packages/glados"
+        run: "cp \"$(stack path --local-install-root)/bin/glados.exe\" generated_packages/glados.exe"
 
       - uses: actions/upload-artifact@master
         with:
