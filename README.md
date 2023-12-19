@@ -26,8 +26,10 @@ curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
 For Ubuntu:
 
 ```sh
-pip install lit && bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+pip install lit
 ```
+
+and you have to install FileCheck.
 
 For Fedora:
 
