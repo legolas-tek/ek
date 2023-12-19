@@ -116,7 +116,7 @@ glados> (+ 1 2)
 3
 ```
 
-## Test the Project 🛠️
+## Run Unit Tests 🛠️
 
 After installing the necessary dependencies, in order to test the project, use the Makefile. Follow this command:
 
