@@ -19,6 +19,8 @@ module Evaluation
 
 import Data.Bits (xor)
 
+import Control.Monad ((<=<))
+
 import Ast
 
 type EvalError = String
@@ -80,7 +82,7 @@ defaultEnv = [ ("#t", BooleanValue True)
              , ("+", arithmeticFn sum)
              , ("*", arithmeticFn product)
              , ("-", arithmeticFn difference)
-             , ("/", arithmeticFn quotient)
+             , ("/", arithmeticFnErr quotient)
              , ("max", arithmeticFn maximum)
              , ("min", arithmeticFn minimum)
              , ("not", FunctionValue $ BuiltinFn $ const $ mapBoolean not)
@@ -114,11 +116,18 @@ mapIntegers = mapM mapInteger
 arithmeticFn :: ([Integer] -> Integer) -> RuntimeValue
 arithmeticFn fn = FunctionValue $ BuiltinFn $ const $ ((IntegerValue . fn) <$>) . mapIntegers
 
+arithmeticFnErr :: ([Integer] -> Either String Integer) -> RuntimeValue
+arithmeticFnErr fn = FunctionValue $ BuiltinFn $ const $ ((IntegerValue <$>) . fn) <=< mapIntegers
+
 difference :: Num a => [a] -> a
 difference = foldr (-) 0
 
-quotient :: Integral a => [a] -> a
-quotient = foldr div 1
+quotient :: Integral a => [a] -> Either String a
+quotient [] = Left "Empty list"
+quotient [x] = Right x
+quotient [_, 0] = Left "Division by zero"
+quotient [x, y] = Right (x `div` y)
+quotient _ = Left "List contains more than two elements"
 
 mapBoolean :: (Bool -> Bool) -> [RuntimeValue] -> Either EvalError RuntimeValue
 mapBoolean fn [BooleanValue v] = Right $ BooleanValue $ fn v
