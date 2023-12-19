@@ -10,11 +10,13 @@ module Parser
   , parseChar
   , parseAnyChar
   , parseAnyButChar
+  , parseAny
   , parseInt
   , parseUInt
   , spaces
   , parseList
   , parseString
+  , parseNot
   , mapError
   , some
   , many
@@ -54,6 +56,9 @@ parseAnyChar allowed
   = printf "Expected one of '%s' but %s" allowed
     `mapError` Parser (parseOneIf (`elem` allowed))
 
+parseAny :: Parser Char
+parseAny = Parser $ parseOneIf $ const True
+
 parseUInt :: Parser Integer
 parseUInt = read <$> some (parseAnyChar ['0'..'9'])
 
@@ -68,6 +73,11 @@ parseList p = parseChar '(' *> many (spaces >> p) <* spaces <* parseChar ')'
 
 parseString :: Parser String
 parseString = parseChar '"' *> many (parseAnyButChar '"') <* parseChar '"'
+
+parseNot :: Parser a -> Parser ()
+parseNot p = Parser $ \input -> parseNot' input (runParser p input)
+  where parseNot' input (Left _) = Right ((), input)
+        parseNot' _ _            = Left "Unexpected token"
 
 instance Functor Parser where
   fmap fct p = Parser $ runParser p >=> Right . mapFst fct
