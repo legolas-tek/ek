@@ -38,5 +38,5 @@ jobs:
       - name: "Run the GLaDOS unit tests"
         run: stack test
 
-      - name: "Run GLaDOS functional tests"
+      - name: "Run the GLaDOS functional tests"
         run: lit -v ./test/functional/
