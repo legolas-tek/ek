@@ -34,6 +34,9 @@ useless = many (((\x -> [x]) <$> parseChar ' ') <|> comment)
 lineComment :: Parser String
 lineComment = parseChar ';' >> many (parseAnyButChar '\n') >> return ""
 
+commentContent :: Parser String
+commentContent = comment <|> ((\x -> [x]) <$> parseAnyButChar '|')
+
 comment :: Parser String
-comment = parseChar '#' >> parseChar '|' >> many (parseAnyButChar '|')
+comment = parseChar '#' >> parseChar '|' >> many (commentContent)
     >> parseChar '|' >> parseChar '#' >> return ""
