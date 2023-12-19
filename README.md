@@ -1,11 +1,12 @@
 # GLADOS
 
 <div align="center">
-  <img src="https://static.wikia.nocookie.net/epicpixelbattles/images/5/5f/400px-GLaDOS_P2.png/revision/latest?cb=20191127181958">
+    <img src="https://static.wikia.nocookie.net/epicpixelbattles/images/5/5f/400px-GLaDOS_P2.png/revision/latest?cb=20191127181958">
 
-![Static Badge](https://img.shields.io/badge/glados-programming_language-blue)
+    ![Static Badge](https://img.shields.io/badge/glados-programming_language-blue)
 
-  <p>The goal of this project is to implement a programming language of our own design in Haskell.</p>
+    <p>The goal of this project is to implement a programming language of our own design in Haskell.</p>
+
 </div>
 
 ## Needed Dependencies ⚙️
@@ -26,6 +27,18 @@ For Ubuntu:
 
 ```sh
 pip install lit && bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+```
+
+For Fedora:
+
+```sh
+pip install lit && sudo dnf install llvm"
+```
+
+For macOS:
+
+```sh
+pip install lit && brew install llvm
 ```
 
 ## Build the Project 🛠️
