@@ -2,10 +2,10 @@
 ;; RUN: glados < %s | FileCheck -v %s
 ;;
 
-(define (factorial x)
+(define factorial (lambda (x)
   (if (= x 0)
       1
-      (* x (factorial (- x 1)))))
+      (* x (factorial (- x 1))))))
 
 ; CHECK: 120
 (factorial 5)
