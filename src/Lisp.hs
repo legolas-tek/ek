@@ -26,4 +26,23 @@ string :: Parser SExpr
 string = StringLit <$> parseString
 
 parseSExpr :: Parser SExpr
-parseSExpr = spaces >> integerLit <|> symbol <|> list <|> string
+parseSExpr = useless >> integerLit <|> symbol <|> list <|> string
+
+useless :: Parser [String]
+useless = many ((parseAnyChar " \n\t" >> return "") <|> comment <|> lineComment)
+
+lineComment :: Parser String
+lineComment = parseChar ';' >> many (parseAnyButChar '\n') >> return ""
+
+comment :: Parser String
+comment = commentStart >> many (commentContent) >> commentEnd >> return ""
+
+commentStart :: Parser Char
+commentStart = parseChar '#' >> parseChar '|'
+
+commentContent :: Parser String
+commentContent = comment <|> nonComment
+  where nonComment = parseNot commentEnd >> parseAny >> return ""
+
+commentEnd :: Parser Char
+commentEnd = parseChar '|' >> parseChar '#'
