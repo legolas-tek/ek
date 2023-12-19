@@ -44,4 +44,6 @@ tests = test
       runParser parseSExpr "test;test" @?= Right (Symbol "test", ";test")
       runParser parseSExpr "(define #|test1|##|test2|#  #|test3|#a 1);test" @?=
             Right (List [Symbol "define",Symbol "a",IntegerLit 1],";test")
+    --   runParser parseSExpr "(define #|te#|test2|#st1|#a 1)" @?=
+    --         Right (List [Symbol "define",Symbol "a",IntegerLit 1],"")
   ]
