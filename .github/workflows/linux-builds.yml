@@ -1,0 +1,42 @@
+name: 🐧 Linux Builds & Tests
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build_ubuntu:
+    name: "Build on Ubuntu latest"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: "Install needed dependencies"
+        run: sudo apt-get update && sudo apt-get install -y libgmp-dev llvm-12-tools && pip install lit
+
+      - uses: haskell-actions/setup@v2
+        with:
+            ghc-version: '9.4.7'
+            enable-stack: true
+            stack-no-global: true
+            stack-version: 'latest'
+
+      - uses: actions/cache@v3
+        name: Cache .stack-work
+        with:
+            path: .stack-work
+            key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('**/*.hs') }}
+            restore-keys: |
+              ${{ runner.os }}-stack-work-
+
+      - name: "Build the GLaDOS project"
+        run: stack build
+
+      - name: "Run the GLaDOS unit tests"
+        run: stack test
+
+      - name: "Run GLaDOS functional tests"
+        run: lit -v ./test/functional/
