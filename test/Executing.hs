@@ -67,5 +67,23 @@ tests = test
            , Ret
            ] [] @?= Right [IntegerValue 20]
    ,"env" ~: do
+      let absFn = [ Dup
+                  , Push $ IntegerValue 0
+                  , Push $ OperatorValue Less
+                  , Call
+                  , JmpFalse 1
+                  , Ret
+                  , Push $ IntegerValue (-1)
+                  , Push $ OperatorValue Mul
+                  , Call
+                  , Ret
+                  ]
       exec [IntegerValue 42] [PushEnv $ IntegerValue 42] [] @?= Right [IntegerValue 42]
+      exec [FunctionValue $ absFn] [ Push $ IntegerValue (-42)
+           , PushEnv $ FunctionValue absFn
+           , Call
+           , Ret
+           ] [] @?= Right [IntegerValue 42]
+      exec [] [PushEnv $ IntegerValue 42] [] @?=
+        Left "Couldn't find requested VMValue in env"
   ]
