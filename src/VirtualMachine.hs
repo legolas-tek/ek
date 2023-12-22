@@ -33,27 +33,30 @@ data Instruction = Push VMValue
                  | JmpFalse Int
                  | Dup
                  | Ret
+                 | PushEnv VMValue
                  deriving (Show, Eq)
 
 type Stack = [VMValue]
 type Insts = [Instruction]
+type Env = [VMValue]
 
-exec :: Insts -> Stack -> Either String Stack
-exec [] stack = Right stack
-exec (Ret:_) stack = Right stack
-exec (Push v:insts) stack = exec insts (v:stack)
-exec (Call:insts) (OperatorValue op:v1:v2:stack) = applyOp op v1 v2
-  >>= \result -> exec insts (result:stack)
-exec (Call:insts) (FunctionValue fn:stack) = exec fn stack
-  >>= \stack' -> exec insts stack'
-exec (Call:_) (OperatorValue _:_) = Left "Not enough arguments for operator"
-exec (Call:_) _ = Left "Cannot call value of non-function type"
-exec (JmpFalse offset:insts) (BooleanValue False:stack)
-  = exec (drop offset insts) stack
-exec (JmpFalse _:insts) (BooleanValue True:stack) = exec insts stack
-exec (JmpFalse _:_) _ = Left "Invalid condition"
-exec (Dup:insts) (v:stack) = exec insts (v:v:stack)
-exec (Dup:_) [] = Left "No value to duplicate"
+exec :: Env -> Insts -> Stack -> Either String Stack
+exec _ [] stack = Right stack
+exec _ (Ret:_) stack = Right stack
+exec env (Push v:insts) stack = exec env insts (v:stack)
+exec env (Call:insts) (OperatorValue op:v1:v2:stack) = applyOp op v1 v2
+  >>= \result -> exec env insts (result:stack)
+exec env (Call:insts) (FunctionValue fn:stack) = exec env fn stack
+  >>= \stack' -> exec env insts stack'
+exec _ (Call:_) (OperatorValue _:_) = Left "Not enough arguments for operator"
+exec _ (Call:_) _ = Left "Cannot call value of non-function type"
+exec env (JmpFalse offset:insts) (BooleanValue False:stack)
+  = exec env (drop offset insts) stack
+exec env (JmpFalse _:insts) (BooleanValue True:stack) = exec env insts stack
+exec _ (JmpFalse _:_) _ = Left "Invalid condition"
+exec env (Dup:insts) (v:stack) = exec env insts (v:v:stack)
+exec _ (Dup:_) [] = Left "No value to duplicate"
+exec env (PushEnv value:insts) stack = exec env insts (value : stack)
 
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)
