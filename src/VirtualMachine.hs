@@ -56,7 +56,7 @@ exec env (JmpFalse _:insts) (BooleanValue True:stack) = exec env insts stack
 exec _ (JmpFalse _:_) _ = Left "Invalid condition"
 exec env (Dup:insts) (v:stack) = exec env insts (v:v:stack)
 exec _ (Dup:_) [] = Left "No value to duplicate"
-exec env (PushEnv value:insts) stack = exec env insts (value : stack)
+exec env (PushEnv value:insts) stack = exec env insts ((filter (== value) env) ++ stack)
 
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)

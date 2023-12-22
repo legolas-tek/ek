@@ -67,5 +67,5 @@ tests = test
            , Ret
            ] [] @?= Right [IntegerValue 20]
    ,"env" ~: do
-      exec [] [PushEnv $ IntegerValue 42] [] @?= Right [IntegerValue 42]
+      exec [IntegerValue 42] [PushEnv $ IntegerValue 42] [] @?= Right [IntegerValue 42]
   ]
