@@ -10,8 +10,8 @@
 module EK.Types
   ( ConcreteType(..)
   , Type(..)
-  , UnionType(..)
   , Field(..)
+  , concrete
   )
 where
 
@@ -19,6 +19,7 @@ import Data.List (intercalate, nub)
 import GHC.Base (stimes)
 import Data.Semigroup (stimesIdempotentMonoid)
 import qualified Data.Range as Range
+import Data.Range ((+=*), Bound (boundValue), (+=+))
 
 -- | A concrete type is a type that a value can have
 data ConcreteType = Atom String -- ^ An atom, or symbol
@@ -43,10 +44,7 @@ data UnionType = UnionType
 data Field = Field String Type
 
 instance Show ConcreteType where
-    show (Atom s) = s
-    show (Function arg ret) = "(" ++ show arg ++ " -> " ++ show ret ++ ")"
-    show (Int i) = show i
-    show (Struct name _) = name
+    show = show . concrete
 
 instance Show Type where
     show TAny = "Any"
@@ -54,25 +52,34 @@ instance Show Type where
 
 instance Show UnionType where
     show (UnionType atoms functions ints structs) =
-        intercalate " | " (map show atoms ++ map showFn functions ++ map showRange ints ++ map (show . fst) structs)
+        intercalate " | " (atoms ++ map showFn functions ++ map (showRange . normalizeRange) ints ++ map fst structs)
 
 showFn :: (Type, Type) -> String
 showFn (arg, ret) = "(" ++ show arg ++ " -> " ++ show ret ++ ")"
 
+normalizeRange :: Range.Range Integer -> Range.Range Integer
+normalizeRange (Range.SingletonRange a) = Range.SingletonRange a
+normalizeRange (Range.SpanRange l u) = span (normalizeLBound l) (normalizeUBound u)
+  where span l u | l == u = Range.SingletonRange l
+                 | otherwise = l +=+ u
+normalizeRange (Range.LowerBoundRange l) = Range.lbi (normalizeLBound l)
+normalizeRange (Range.UpperBoundRange u) = Range.ubi (normalizeUBound u)
+normalizeRange Range.InfiniteRange = Range.InfiniteRange
+
 showRange :: Range.Range Integer -> String
 showRange (Range.SingletonRange a) = show a
-showRange (Range.SpanRange l u) = "[" ++ showLBound l ++ ".." ++ showUBound u ++ "]"
-showRange (Range.LowerBoundRange l) = "[" ++ showLBound l ++ "..]"
-showRange (Range.UpperBoundRange u) = "[.." ++ showUBound u ++ "]"
+showRange (Range.SpanRange l u) = "[" ++ show (boundValue l) ++ ".." ++ show (boundValue u) ++ "]"
+showRange (Range.LowerBoundRange l) = "[" ++ show (boundValue l) ++ "..]"
+showRange (Range.UpperBoundRange u) = "[.." ++ show (boundValue u) ++ "]"
 showRange Range.InfiniteRange = "[..]"
 
-showLBound :: Range.Bound Integer -> String
-showLBound (Range.Bound a Range.Inclusive) = show a
-showLBound (Range.Bound a Range.Exclusive) = show (a + 1)
+normalizeLBound :: Range.Bound Integer -> Integer
+normalizeLBound (Range.Bound a Range.Inclusive) = a
+normalizeLBound (Range.Bound a Range.Exclusive) = a + 1
 
-showUBound :: Range.Bound Integer -> String
-showUBound (Range.Bound a Range.Inclusive) = show a
-showUBound (Range.Bound a Range.Exclusive) = show (a - 1)
+normalizeUBound :: Range.Bound Integer -> Integer
+normalizeUBound (Range.Bound a Range.Inclusive) = a
+normalizeUBound (Range.Bound a Range.Exclusive) = a - 1
 
 instance Semigroup UnionType where
     UnionType a1 f1 i1 s1 <> UnionType a2 f2 i2 s2 =
@@ -81,6 +88,15 @@ instance Semigroup UnionType where
 
 instance Monoid UnionType where
     mempty = UnionType [] [] [] []
+
+instance Semigroup Type where
+    TAny <> _ = TAny
+    _ <> TAny = TAny
+    TUnion t1 <> TUnion t2 = TUnion (t1 <> t2)
+    stimes = stimesIdempotentMonoid
+
+instance Monoid Type where
+    mempty = TUnion mempty
 
 instance Eq Field where
     Field name1 typ1 == Field name2 typ2 = name1 == name2 && typ1 == typ2
@@ -95,3 +111,12 @@ merge xs [] = xs
 merge (x:xs) (y:ys) | x < y = x : merge xs (y:ys)
                     | x > y = y : merge (x:xs) ys
                     | otherwise = x : merge xs ys
+
+concrete :: ConcreteType -> Type
+concrete = TUnion . concreteUnion
+
+concreteUnion :: ConcreteType -> UnionType
+concreteUnion (Atom s) = UnionType [s] [] [] []
+concreteUnion (Function arg ret) = UnionType [] [(arg, ret)] [] []
+concreteUnion (Int i) = UnionType [] [] [i +=* (i + 1)] []
+concreteUnion (Struct name fields) = UnionType [] [] [] [(name, fields)]
