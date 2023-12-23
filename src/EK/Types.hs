@@ -22,14 +22,14 @@ import qualified Data.Range as Range
 import Data.Range ((+=*), (+=+), Bound (boundValue))
 
 -- | A concrete type is a type that a value can have
-data ConcreteType = Atom String -- ^ An atom, or symbol
-                  | Function Type Type -- ^ A function with an argument and a return type
-                  | Int Integer -- ^ A specific integer
-                  | Struct String [Field] -- ^ A struct with a name and a list of fields
+data ConcreteType = AtomTy String -- ^ An atom, or symbol
+                  | FunctionTy Type Type -- ^ A function with an argument and a return type
+                  | IntTy Integer -- ^ A specific integer
+                  | StructTy String [Field] -- ^ A struct with a name and a list of fields
 
 -- | A type is a list of concrete types
-data Type = TAny -- ^ The Any type, which can be anything
-          | TUnion UnionType -- ^ A union type, which can be any of the types in the list
+data Type = AnyTy -- ^ The Any type, which can be anything
+          | UnionTy UnionType -- ^ A union type, which can be any of the types in the list
           deriving (Eq)
 
 -- | A union type is a list of atoms, functions, integer ranges, and structs
@@ -47,8 +47,8 @@ instance Show ConcreteType where
     show = show . concrete
 
 instance Show Type where
-    show TAny = "Any"
-    show (TUnion ts) = show ts
+    show AnyTy = "Any"
+    show (UnionTy ts) = show ts
 
 instance Show UnionType where
     show (UnionType atoms functions ints structs) =
@@ -90,13 +90,13 @@ instance Monoid UnionType where
     mempty = UnionType [] [] [] []
 
 instance Semigroup Type where
-    TAny <> _ = TAny
-    _ <> TAny = TAny
-    TUnion t1 <> TUnion t2 = TUnion (t1 <> t2)
+    AnyTy <> _ = AnyTy
+    _ <> AnyTy = AnyTy
+    UnionTy t1 <> UnionTy t2 = UnionTy (t1 <> t2)
     stimes = stimesIdempotentMonoid
 
 instance Monoid Type where
-    mempty = TUnion mempty
+    mempty = UnionTy mempty
 
 instance Eq Field where
     Field name1 typ1 == Field name2 typ2 = name1 == name2 && typ1 == typ2
@@ -114,10 +114,10 @@ merge (x:xs) (y:ys) | x < y = x : merge xs (y:ys)
 
 -- | Creates a type from a concrete type
 concrete :: ConcreteType -> Type
-concrete = TUnion . concreteUnion
+concrete = UnionTy . concreteUnion
 
 concreteUnion :: ConcreteType -> UnionType
-concreteUnion (Atom s) = UnionType [s] [] [] []
-concreteUnion (Function arg ret) = UnionType [] [(arg, ret)] [] []
-concreteUnion (Int i) = UnionType [] [] [i +=* (i + 1)] []
-concreteUnion (Struct name fields) = UnionType [] [] [] [(name, fields)]
+concreteUnion (AtomTy s) = UnionType [s] [] [] []
+concreteUnion (FunctionTy arg ret) = UnionType [] [(arg, ret)] [] []
+concreteUnion (IntTy i) = UnionType [] [] [i +=* (i + 1)] []
+concreteUnion (StructTy name fields) = UnionType [] [] [] [(name, fields)]
