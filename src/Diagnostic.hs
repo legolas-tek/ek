@@ -5,7 +5,10 @@
 -- Diagnostic
 --
 
-module Diagnostic where
+module Diagnostic
+    ( Diagnostic(..)
+    , Severity(..)
+    ) where
 
 import Token
 

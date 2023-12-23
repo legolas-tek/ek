@@ -5,7 +5,10 @@
 -- Token
 --
 
-module Token where
+module Token
+    ( Token(..)
+    , TokenType(..)
+    ) where
 
 data TokenType = AtomKw
                | StructKw
