@@ -7,9 +7,28 @@
 
 module Token where
 
-data TokenType = IntLiteral
-               | String
-               | Identifier
+data TokenType = AtomKw
+               | StructKw
+               | TypeKw
+               | FnKw
+               | ExternKw
+               | Equal
+               | CurlyOpen
+               | CurlyClose
+               | Comma
+               | UnderScore
+               | ParenOpen
+               | ParenClose
+               | Colon
+               | ColonColon
+               | Pipe
+               | BracketOpen
+               | BracketClose
+               | DotDot
+               | IntLiter
+               | StringLiter
+               | TextIdentifier
+               | OperatorIdentifier
                deriving (Show)
 
 data Token = Token { string  :: String
