@@ -17,5 +17,5 @@ data Severity = Info
 data Diagnostic = Diagnostic {
     severity :: Severity,
     message  :: String,
-    token    :: Maybe Token
+    token    :: [Token]
 } deriving (Show)
