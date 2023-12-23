@@ -19,7 +19,7 @@ import Data.List (intercalate, nub)
 import GHC.Base (stimes)
 import Data.Semigroup (stimesIdempotentMonoid)
 import qualified Data.Range as Range
-import Data.Range ((+=*), Bound (boundValue), (+=+))
+import Data.Range ((+=*), (+=+), Bound (boundValue))
 
 -- | A concrete type is a type that a value can have
 data ConcreteType = Atom String -- ^ An atom, or symbol
@@ -34,11 +34,11 @@ data Type = TAny -- ^ The Any type, which can be anything
 
 -- | A union type is a list of atoms, functions, integer ranges, and structs
 data UnionType = UnionType
-  { atoms :: [String] -- ^ A list of atoms
-  , functions :: [(Type, Type)] -- ^ A list of functions
-  , ints :: [Range.Range Integer] -- ^ A list of integer ranges
-  , structs :: [(String, [Field])] -- ^ A list of structs
-  } deriving (Eq)
+  [String] -- ^ A list of atoms
+  [(Type, Type)] -- ^ A list of functions
+  [Range.Range Integer] -- ^ A list of integer ranges
+  [(String, [Field])] -- ^ A list of structs
+  deriving (Eq)
 
 -- | A field is a name and a type
 data Field = Field String Type
@@ -112,6 +112,7 @@ merge (x:xs) (y:ys) | x < y = x : merge xs (y:ys)
                     | x > y = y : merge (x:xs) ys
                     | otherwise = x : merge xs ys
 
+-- | Creates a type from a concrete type
 concrete :: ConcreteType -> Type
 concrete = TUnion . concreteUnion
 
