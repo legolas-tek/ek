@@ -34,7 +34,7 @@ data TokenType = AtomKw
                | OperatorIdentifier
                deriving (Show)
 
-data Token = Token { string  :: String
+data Token = Token { lexeme  :: String
                    , line :: Int
                    , column :: Int
                    , fileName :: String
