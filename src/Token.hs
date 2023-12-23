@@ -7,8 +7,14 @@
 
 module Token where
 
+data TokenType = IntLiteral
+               | String
+               | Identifier
+               deriving (Show)
+
 data Token = Token { string  :: String
                    , line :: Int
                    , column :: Int
                    , fileName :: String
+                   , tokenType :: TokenType
                    } deriving (Show)
