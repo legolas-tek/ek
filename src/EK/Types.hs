@@ -18,6 +18,7 @@ module EK.Types
   , intRangeFromTy
   , intRangeUpToTy
   , intRangeInfTy
+  , convertible
   )
 where
 
@@ -137,4 +138,20 @@ intRangeFromTy l = UnionTy $ mempty { ints = [Range.lbi l] }
 
 -- | Creates an integer range type with no bounds
 intRangeInfTy :: Type
-intRangeInfTy = UnionTy $ mempty { ints = [Range.InfiniteRange] }
+intRangeInfTy = UnionTy $ mempty { ints = [Range.inf] }
+
+-- | Checks if the first type is convertible to the second type
+convertible :: Type -> Type -> Bool
+convertible _ AnyTy = True
+convertible AnyTy _ = False
+convertible (UnionTy t1) (UnionTy t2) = convertibleUnion t1 t2
+
+convertibleUnion :: UnionType -> UnionType -> Bool
+convertibleUnion (UnionType a1 f1 i1 s1) (UnionType a2 f2 i2 s2)
+  =  all (`elem` a2) a1
+  && all (\f1 -> any (convertibleFn f1) f2) f1
+  && all (`elem` s2) s1
+  && Range.union i1 i2 == i2
+
+convertibleFn :: (Type, Type) -> (Type, Type) -> Bool
+convertibleFn (arg1, ret1) (arg2, ret2) = convertible arg2 arg1 && convertible ret1 ret2

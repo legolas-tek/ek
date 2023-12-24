@@ -12,12 +12,14 @@ import Test.HUnit
 import EK.Types
 import Data.Semigroup (Semigroup(stimes))
 
+bool :: Type
+bool = atomTy "false" <> atomTy "true"
+
 tests :: Test
 tests = test
   [ "bool" ~: do
       let false = atomTy "false"
       let true = atomTy "true"
-      let bool = false <> true
       show bool @?= "false | true"
       show false @?= "false"
       show true @?= "true"
@@ -32,7 +34,6 @@ tests = test
       let s = structTy "foo" [Field "bar" (atomTy "false")]
       show s @?= "foo"
   , "merge" ~: do
-      let bool = atomTy "false" <> atomTy "true"
       let tribool = bool <> atomTy "undefined"
       show tribool @?= "false | true | undefined"
       let tribool2 = bool <> tribool
@@ -52,4 +53,53 @@ tests = test
       show (intRangeFromTy 0) @?= "[0..]"
       show (intRangeUpToTy 2) @?= "[..2]"
       show intRangeInfTy @?= "[..]"
+      intTy 0 <> intTy 1 @?= intRangeTy 0 1
+  , "atom convertibility" ~: do
+      convertible (atomTy "false") (atomTy "false") @?= True
+      convertible (atomTy "false") (atomTy "true") @?= False
+      convertible (atomTy "false") AnyTy @?= True
+      convertible AnyTy (atomTy "false") @?= False
+      convertible (atomTy "false") bool @?= True
+      convertible bool (atomTy "false") @?= False
+      convertible bool bool @?= True
+  , "range convertibility" ~: do
+      convertible (intRangeTy 0 1) (intRangeTy 0 1) @?= True
+      convertible (intRangeTy 0 1) (intRangeTy 0 2) @?= True
+      convertible (intRangeTy 0 2) (intRangeTy 0 1) @?= False
+      convertible (intRangeTy 0 1) (intRangeTy 1 2) @?= False
+      convertible (intTy 0) (intRangeTy 0 1) @?= True
+      convertible (intRangeTy 0 1) (intTy 0) @?= False
+      convertible (intTy 0) (intTy 0) @?= True
+      convertible (intTy 0) (intTy 1) @?= False
+      convertible (intRangeTy 0 1) (intTy 1) @?= False
+      convertible (intTy 1) (intRangeTy 0 1) @?= True
+      convertible (intTy 2) (intRangeTy 0 1) @?= False
+      convertible (intTy 2347) (intRangeUpToTy 42) @?= False
+      convertible (intTy 2347) (intRangeFromTy 42) @?= True
+      convertible (intTy 2347) intRangeInfTy @?= True
+      convertible (atomTy "hey") intRangeInfTy @?= False
+      convertible intRangeInfTy (atomTy "hey") @?= False
+      convertible intRangeInfTy intRangeInfTy @?= True
+      convertible mempty intRangeInfTy @?= True
+      convertible intRangeInfTy mempty @?= False
+  , "function convertibility" ~: do
+      let ftob = functionTy (atomTy "false") bool
+      let btob = functionTy bool bool
+      convertible ftob ftob @?= True
+      convertible ftob (functionTy (atomTy "false") (atomTy "true")) @?= False
+      convertible (functionTy (atomTy "false") (atomTy "true")) ftob @?= True
+      convertible btob ftob @?= True
+      convertible ftob btob @?= False
+      convertible btob btob @?= True
+  , "struct convertibility" ~: do
+      let s1 = structTy "BoolWrapper" [Field "bool" bool]
+      let s2 = structTy "Flag" [Field "bool" bool]
+      convertible s1 s1 @?= True
+      convertible s1 s2 @?= False
+      convertible s2 s1 @?= False
+      convertible s2 s2 @?= True
+      convertible s1 (s1 <> s2) @?= True
+      convertible s2 (s1 <> s2) @?= True
+      convertible (s1 <> s2) s1 @?= False
+      convertible (s1 <> s2) (s1 <> s2) @?= True
   ]
