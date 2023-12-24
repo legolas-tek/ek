@@ -81,7 +81,7 @@ tests = test
                   , Ret
                   ]
       exec (fromList [("a", IntegerValue 42)]) [PushEnv "a"] [] @?= Right [IntegerValue 42]
-      exec  (fromList [("absFn", FunctionValue absFn)]) [ Push $ IntegerValue (-42)
+      exec (fromList [("absFn", FunctionValue absFn)]) [ Push $ IntegerValue (-42)
            , PushEnv "absFn"
            , Call
            , Ret
