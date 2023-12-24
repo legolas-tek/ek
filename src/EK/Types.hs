@@ -22,8 +22,7 @@ module EK.Types
 where
 
 import Data.List (intercalate, nub)
-import GHC.Base (stimes)
-import Data.Semigroup (stimesIdempotentMonoid)
+import Data.Semigroup (stimes, stimesIdempotentMonoid)
 import qualified Data.Range as Range
 import Data.Range ((+=*), (+=+), Bound (boundValue))
 
