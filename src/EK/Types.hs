@@ -12,6 +12,14 @@ module EK.Types
   , Type(..)
   , Field(..)
   , concrete
+  , atomTy
+  , functionTy
+  , intTy
+  , structTy
+  , intRangeTy
+  , intRangeFromTy
+  , intRangeUpToTy
+  , intRangeInfTy
   )
 where
 
@@ -34,11 +42,11 @@ data Type = AnyTy -- ^ The Any type, which can be anything
 
 -- | A union type is a list of atoms, functions, integer ranges, and structs
 data UnionType = UnionType
-  [String] -- ^ A list of atoms
-  [(Type, Type)] -- ^ A list of functions
-  [Range.Range Integer] -- ^ A list of integer ranges
-  [(String, [Field])] -- ^ A list of structs
-  deriving (Eq)
+  { atoms :: [String] -- ^ A list of atoms
+  , functions :: [(Type, Type)] -- ^ A list of functions
+  , ints :: [Range.Range Integer] -- ^ A list of integer ranges
+  , structs :: [(String, [Field])] -- ^ A list of structs
+  } deriving (Eq)
 
 -- | A field is a name and a type
 data Field = Field String Type
@@ -121,3 +129,27 @@ concreteUnion (AtomTy s) = UnionType [s] [] [] []
 concreteUnion (FunctionTy arg ret) = UnionType [] [(arg, ret)] [] []
 concreteUnion (IntTy i) = UnionType [] [] [i +=* (i + 1)] []
 concreteUnion (StructTy name fields) = UnionType [] [] [] [(name, fields)]
+
+atomTy :: String -> Type
+atomTy s = UnionTy $ mempty { atoms = [s] }
+
+intTy :: Integer -> Type
+intTy i = intRangeTy i i
+
+structTy :: String -> [Field] -> Type
+structTy name fields = UnionTy $ mempty { structs = [(name, fields)] }
+
+functionTy :: Type -> Type -> Type
+functionTy arg ret = UnionTy $ mempty { functions = [(arg, ret)] }
+
+intRangeTy :: Integer -> Integer -> Type
+intRangeTy l u = UnionTy $ mempty { ints = [l +=* (u + 1)] }
+
+intRangeUpToTy :: Integer -> Type
+intRangeUpToTy u = UnionTy $ mempty { ints = [Range.ube (u + 1)] }
+
+intRangeFromTy :: Integer -> Type
+intRangeFromTy l = UnionTy $ mempty { ints = [Range.lbi l] }
+
+intRangeInfTy :: Type
+intRangeInfTy = UnionTy $ mempty { ints = [Range.InfiniteRange] }
