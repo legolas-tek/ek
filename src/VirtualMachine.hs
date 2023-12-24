@@ -14,6 +14,8 @@ module VirtualMachine
     , Insts
     ) where
 
+import Data.Map (Map, lookup)
+
 data VMValue = IntegerValue Integer
              | BooleanValue Bool
              | OperatorValue Operator
@@ -33,12 +35,12 @@ data Instruction = Push VMValue
                  | JmpFalse Int
                  | Dup
                  | Ret
-                 | PushEnv VMValue
+                 | PushEnv String
                  deriving (Show, Eq)
 
 type Stack = [VMValue]
 type Insts = [Instruction]
-type Env = [VMValue]
+type Env = Map String VMValue
 
 exec :: Env -> Insts -> Stack -> Either String Stack
 exec _ [] stack = Right stack
@@ -56,11 +58,12 @@ exec env (JmpFalse _:insts) (BooleanValue True:stack) = exec env insts stack
 exec _ (JmpFalse _:_) _ = Left "Invalid condition"
 exec env (Dup:insts) (v:stack) = exec env insts (v:v:stack)
 exec _ (Dup:_) [] = Left "No value to duplicate"
-exec env (PushEnv value : insts) stack
-  | null filteredEnv = Left "Couldn't find requested VMValue in env"
-  | otherwise = exec env insts (head filteredEnv : stack)
+exec env (PushEnv value : insts) stack =
+  case sValue of
+    Just val -> exec env insts (val : stack)
+    Nothing  -> Left "Couldn't find requested VMValue in env"
   where
-    filteredEnv = filter (== value) env
+    sValue = Data.Map.lookup value env
 
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)
