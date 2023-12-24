@@ -8,10 +8,8 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module EK.Types
-  ( ConcreteType(..)
-  , Type(..)
+  ( Type(..)
   , Field(..)
-  , concrete
   , atomTy
   , functionTy
   , intTy
@@ -29,12 +27,6 @@ import Data.Semigroup (stimesIdempotentMonoid)
 import qualified Data.Range as Range
 import Data.Range ((+=*), (+=+), Bound (boundValue))
 
--- | A concrete type is a type that a value can have
-data ConcreteType = AtomTy String -- ^ An atom, or symbol
-                  | FunctionTy Type Type -- ^ A function with an argument and a return type
-                  | IntTy Integer -- ^ A specific integer
-                  | StructTy String [Field] -- ^ A struct with a name and a list of fields
-
 -- | A type is a list of concrete types
 data Type = AnyTy -- ^ The Any type, which can be anything
           | UnionTy UnionType -- ^ A union type, which can be any of the types in the list
@@ -50,9 +42,6 @@ data UnionType = UnionType
 
 -- | A field is a name and a type
 data Field = Field String Type
-
-instance Show ConcreteType where
-    show = show . concrete
 
 instance Show Type where
     show AnyTy = "Any"
@@ -92,7 +81,6 @@ normalizeUBound (Range.Bound a Range.Exclusive) = a - 1
 instance Semigroup UnionType where
     UnionType a1 f1 i1 s1 <> UnionType a2 f2 i2 s2 =
         UnionType (a1 `merge` a2) (nub $ f1 ++ f2) (i1 `Range.union` i2) (s1 `merge` s2)
-    stimes = stimesIdempotentMonoid
 
 instance Monoid UnionType where
     mempty = UnionType [] [] [] []
@@ -120,36 +108,34 @@ merge (x:xs) (y:ys) | x < y = x : merge xs (y:ys)
                     | x > y = y : merge (x:xs) ys
                     | otherwise = x : merge xs ys
 
--- | Creates a type from a concrete type
-concrete :: ConcreteType -> Type
-concrete = UnionTy . concreteUnion
-
-concreteUnion :: ConcreteType -> UnionType
-concreteUnion (AtomTy s) = UnionType [s] [] [] []
-concreteUnion (FunctionTy arg ret) = UnionType [] [(arg, ret)] [] []
-concreteUnion (IntTy i) = UnionType [] [] [i +=* (i + 1)] []
-concreteUnion (StructTy name fields) = UnionType [] [] [] [(name, fields)]
-
+-- | Creates a new atom type with the given name
 atomTy :: String -> Type
 atomTy s = UnionTy $ mempty { atoms = [s] }
 
+-- | Creates an integer type with the given value
 intTy :: Integer -> Type
 intTy i = intRangeTy i i
 
+-- | Creates a new struct type with the given name and fields
 structTy :: String -> [Field] -> Type
 structTy name fields = UnionTy $ mempty { structs = [(name, fields)] }
 
+-- | Creates a new function type with the given argument and return type
 functionTy :: Type -> Type -> Type
 functionTy arg ret = UnionTy $ mempty { functions = [(arg, ret)] }
 
+-- | Creates an integer range type with the given lower and upper bounds, inclusive
 intRangeTy :: Integer -> Integer -> Type
 intRangeTy l u = UnionTy $ mempty { ints = [l +=* (u + 1)] }
 
+-- | Creates an integer range type with the given upper bound, inclusive
 intRangeUpToTy :: Integer -> Type
 intRangeUpToTy u = UnionTy $ mempty { ints = [Range.ube (u + 1)] }
 
+-- | Creates an integer range type with the given lower bound, inclusive
 intRangeFromTy :: Integer -> Type
 intRangeFromTy l = UnionTy $ mempty { ints = [Range.lbi l] }
 
+-- | Creates an integer range type with no bounds
 intRangeInfTy :: Type
 intRangeInfTy = UnionTy $ mempty { ints = [Range.InfiniteRange] }
