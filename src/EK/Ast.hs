@@ -11,14 +11,37 @@ module EK.Ast
   ) where
 
 data Expr
-  = IntegerLit Integer
+  = IntLit Integer
   | StringLit String
-  | Symbol String
-  | Call Expr [Expr]
+  | Call String [Expr]
+  | ParenExpr Expr
+  | Placeholder
   deriving (Show)
 
 data Stmt
-  = Define String Expr
-  | If Expr Stmt Stmt
+  = AtomDef String
+  | Define String Expr
   | EKExpr Expr
+  | TypeDef String Type
+  | StructDef String [StructElem]
+  | FuncDef FuncPattern Expr
+  | ExternFunc FuncPattern
+  deriving (Show)
+
+data StructElem = StructElem String Type
+  deriving (Show)
+
+data Type
+  = TypeName String
+  | IntRange (Maybe Integer) (Maybe Integer)
+  | UnionType Type Type
+  deriving (Show)
+
+data FuncPattern = FuncPattern [FuncPatternItem] (Maybe Type)
+  deriving (Show)
+
+data FuncPatternItem
+  = ArgPattern String (Maybe Type)
+  | IdentifierPattern String
+  | PlaceholderPattern
   deriving (Show)
