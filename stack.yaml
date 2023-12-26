@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: ghc-9.4.7
+resolver: lts-21.13 # GHC 9.4.7
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -42,7 +42,6 @@ packages:
 #
 extra-deps:
   - HUnit-1.6.2.0
-  - call-stack-0.3.0
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
