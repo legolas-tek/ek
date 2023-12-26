@@ -11,6 +11,7 @@ import qualified Parsing
 import qualified LispParsing
 import qualified Evaluating
 import qualified Executing
+import qualified EKTyping
 
 tests :: Test
 tests = test
@@ -18,8 +19,8 @@ tests = test
   , "Lisp parsing" ~: LispParsing.tests
   , "Evaluation" ~: Evaluating.tests
   , "Executing" ~: Executing.tests
+  , "EK Typing" ~: EKTyping.tests
   ]
 
 main :: IO ()
 main = runTestTTAndExit tests
-

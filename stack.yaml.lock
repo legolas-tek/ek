@@ -11,16 +11,9 @@ packages:
       size: 878
   original:
     hackage: HUnit-1.6.2.0
-- completed:
-    hackage: call-stack-0.3.0@sha256:dc369179410fd39542efde04778d1c4a18a015b3cf4b1703d9c88e07d58ece20,1105
-    pantry-tree:
-      sha256: db9e7cef1195c13cc9ceede808a7be464fe0c38fcdfcbf5224bfa3fe6411a460
-      size: 501
-  original:
-    hackage: call-stack-0.3.0
 snapshots:
 - completed:
-    sha256: 7d4b649cf368f9076d8aa049aa44efe58950971d105892734e9957b2a26a2186
-    size: 640060
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/21/21.yaml
-  original: lts-21.21
+    sha256: 8017c7970c2a8a9510c60cc70ac245d59e0c34eb932b91d37af09fe59855d854
+    size: 640038
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/21/13.yaml
+  original: lts-21.13

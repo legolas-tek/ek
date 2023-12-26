@@ -9,10 +9,14 @@ module Parser
   ( Parser(..)
   , parseChar
   , parseAnyChar
+  , parseAnyButChar
+  , parseAny
   , parseInt
   , parseUInt
   , spaces
   , parseList
+  , parseString
+  , parseNot
   , mapError
   , some
   , many
@@ -42,10 +46,18 @@ parseChar expected
   = printf "Expected '%c' but %s" expected
     `mapError` Parser (parseOneIf (== expected))
 
+parseAnyButChar :: Char -> Parser Char
+parseAnyButChar expected
+  = printf "Unexpected '%c'" expected
+    `mapError` Parser (parseOneIf (/= expected))
+
 parseAnyChar :: String -> Parser Char
 parseAnyChar allowed
   = printf "Expected one of '%s' but %s" allowed
     `mapError` Parser (parseOneIf (`elem` allowed))
+
+parseAny :: Parser Char
+parseAny = Parser $ parseOneIf $ const True
 
 parseUInt :: Parser Integer
 parseUInt = read <$> some (parseAnyChar ['0'..'9'])
@@ -54,10 +66,18 @@ parseInt :: Parser Integer
 parseInt = (parseChar '-' >> negate <$> parseUInt) <|> parseUInt
 
 spaces :: Parser [Char]
-spaces = many $ parseChar ' '
+spaces = many $ parseAnyChar " \t\n"
 
 parseList :: Parser a -> Parser [a]
 parseList p = parseChar '(' *> many (spaces >> p) <* spaces <* parseChar ')'
+
+parseString :: Parser String
+parseString = parseChar '"' *> many (parseAnyButChar '"') <* parseChar '"'
+
+parseNot :: Parser a -> Parser ()
+parseNot p = Parser $ \input -> parseNot' input (runParser p input)
+  where parseNot' input (Left _) = Right ((), input)
+        parseNot' _ _            = Left "Unexpected token"
 
 instance Functor Parser where
   fmap fct p = Parser $ runParser p >=> Right . mapFst fct
