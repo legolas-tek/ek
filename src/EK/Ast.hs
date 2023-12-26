@@ -10,7 +10,13 @@ module EK.Ast
   , Stmt(..)
   , Symbol(..)
   , FunctionName(..)
+  , CallItem(..)
+  , StructElem(..)
+  , Type(..)
+  , FuncPattern(..)
+  , FuncPatternItem(..)
   ) where
+
 import Data.List (intercalate)
 
 data Symbol
@@ -59,18 +65,19 @@ instance Show Symbol where
 instance Show Expr where
   show (IntegerLit i) = show i
   show (StringLit s) = show s
-  show (Call (FunctionName name) items) = showCall name items
+  show (Call (FunctionName name) items) = unwords $ showCall name items
 
-showCall :: [Symbol] -> [CallItem] -> String
-showCall ((Symbol s):xs) i = s ++ " " ++ showCall xs i
-showCall (Placeholder:xs) ((ExprCall e):is) = "(" ++ show e ++ ") " ++ showCall xs is
-showCall (Placeholder:xs) (PlaceholderCall:is) = "_ " ++ showCall xs is
-showCall [] _ = ""
-showCall _ [] = "#error#"
+showCall :: [Symbol] -> [CallItem] -> [String]
+showCall ((Symbol s):xs) i = s : showCall xs i
+showCall (Placeholder:xs) ((ExprCall e):is) = ("(" ++ show e ++ ")") : showCall xs is
+showCall (Placeholder:xs) (PlaceholderCall:is) = "_" : showCall xs is
+showCall [] _ = []
+showCall _ [] = ["#error#"]
 
 instance Show Stmt where
   show (AtomDef s) = "atom " ++ s
   show (TypeDef s t) = "type " ++ s ++ " = " ++ show t
+  show (StructDef s []) = "struct " ++ s ++ " {}"
   show (StructDef s elems) = "struct " ++ s ++ " { " ++ intercalate ", " (show <$> elems) ++ " }"
   show (FuncDef pattern expr) = "fn " ++ show pattern ++ " = " ++ show expr
   show (ExternDef pattern) = "extern fn " ++ show pattern
