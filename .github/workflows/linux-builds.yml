@@ -29,6 +29,14 @@ jobs:
             stack-version: 'latest'
 
       - uses: actions/cache@v3
+        name: Cache ~/.stack
+        with:
+            path: ~/.stack
+            key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}
+            restore-keys: |
+              ${{ runner.os }}-stack-global-
+            
+      - uses: actions/cache@v3
         name: Cache .stack-work
         with:
             path: .stack-work
