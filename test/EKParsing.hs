@@ -28,7 +28,7 @@ idt s = tk s TextIdentifier
 int :: Int -> Token
 int i = tk (show i) IntLiter
 
-doc :: [Token] -> Either String [Stmt]
+doc :: [Token] -> Either String [Stmt Expr]
 doc t = runParser parseDocument t >>= assertEmpty
   where assertEmpty (v, []) = Right v
         assertEmpty (_, r) = Left $ "Expected empty token list, got " ++ show r

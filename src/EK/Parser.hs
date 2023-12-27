@@ -14,25 +14,39 @@ import Parser
 import Token
 import Control.Monad (liftM2)
 
-parseDocument :: Parser Token [Stmt]
-parseDocument = many stmt
+type TotalStmt = EK.Ast.Stmt Expr
+type PartialStmt = EK.Ast.Stmt [Token]
+
+parseDocument :: Parser Token [TotalStmt]
+parseDocument = parseExprs <$> document
+
+--- Expressions
+
+parseExprs :: [PartialStmt] -> [TotalStmt]
+parseExprs partials = (parseExpr partials <$>) <$> partials
+
+parseExpr :: [PartialStmt] -> [Token] -> Expr
+parseExpr partials = undefined
 
 --- Statements
 
-stmt :: Parser Token Stmt
+document :: Parser Token [PartialStmt]
+document = many stmt
+
+stmt :: Parser Token PartialStmt
 stmt = atomDef <|> typeDef <|> structDef <|> funcDef <|> externDef
 
-atomDef :: Parser Token Stmt
+atomDef :: Parser Token PartialStmt
 atomDef = parseTokenType AtomKw >> AtomDef <$> textIdentifier
 
-typeDef :: Parser Token Stmt
+typeDef :: Parser Token PartialStmt
 typeDef = do
   parseTokenType TypeKw
   name <- textIdentifier
   parseTokenType Equal
   TypeDef name <$> typeId
 
-structDef :: Parser Token Stmt
+structDef :: Parser Token PartialStmt
 structDef = do
   parseTokenType StructKw
   name <- textIdentifier
@@ -54,10 +68,13 @@ structElems = structElems' <|> (pure <$> structElem) <|> return []
 
 --- Function definition
 
-funcDef :: Parser Token Stmt
-funcDef = parseTokenType FnKw >> undefined
+funcDef :: Parser Token PartialStmt
+funcDef = parseTokenType FnKw >> FuncDef <$> funcPattern <*> funcBody
 
-externDef :: Parser Token Stmt
+funcBody :: Parser Token [Token]
+funcBody = parseTokenType Equal >> some parseNotStmtStart
+
+externDef :: Parser Token PartialStmt
 externDef = parseTokenType ExternKw >> parseTokenType FnKw >> ExternDef <$> funcPattern
 
 --- Function pattern
@@ -130,3 +147,7 @@ identifier = textIdentifier <|> operatorIdentifier
 parseTokenType :: TokenType -> Parser Token Token
 parseTokenType expected = parseOneIf predicate
   where predicate (Token { tokenType = tt }) = expected == tt
+
+parseNotStmtStart :: Parser Token Token
+parseNotStmtStart = parseOneIf predicate
+  where predicate (Token { tokenType = tt }) = tt /= AtomKw && tt /= TypeKw && tt /= StructKw && tt /= FnKw && tt /= ExternKw

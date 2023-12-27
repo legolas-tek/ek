@@ -38,11 +38,11 @@ data CallItem
   | PlaceholderCall
   deriving (Eq)
 
-data Stmt
+data Stmt expr
   = AtomDef String
   | TypeDef String Type
   | StructDef String [StructElem]
-  | FuncDef FuncPattern Expr
+  | FuncDef FuncPattern expr
   | ExternDef FuncPattern
   deriving (Eq)
 
@@ -83,7 +83,7 @@ showCall (Placeholder:xs) (PlaceholderCall:is) = "_" : showCall xs is
 showCall [] _ = []
 showCall _ [] = ["#error#"]
 
-instance Show Stmt where
+instance Show expr => Show (Stmt expr) where
   show (AtomDef s) = "atom " ++ s
   show (TypeDef s t) = "type " ++ s ++ " = " ++ show t
   show (StructDef s []) = "struct " ++ s ++ " {}"
@@ -111,3 +111,10 @@ instance Show FuncPatternItem where
   show (ArgPattern s Nothing) = "(" ++ s ++ ")"
   show (SymbolPattern s) = s
   show PlaceholderPattern = "_"
+
+instance Functor Stmt where
+  fmap f (FuncDef pat expr) = FuncDef pat (f expr)
+  fmap _ (AtomDef s) = AtomDef s
+  fmap _ (TypeDef s t) = TypeDef s t
+  fmap _ (StructDef s elems) = StructDef s elems
+  fmap _ (ExternDef pat) = ExternDef pat
