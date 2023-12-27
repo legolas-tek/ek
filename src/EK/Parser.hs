@@ -52,13 +52,29 @@ structElems = structElems' <|> (pure <$> structElem) <|> return []
   where
     structElems' = liftM2 (:) structElem (parseTokenType Comma >> structElems)
 
--- Function definition
+--- Function definition
 
 funcDef :: Parser Token Stmt
 funcDef = parseTokenType FnKw >> undefined
 
 externDef :: Parser Token Stmt
-externDef = parseTokenType ExternKw >> parseTokenType FnKw >> undefined
+externDef = parseTokenType ExternKw >> parseTokenType FnKw >> ExternDef <$> funcPattern
+
+--- Function pattern
+
+funcPattern :: Parser Token FuncPattern
+funcPattern = liftM2 FuncPattern (some funcPatternItem) (optional typed)
+
+funcPatternItem :: Parser Token FuncPatternItem
+funcPatternItem = placeholder PlaceholderPattern <|> (SymbolPattern <$> identifier) <|> argumentPatternItem
+
+argumentPatternItem :: Parser Token FuncPatternItem
+argumentPatternItem = do
+  parseTokenType ParenOpen
+  name <- identifier
+  t <- optional typed
+  parseTokenType ParenClose
+  return $ ArgPattern name t
 
 --- Types
 
@@ -80,15 +96,15 @@ typeName :: Parser Token Type
 typeName = TypeName <$> textIdentifier
 
 intType :: Parser Token Type
-intType = single . read . lexeme <$> parseTokenType IntLiter
+intType = single <$> intLiteral
   where single i = IntRange (Just i) (Just i)
 
 intRange :: Parser Token Type
 intRange = do
   parseTokenType BracketOpen
-  l <- optional $ read . lexeme <$> parseTokenType IntLiter
+  l <- optional intLiteral
   parseTokenType DotDot
-  u <- optional $ read . lexeme <$> parseTokenType IntLiter
+  u <- optional intLiteral
   parseTokenType BracketClose
   return $ IntRange l u
 
@@ -96,6 +112,18 @@ intRange = do
 
 textIdentifier :: Parser Token String
 textIdentifier = lexeme <$> parseTokenType TextIdentifier
+
+intLiteral :: Parser Token Integer
+intLiteral = read . lexeme <$> parseTokenType IntLiter
+
+placeholder :: a -> Parser Token a
+placeholder a = parseTokenType UnderScore >> return a
+
+operatorIdentifier :: Parser Token String
+operatorIdentifier = lexeme <$> parseTokenType OperatorIdentifier
+
+identifier :: Parser Token String
+identifier = textIdentifier <|> operatorIdentifier
 
 --- Low level parsers
 

@@ -64,4 +64,7 @@ tests = test
           , idt "snd", tkt Colon, idt "bool"
           , tkt CurlyClose]
         @?= Right [StructDef "foo" [StructElem "bar" (TypeName "baz"), StructElem "snd" (TypeName "bool")]]
+  , "extern function" ~: do
+      doc [tkt ExternKw, tkt FnKw, idt "nbcpu", tkt Colon, idt "int"] @?= Right [ExternDef $ FuncPattern [SymbolPattern "nbcpu"] (Just $ TypeName "int")]
+      doc [tkt ExternKw, tkt FnKw, tkt ParenOpen, idt "a", tkt Colon, idt "int", tkt ParenClose, idt "!", tkt Colon, idt "int"] @?= Right [ExternDef $ FuncPattern [ArgPattern "a" $ Just $ TypeName "int", SymbolPattern "!"] (Just $ TypeName "int")]
   ]
