@@ -27,7 +27,7 @@ type EvalError = String
 
 type Environment = [(String, RuntimeValue)]
 
-data BuiltinFn = BuiltinFn (Environment -> [RuntimeValue] -> Either EvalError RuntimeValue)
+newtype BuiltinFn = BuiltinFn (Environment -> [RuntimeValue] -> Either EvalError RuntimeValue)
 
 data RuntimeValue = IntegerValue Integer
                   | BooleanValue Bool
@@ -46,13 +46,13 @@ envLookup ((name', val):env) name
 
 evalBody :: Environment -> [Ast] -> EvalResult
 evalBody env [] = Right (env, VoidValue)
-evalBody env (x:[]) = evalAst env x
+evalBody env [x] = evalAst env x
 evalBody env (x:xs) = evalAst env x >>= \(nextEnv, _) -> evalBody nextEnv xs
 
 evalLambda :: Environment -> [String] -> [Ast] -> Environment -> [RuntimeValue] -> Either EvalError RuntimeValue
 evalLambda closedEnv names body currentEnv args
   | length names /= length args = Left $ "Function expected " ++ show (length names) ++ " arguments but got " ++ show (length args) ++ " arguments"
-  | otherwise = snd <$> evalBody ((zip names args) ++ closedEnv ++ currentEnv) body
+  | otherwise = snd <$> evalBody (zip names args ++ closedEnv ++ currentEnv) body
 
 evalIf :: Environment -> RuntimeValue -> Ast -> Ast -> EvalResult
 evalIf env (BooleanValue True) trueCase _ = evalAst env trueCase
@@ -74,7 +74,7 @@ evalAst env (Call fn args) = do
 
 call :: Environment -> RuntimeValue -> [RuntimeValue] -> EvalResult
 call env (FunctionValue (BuiltinFn fn)) args = (env,) <$> fn env args
-call _ _ _ = Left $ "Cannot call value of non-function type"
+call _ _ _ = Left "Cannot call value of non-function type"
 
 defaultEnv :: Environment
 defaultEnv = [ ("#t", BooleanValue True)
