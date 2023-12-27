@@ -43,6 +43,12 @@ tests = test
         @?= Right [TypeDef "bit" (IntRange (Just 0) (Just 1))]
       doc [tkt TypeKw, idt "bit", tkt Equal, int 0, tkt Pipe, int 1]
         @?= Right [TypeDef "bit" (UnionType (IntRange (Just 0) (Just 0)) (IntRange (Just 1) (Just 1)))]
+      doc [tkt TypeKw, idt "int", tkt Equal, tkt BracketOpen, tkt DotDot, tkt BracketClose]
+        @?= Right [TypeDef "int" (IntRange Nothing Nothing)]
+      doc [tkt TypeKw, idt "uint", tkt Equal, tkt BracketOpen, int 0, tkt DotDot, tkt BracketClose]
+        @?= Right [TypeDef "uint" (IntRange (Just 0) Nothing)]
+      doc [tkt TypeKw, idt "foo", tkt Equal, tkt BracketOpen, tkt DotDot, int 42, tkt BracketClose]
+        @?= Right [TypeDef "foo" (IntRange Nothing (Just 42))]
   , "struct" ~: do
       doc [tkt StructKw, idt "empty", tkt CurlyOpen, tkt CurlyClose] @?= Right [StructDef "empty" []]
       doc [ tkt StructKw, idt "foo", tkt CurlyOpen
