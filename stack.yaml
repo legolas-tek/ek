@@ -66,3 +66,6 @@ system-ghc: true
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
+
+# Disable parallel build to avoid out of memory in CI
+jobs: 1

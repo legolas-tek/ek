@@ -11,6 +11,7 @@ import qualified Parsing
 import qualified LispParsing
 import qualified Evaluating
 import qualified Executing
+import qualified EKAstShowing
 import qualified EKTyping
 
 tests :: Test
@@ -19,6 +20,7 @@ tests = test
   , "Lisp parsing" ~: LispParsing.tests
   , "Evaluation" ~: Evaluating.tests
   , "Executing" ~: Executing.tests
+  , "EK Ast Show" ~: EKAstShowing.tests
   , "EK Typing" ~: EKTyping.tests
   ]
 
