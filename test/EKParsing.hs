@@ -64,4 +64,11 @@ tests = test
   , "extern function" ~: do
       doc [tkt ExternKw, tkt FnKw, idt "nbcpu", tkt Colon, idt "int"] @?= Right [ExternDef $ FuncPattern [SymbolPattern "nbcpu"] (Just $ TypeName "int")]
       doc [tkt ExternKw, tkt FnKw, tkt ParenOpen, idt "a", tkt Colon, idt "int", tkt ParenClose, idt "!", tkt Colon, idt "int"] @?= Right [ExternDef $ FuncPattern [ArgPattern "a" $ Just $ TypeName "int", SymbolPattern "!"] (Just $ TypeName "int")]
+  , "simple var function" ~: do
+      doc [tkt FnKw, idt "key", tkt Colon, idt "int", tkt Equal, int 42]
+        @?= Right [FuncDef (FuncPattern [SymbolPattern "key"] (Just $ TypeName "int")) (IntegerLit 42)]
+      doc [tkt FnKw, idt "key", tkt Colon, idt "string", tkt Equal, tk "foo" StringLiter]
+        @?= Right [FuncDef (FuncPattern [SymbolPattern "key"] (Just $ TypeName "string")) (StringLit "foo")]
+      doc [tkt FnKw, idt "key", tkt Colon, idt "int", tkt Equal, tkt ParenOpen, int 42, tkt ParenClose]
+        @?= Right [FuncDef (FuncPattern [SymbolPattern "key"] (Just $ TypeName "int")) (IntegerLit 42)]
   ]
