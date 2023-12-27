@@ -15,6 +15,7 @@ module EK.Ast
   , Type(..)
   , FuncPattern(..)
   , FuncPatternItem(..)
+  , patternToName
   ) where
 
 import Data.List (intercalate)
@@ -63,6 +64,13 @@ data FuncPatternItem
   | SymbolPattern String
   | PlaceholderPattern
   deriving (Eq)
+
+patternToName :: FuncPattern -> FunctionName
+patternToName (FuncPattern items _) = FunctionName $ map patternToName' items
+  where
+    patternToName' (ArgPattern _ _) = Placeholder
+    patternToName' (SymbolPattern s) = Symbol s
+    patternToName' PlaceholderPattern = Placeholder
 
 instance Show FunctionName where
   show (FunctionName symbols) = unwords (show <$> symbols)
@@ -118,3 +126,14 @@ instance Functor Stmt where
   fmap _ (TypeDef s t) = TypeDef s t
   fmap _ (StructDef s elems) = StructDef s elems
   fmap _ (ExternDef pat) = ExternDef pat
+
+instance Traversable Stmt where
+  traverse f (FuncDef pat expr) = FuncDef pat <$> f expr
+  traverse _ (AtomDef s) = pure $ AtomDef s
+  traverse _ (TypeDef s t) = pure $ TypeDef s t
+  traverse _ (StructDef s elems) = pure $ StructDef s elems
+  traverse _ (ExternDef pat) = pure $ ExternDef pat
+
+instance Foldable Stmt where
+  foldMap f (FuncDef _ expr) = f expr
+  foldMap _ _ = mempty

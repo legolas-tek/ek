@@ -10,28 +10,19 @@
 module EK.Parser (parseDocument) where
 
 import EK.Ast
+import EK.ExprParser
 import Parser
 import Token
+import EK.TokenParser
 import Control.Monad (liftM2)
 
-type TotalStmt = EK.Ast.Stmt Expr
-type PartialStmt = EK.Ast.Stmt [Token]
-
-parseDocument :: Parser Token [TotalStmt]
-parseDocument = parseExprs <$> document
-
---- Expressions
-
-parseExprs :: [PartialStmt] -> [TotalStmt]
-parseExprs partials = (parseExpr partials <$>) <$> partials
-
-parseExpr :: [PartialStmt] -> [Token] -> Expr
-parseExpr partials = undefined
+parseDocument :: [Token] -> Either String [TotalStmt]
+parseDocument tokens = runParser document tokens >>= parseExprs . fst
 
 --- Statements
 
 document :: Parser Token [PartialStmt]
-document = many stmt
+document = many stmt <* eof
 
 stmt :: Parser Token PartialStmt
 stmt = atomDef <|> typeDef <|> structDef <|> funcDef <|> externDef
@@ -124,30 +115,3 @@ intRange = do
   u <- optional intLiteral
   parseTokenType BracketClose
   return $ IntRange l u
-
---- Token parsers
-
-textIdentifier :: Parser Token String
-textIdentifier = lexeme <$> parseTokenType TextIdentifier
-
-intLiteral :: Parser Token Integer
-intLiteral = read . lexeme <$> parseTokenType IntLiter
-
-placeholder :: a -> Parser Token a
-placeholder a = parseTokenType UnderScore >> return a
-
-operatorIdentifier :: Parser Token String
-operatorIdentifier = lexeme <$> parseTokenType OperatorIdentifier
-
-identifier :: Parser Token String
-identifier = textIdentifier <|> operatorIdentifier
-
---- Low level parsers
-
-parseTokenType :: TokenType -> Parser Token Token
-parseTokenType expected = parseOneIf predicate
-  where predicate (Token { tokenType = tt }) = expected == tt
-
-parseNotStmtStart :: Parser Token Token
-parseNotStmtStart = parseOneIf predicate
-  where predicate (Token { tokenType = tt }) = tt /= AtomKw && tt /= TypeKw && tt /= StructKw && tt /= FnKw && tt /= ExternKw

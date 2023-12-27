@@ -14,7 +14,6 @@ import Test.HUnit
 import EK.Parser
 import Token
 import EK.Ast
-import Parser
 
 tk :: String -> TokenType -> Token
 tk s = Token s 0 0 ""
@@ -29,9 +28,7 @@ int :: Int -> Token
 int i = tk (show i) IntLiter
 
 doc :: [Token] -> Either String [Stmt Expr]
-doc t = runParser parseDocument t >>= assertEmpty
-  where assertEmpty (v, []) = Right v
-        assertEmpty (_, r) = Left $ "Expected empty token list, got " ++ show r
+doc t = parseDocument t
 
 tests :: Test
 tests = test

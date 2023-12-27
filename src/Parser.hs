@@ -80,7 +80,7 @@ parseList p = parseChar '(' *> many (spaces >> p) <* spaces <* parseChar ')'
 parseString :: Parser Char [Char]
 parseString = parseChar '"' *> many (parseAnyButChar '"') <* parseChar '"'
 
-parseNot :: Parser Char out -> Parser Char ()
+parseNot :: Parser inp out -> Parser inp ()
 parseNot p = Parser $ \input -> parseNot' input (runParser p input)
   where parseNot' input (Left _) = Right ((), input)
         parseNot' _ _            = Left "Unexpected token"
