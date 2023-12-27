@@ -22,17 +22,21 @@ import Data.List (intercalate)
 data Symbol
   = Symbol String
   | Placeholder
+  deriving (Eq)
 
 newtype FunctionName = FunctionName [Symbol]
+  deriving (Eq)
 
 data Expr
   = IntegerLit Integer
   | StringLit String
   | Call FunctionName [CallItem]
+  deriving (Eq)
 
 data CallItem
   = ExprCall Expr
   | PlaceholderCall
+  deriving (Eq)
 
 data Stmt
   = AtomDef String
@@ -40,20 +44,25 @@ data Stmt
   | StructDef String [StructElem]
   | FuncDef FuncPattern Expr
   | ExternDef FuncPattern
+  deriving (Eq)
 
 data StructElem = StructElem String Type
+  deriving (Eq)
 
 data Type
   = TypeName String
   | IntRange (Maybe Integer) (Maybe Integer)
   | UnionType Type Type
+  deriving (Eq)
 
 data FuncPattern = FuncPattern [FuncPatternItem] (Maybe Type)
+  deriving (Eq)
 
 data FuncPatternItem
   = ArgPattern String (Maybe Type)
   | SymbolPattern String
   | PlaceholderPattern
+  deriving (Eq)
 
 instance Show FunctionName where
   show (FunctionName symbols) = unwords (show <$> symbols)
