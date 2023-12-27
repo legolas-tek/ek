@@ -44,8 +44,7 @@ structDef = do
 structElem :: Parser Token StructElem
 structElem = do
   name <- textIdentifier
-  parseTokenType Colon
-  StructElem name <$> typeId
+  StructElem name <$> typed
 
 -- structElem separated by commas, with an optional trailing comma
 structElems :: Parser Token [StructElem]
@@ -63,8 +62,35 @@ externDef = parseTokenType ExternKw >> parseTokenType FnKw >> undefined
 
 --- Types
 
+typed :: Parser Token Type
+typed = parseTokenType Colon >> typeId
+
 typeId :: Parser Token Type
-typeId = TypeName <$> textIdentifier
+typeId = do
+  t <- primType
+  next <- optional (parseTokenType Pipe >> typeId)
+  return $ combine t next
+    where combine t Nothing = t
+          combine t (Just t') = UnionType t t'
+
+primType :: Parser Token Type
+primType = typeName <|> intType <|> intRange
+
+typeName :: Parser Token Type
+typeName = TypeName <$> textIdentifier
+
+intType :: Parser Token Type
+intType = single . read . lexeme <$> parseTokenType IntLiter
+  where single i = IntRange (Just i) (Just i)
+
+intRange :: Parser Token Type
+intRange = do
+  parseTokenType BracketOpen
+  l <- optional $ read . lexeme <$> parseTokenType IntLiter
+  parseTokenType DotDot
+  u <- optional $ read . lexeme <$> parseTokenType IntLiter
+  parseTokenType BracketClose
+  return $ IntRange l u
 
 --- Token parsers
 

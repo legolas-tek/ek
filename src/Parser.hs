@@ -21,12 +21,14 @@ module Parser
   , mapError
   , some
   , many
+  , optional
   , (<|>)
   ) where
 
 import Control.Applicative
   ( Applicative(liftA2)
   , Alternative((<|>), some, many, empty)
+  , optional
   )
 import Control.Monad((>=>), MonadPlus)
 import Text.Printf (printf)
