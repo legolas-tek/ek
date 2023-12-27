@@ -12,6 +12,7 @@ module VirtualMachine
     , Instruction(..)
     , Stack
     , Insts
+    , Env
     ) where
 
 import Data.Map (Map, lookup)
@@ -20,6 +21,7 @@ data VMValue = IntegerValue Integer
              | BooleanValue Bool
              | OperatorValue Operator
              | FunctionValue Insts
+             | StringValue String
              deriving (Show, Eq)
 
 data Operator = Add
@@ -50,6 +52,7 @@ exec env (Call:insts) (OperatorValue op:v1:v2:stack) = applyOp op v1 v2
   >>= \result -> exec env insts (result:stack)
 exec env (Call:insts) (FunctionValue fn:stack) = exec env fn stack
   >>= \stack' -> exec env insts stack'
+exec env (Call:insts) (StringValue s:stack) = exec env insts (StringValue s:stack)
 exec _ (Call:_) (OperatorValue _:_) = Left "Not enough arguments for operator"
 exec _ (Call:_) _ = Left "Cannot call value of non-function type"
 exec env (JmpFalse offset:insts) (BooleanValue False:stack)

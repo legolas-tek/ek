@@ -18,6 +18,7 @@ tests = test
   [ "const" ~: do
       exec empty [Push $ IntegerValue 32, Ret] [] @?= Right [IntegerValue 32]
       exec empty [Push $ IntegerValue 10, Push $ IntegerValue 52, Push $ OperatorValue Sub, Call, Ret] [] @?= Right [IntegerValue 42]
+      exec empty [Push $ StringValue "Hello", Ret] [] @?= Right [StringValue "Hello"]
   , "errorHandling" ~: do
       exec empty [Push $ IntegerValue 10, Push $ OperatorValue Add, Call, Ret] [] @?= Left "Not enough arguments for operator"
       exec empty [Push $ IntegerValue 10, Push $ BooleanValue True, Push $ OperatorValue Add, Call, Ret] [] @?= Left "Invalid operands for operator"
