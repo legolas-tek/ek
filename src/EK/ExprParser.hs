@@ -50,7 +50,7 @@ parsePrefix _ [] _ = fail "Could not resolve expression"
 
 parseInfix :: [FuncItem] -> [FuncItem] -> Int -> CallItem -> Parser Token Expr
 parseInfix fi (FunctionName (Placeholder:ss):fis) prec initial
-  = (Call (FunctionName (Placeholder:ss)) . (initial:) <$> parseFollowUp fi ss prec) <|> parseInfix fi fis prec initial
+  = (parseFollowUp fi ss prec >>= (parseInfix fi fi prec . ExprCall) . Call (FunctionName (Placeholder:ss)) . (initial:)) <|> parseInfix fi fis prec initial
 parseInfix fi (_:fis) prec initial = parseInfix fi fis prec initial
 parseInfix _ [] _ (ExprCall e) = return e
 parseInfix _ [] _ _ = fail "Invalid placeholder"

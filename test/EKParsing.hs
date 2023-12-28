@@ -114,4 +114,18 @@ tests = test
         @?= Right [ FuncDef (FuncPattern [ArgPattern "a" Nothing, SymbolPattern "zero"] Nothing) (IntegerLit 0)
                   , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "_ zero" [ExprCall $ IntegerLit 42])
                   ]
+  , "simple infix operator" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, tk "+" OperatorIdentifier, tkt UnderScore
+          , tkt FnKw, idt "test", tkt Equal, int 3, tk "+" OperatorIdentifier, int 7
+          ]
+        @?= Right [ ExternDef $ FuncPattern [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern] Nothing
+                  , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "_ + _" [ExprCall $ IntegerLit 3, ExprCall $ IntegerLit 7])
+                  ]
+  , "double infix function" ~: do
+      doc [ tkt FnKw, tkt ParenOpen, idt "a", tkt ParenClose, idt "zero", tkt Equal, int 0
+          , tkt FnKw, idt "test", tkt Equal, int 42, idt "zero", idt "zero"
+          ]
+        @?= Right [ FuncDef (FuncPattern [ArgPattern "a" Nothing, SymbolPattern "zero"] Nothing) (IntegerLit 0)
+                  , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "_ zero" [ExprCall $ Call "_ zero" [ExprCall $ IntegerLit 42]])
+                  ]
   ]
