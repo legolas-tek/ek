@@ -38,10 +38,21 @@ compilePattern (FuncPattern items _) _ =
   concatMap compilePatternItem items
   where
     compilePatternItem (ArgPattern s _) = [PushEnv s]
-    compilePatternItem (SymbolPattern s) = [PushEnv s]
+    compilePatternItem (SymbolPattern _) = []
     compilePatternItem PlaceholderPattern = []
 
 compileExpr :: Expr -> Env -> Either String Insts
 compileExpr (IntegerLit i) _ = Right [Push (IntegerValue i)]
 compileExpr (StringLit s) _ = Right [Push (StringValue s)]
-compileExpr (EK.Ast.Call _ _) _ = Right []
+compileExpr (EK.Ast.Call _ callItems) env = do
+  callInsts <- compileCallItems callItems env
+  return (callInsts ++ [VirtualMachine.Call])
+
+compileCallItems :: [CallItem] -> Env -> Either String Insts
+compileCallItems items env = do
+  itemInsts <- mapM (`compileCallItem` env) items
+  return (concat itemInsts)
+
+compileCallItem :: CallItem -> Env -> Either String Insts
+compileCallItem (ExprCall expr) env = compileExpr expr env
+compileCallItem PlaceholderCall _ = Right []
