@@ -52,7 +52,7 @@ funcItems (_ : xs) = funcItems xs
 funcItems [] = []
 
 parsePrec :: [FuncItem] -> Int -> Parser Token Expr
-parsePrec fi prec = (ExprCall <$> (prim fi <|> parsePrefix fi fi prec)) <|> placeholder PlaceholderCall >>= parseInfix fi fi prec
+parsePrec fi prec = placeholder PlaceholderCall <|> (ExprCall <$> (prim fi <|> parsePrefix fi fi prec)) >>= parseInfix fi fi prec
 
 parsePrefix :: [FuncItem] -> [FuncItem] -> Int -> Parser Token Expr
 parsePrefix fi (FunctionName (Symbol s:ss):fis) prec

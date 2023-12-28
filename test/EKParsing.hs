@@ -30,7 +30,7 @@ int :: Int -> Token
 int i = tk (show i) IntLiter
 
 doc :: [Token] -> Either String [Stmt Expr]
-doc t = parseDocument t
+doc = parseDocument
 
 tests :: Test
 tests = test
@@ -135,4 +135,55 @@ tests = test
         @?= Right [ FuncDef (FuncPattern [ArgPattern "a" Nothing, SymbolPattern "qed"] Nothing) (Call "a" [])
                   , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "_ qed" [ExprCall $ IntegerLit 42])
                   ]
+  , "double prefix function" ~: do
+      doc [ tkt FnKw, idt "zero", tkt ParenOpen, idt "a", tkt ParenClose, tkt Equal, int 0
+          , tkt FnKw, idt "test", tkt Equal, idt "zero", idt "zero", int 42
+          ]
+        @?= Right [ FuncDef (FuncPattern [SymbolPattern "zero", ArgPattern "a" Nothing] Nothing) (IntegerLit 0)
+                  , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "zero _" [ExprCall $ Call "zero _" [ExprCall $ IntegerLit 42]])
+                  ]
+  , "prefix function with 2 unseparated args" ~: do
+      doc [ tkt FnKw, idt "add", tkt UnderScore, tkt UnderScore, tkt Equal, int 3
+          , tkt FnKw, idt "test", tkt Equal, idt "add", int 1, int 2
+          ]
+        @?= Right [ FuncDef (FuncPattern [SymbolPattern "add", PlaceholderPattern, PlaceholderPattern] Nothing) (IntegerLit 3)
+                  , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "add _ _" [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2])
+                  ]
+  , "postfix function with 2 unseparated args" ~: do
+      doc [ tkt FnKw, tkt UnderScore, tkt UnderScore, idt "add", tkt Equal, int 3
+          , tkt FnKw, idt "test", tkt Equal, int 1, int 2, idt "add"
+          ]
+        @?= Right [ FuncDef (FuncPattern [PlaceholderPattern, PlaceholderPattern, SymbolPattern "add"] Nothing) (IntegerLit 3)
+                  , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "_ _ add" [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2])
+                  ]
+  , "postfix function with 2 unseparated args, multiple" ~: do
+      doc [ tkt FnKw, tkt UnderScore, tkt UnderScore, idt "add", tkt Equal, int 3
+          , tkt FnKw, tkt UnderScore, tkt UnderScore, idt "sub", tkt Equal, int 2
+          , tkt FnKw, idt "test", tkt Equal, int 1, int 2, idt "sub", int 3, idt "add"
+          ]
+        @?= Right [ FuncDef (FuncPattern [PlaceholderPattern, PlaceholderPattern, SymbolPattern "add"] Nothing) (IntegerLit 3)
+                  , FuncDef (FuncPattern [PlaceholderPattern, PlaceholderPattern, SymbolPattern "sub"] Nothing) (IntegerLit 2)
+                  , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "_ _ add" [ExprCall $ Call "_ _ sub" [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2], ExprCall $ IntegerLit 3])
+                  ]
+  , "prefix function with 2 unseparated args, multiple" ~: do
+      doc [ tkt FnKw, idt "add", tkt UnderScore, tkt UnderScore, tkt Equal, int 3
+          , tkt FnKw, idt "sub", tkt UnderScore, tkt UnderScore, tkt Equal, int 2
+          , tkt FnKw, idt "test", tkt Equal, idt "add", idt "sub", int 1, int 2, int 3
+          ]
+        @?= Right [ FuncDef (FuncPattern [SymbolPattern "add", PlaceholderPattern, PlaceholderPattern] Nothing) (IntegerLit 3)
+                  , FuncDef (FuncPattern [SymbolPattern "sub", PlaceholderPattern, PlaceholderPattern] Nothing) (IntegerLit 2)
+                  , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "add _ _" [ExprCall $ Call "sub _ _" [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2], ExprCall $ IntegerLit 3])
+                  ]
+  , "error case, invalid placeholder" ~: do
+      doc [ tkt FnKw, idt "add", tkt Equal, tkt UnderScore
+          ]
+        @?= Left "Invalid placeholder"
+  , "error case, variable does not exist" ~: do
+      doc [ tkt FnKw, idt "add", tkt Equal, idt "a"
+          ]
+        @?= Left "Could not resolve expression"
+  , "error case, unopened paren" ~: do
+      doc [ tkt FnKw, idt "a", tkt Equal, int 3, tkt CurlyClose
+          ]
+        @?= Left "Unexpected trailing token"
   ]
