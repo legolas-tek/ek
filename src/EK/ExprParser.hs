@@ -4,6 +4,7 @@
 -- File description:
 -- expression parser for ek
 -}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module EK.ExprParser
   ( parseExprs
@@ -35,9 +36,26 @@ funcItems :: [PartialStmt] -> [FuncItem]
 funcItems (FuncDef pat _ : xs) = patternToName pat : funcItems xs
 funcItems (ExternDef pat : xs) = patternToName pat : funcItems xs
 funcItems (_ : xs) = funcItems xs
+funcItems [] = []
 
 parsePrec :: [FuncItem] -> Int -> Parser Token Expr
-parsePrec funcItems prec = prim funcItems
+parsePrec fi prec = prim fi <|> parsePrefix fi fi prec
+  -- TODO: infix
+
+parsePrefix :: [FuncItem] -> [FuncItem] -> Int -> Parser Token Expr
+parsePrefix fi (FunctionName (Symbol s:ss):fis) prec
+  -- TODO: Check precedence
+  = (identifierExact s >> Call (FunctionName (Symbol s:ss)) <$> parseFollowUp fi ss prec) <|> parsePrefix fi fis prec
+parsePrefix fi (_:fis) prec = parsePrefix fi fis prec
+parsePrefix _ [] _ = fail "Could not resolve expression"
+
+parseFollowUp :: [FuncItem] -> [Symbol] -> Int -> Parser Token [CallItem]
+parseFollowUp fi (Symbol s:ss) prec
+  = identifierExact s *> parseFollowUp fi ss prec
+parseFollowUp fi (Placeholder:ss) prec = do
+  e <- parsePrec fi prec -- TODO: use prec from fn
+  (ExprCall e :) <$> parseFollowUp fi ss prec
+parseFollowUp _ [] _ = return []
 
 prim :: [FuncItem] -> Parser Token Expr
 prim funcItems = intExpr <|> stringExpr <|> parenExpr funcItems

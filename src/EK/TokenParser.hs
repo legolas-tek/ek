@@ -15,6 +15,7 @@ module EK.TokenParser
   , parseTokenType
   , parseNotStmtStart
   , eof
+  , identifierExact
   ) where
 
 import Token
@@ -37,6 +38,9 @@ operatorIdentifier = lexeme <$> parseTokenType OperatorIdentifier
 
 identifier :: Parser Token String
 identifier = textIdentifier <|> operatorIdentifier
+
+identifierExact :: String -> Parser Token String
+identifierExact s = identifier >>= \t -> if t == s then return s else fail $ "Expected " ++ s ++ " but found " ++ t
 
 --- Low level parsers
 

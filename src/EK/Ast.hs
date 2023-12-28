@@ -19,6 +19,7 @@ module EK.Ast
   ) where
 
 import Data.List (intercalate)
+import Data.String (IsString(..))
 
 data Symbol
   = Symbol String
@@ -71,6 +72,11 @@ patternToName (FuncPattern items _) = FunctionName $ map patternToName' items
     patternToName' (ArgPattern _ _) = Placeholder
     patternToName' (SymbolPattern s) = Symbol s
     patternToName' PlaceholderPattern = Placeholder
+
+instance IsString FunctionName where
+  fromString str = FunctionName (unshow <$> words str)
+    where unshow "_" = Placeholder
+          unshow s = Symbol s
 
 instance Show FunctionName where
   show (FunctionName symbols) = unwords (show <$> symbols)
