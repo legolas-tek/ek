@@ -27,10 +27,23 @@ lowestPrec :: Prec
 lowestPrec = 0
 
 parseExprs :: [PartialStmt] -> Either String [TotalStmt]
-parseExprs partials = mapM (mapM $ parseExpr partials) partials
+parseExprs partials = mapM (parseBody partials) partials
 
-parseExpr :: [PartialStmt] -> [Token] -> Either String Expr
-parseExpr partials tokens = fst <$> runParser (parsePrec (funcItems partials) lowestPrec <* eof) tokens
+parseBody :: [PartialStmt] -> PartialStmt -> Either String TotalStmt
+parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ funcItems partials) body
+  where
+    args = funcPatternItems pat >>= argFuncItems
+    argFuncItems (ArgPattern s _) = [FunctionName [Symbol s]]
+    argFuncItems PlaceholderPattern = []
+    argFuncItems (SymbolPattern _) = []
+
+parseBody _ (ExternDef pat) = return $ ExternDef pat
+parseBody _ (AtomDef name) = return $ AtomDef name
+parseBody _ (TypeDef name ty) = return $ TypeDef name ty
+parseBody _ (StructDef name elems) = return $ StructDef name elems
+
+parseExpr :: [FuncItem] -> [Token] -> Either String Expr
+parseExpr fi tokens = fst <$> runParser (parsePrec fi lowestPrec <* eof) tokens
 
 funcItems :: [PartialStmt] -> [FuncItem]
 funcItems (FuncDef pat _ : xs) = patternToName pat : funcItems xs

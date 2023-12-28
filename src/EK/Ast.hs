@@ -57,8 +57,10 @@ data Type
   | UnionType Type Type
   deriving (Eq)
 
-data FuncPattern = FuncPattern [FuncPatternItem] (Maybe Type)
-  deriving (Eq)
+data FuncPattern = FuncPattern
+  { funcPatternItems :: [FuncPatternItem]
+  , funcPatternType :: Maybe Type
+  } deriving (Eq)
 
 data FuncPatternItem
   = ArgPattern String (Maybe Type)
@@ -104,7 +106,7 @@ instance Show expr => Show (Stmt expr) where
   show (StructDef s elems) = "struct " ++ s ++ " { " ++ intercalate ", " (show <$> elems) ++ " }"
   show (FuncDef pattern expr) = "fn " ++ show pattern ++ " = " ++ show expr
   show (ExternDef pattern) = "extern fn " ++ show pattern
-  
+
 instance Show StructElem where
   show (StructElem s t) = s ++ " : " ++ show t
 
@@ -119,7 +121,7 @@ instance Show Type where
 instance Show FuncPattern where
   show (FuncPattern items (Just t)) = unwords (show <$> items) ++ " : " ++ show t
   show (FuncPattern items Nothing) = unwords (show <$> items)
-  
+
 instance Show FuncPatternItem where
   show (ArgPattern s (Just t)) = "(" ++ s ++ " : " ++ show t ++ ")"
   show (ArgPattern s Nothing) = "(" ++ s ++ ")"

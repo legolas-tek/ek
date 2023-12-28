@@ -128,4 +128,11 @@ tests = test
         @?= Right [ FuncDef (FuncPattern [ArgPattern "a" Nothing, SymbolPattern "zero"] Nothing) (IntegerLit 0)
                   , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "_ zero" [ExprCall $ Call "_ zero" [ExprCall $ IntegerLit 42]])
                   ]
+  , "simple infix function using arg" ~: do
+      doc [ tkt FnKw, tkt ParenOpen, idt "a", tkt ParenClose, idt "qed", tkt Equal, idt "a"
+          , tkt FnKw, idt "test", tkt Equal, int 42, idt "qed"
+          ]
+        @?= Right [ FuncDef (FuncPattern [ArgPattern "a" Nothing, SymbolPattern "qed"] Nothing) (Call "a" [])
+                  , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "_ qed" [ExprCall $ IntegerLit 42])
+                  ]
   ]
