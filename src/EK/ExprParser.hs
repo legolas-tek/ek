@@ -48,6 +48,7 @@ parseExpr fi tokens = fst <$> runParser (parsePrec fi lowestPrec <* eof) tokens
 funcItems :: [PartialStmt] -> [FuncItem]
 funcItems (FuncDef pat _ : xs) = patternToName pat : funcItems xs
 funcItems (ExternDef pat : xs) = patternToName pat : funcItems xs
+funcItems (AtomDef name : xs) = FunctionName [Symbol name] : funcItems xs
 funcItems (_ : xs) = funcItems xs
 funcItems [] = []
 

@@ -174,6 +174,13 @@ tests = test
                   , FuncDef (FuncPattern [SymbolPattern "sub", PlaceholderPattern, PlaceholderPattern] Nothing) (IntegerLit 2)
                   , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "add _ _" [ExprCall $ Call "sub _ _" [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2], ExprCall $ IntegerLit 3])
                   ]
+  , "atom reference" ~: do
+      doc [ tkt FnKw, idt "fruit", tkt Equal, idt "apple"
+          , tkt AtomKw, idt "apple"
+          ]
+        @?= Right [ FuncDef (FuncPattern [SymbolPattern "fruit"] Nothing) (Call "apple" [])
+                  , AtomDef "apple"
+                  ]
   , "error case, invalid placeholder" ~: do
       doc [ tkt FnKw, idt "add", tkt Equal, tkt UnderScore
           ]
