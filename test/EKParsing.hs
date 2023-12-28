@@ -107,4 +107,11 @@ tests = test
                   , ExternDef $ FuncPattern [SymbolPattern "tty"] (Just $ TypeName "bool")
                   , ExternDef $ FuncPattern [SymbolPattern "if", PlaceholderPattern, SymbolPattern "then", PlaceholderPattern, SymbolPattern "else", PlaceholderPattern] Nothing
                   ]
+  , "simple infix function" ~: do
+      doc [ tkt FnKw, tkt ParenOpen, idt "a", tkt ParenClose, idt "zero", tkt Equal, int 0
+          , tkt FnKw, idt "test", tkt Equal, int 42, idt "zero"
+          ]
+        @?= Right [ FuncDef (FuncPattern [ArgPattern "a" Nothing, SymbolPattern "zero"] Nothing) (IntegerLit 0)
+                  , FuncDef (FuncPattern [SymbolPattern "test"] Nothing) (Call "_ zero" [ExprCall $ IntegerLit 42])
+                  ]
   ]

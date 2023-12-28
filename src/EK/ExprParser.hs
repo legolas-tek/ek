@@ -39,8 +39,7 @@ funcItems (_ : xs) = funcItems xs
 funcItems [] = []
 
 parsePrec :: [FuncItem] -> Int -> Parser Token Expr
-parsePrec fi prec = prim fi <|> parsePrefix fi fi prec
-  -- TODO: infix
+parsePrec fi prec = (ExprCall <$> (prim fi <|> parsePrefix fi fi prec)) <|> placeholder PlaceholderCall >>= parseInfix fi fi prec
 
 parsePrefix :: [FuncItem] -> [FuncItem] -> Int -> Parser Token Expr
 parsePrefix fi (FunctionName (Symbol s:ss):fis) prec
@@ -48,6 +47,13 @@ parsePrefix fi (FunctionName (Symbol s:ss):fis) prec
   = (identifierExact s >> Call (FunctionName (Symbol s:ss)) <$> parseFollowUp fi ss prec) <|> parsePrefix fi fis prec
 parsePrefix fi (_:fis) prec = parsePrefix fi fis prec
 parsePrefix _ [] _ = fail "Could not resolve expression"
+
+parseInfix :: [FuncItem] -> [FuncItem] -> Int -> CallItem -> Parser Token Expr
+parseInfix fi (FunctionName (Placeholder:ss):fis) prec initial
+  = (Call (FunctionName (Placeholder:ss)) . (initial:) <$> parseFollowUp fi ss prec) <|> parseInfix fi fis prec initial
+parseInfix fi (_:fis) prec initial = parseInfix fi fis prec initial
+parseInfix _ [] _ (ExprCall e) = return e
+parseInfix _ [] _ _ = fail "Invalid placeholder"
 
 parseFollowUp :: [FuncItem] -> [Symbol] -> Int -> Parser Token [CallItem]
 parseFollowUp fi (Symbol s:ss) prec
