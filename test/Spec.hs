@@ -13,6 +13,7 @@ import qualified Evaluating
 import qualified Executing
 import qualified EKAstShowing
 import qualified EKTyping
+import qualified Compilation
 
 tests :: Test
 tests = test
@@ -22,6 +23,7 @@ tests = test
   , "Executing" ~: Executing.tests
   , "EK Ast Show" ~: EKAstShowing.tests
   , "EK Typing" ~: EKTyping.tests
+  , "Compilation" ~: Compilation.tests
   ]
 
 main :: IO ()
