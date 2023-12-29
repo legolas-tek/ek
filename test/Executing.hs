@@ -89,4 +89,8 @@ tests = test
            ] [] @?= Right [IntegerValue 42]
       exec empty [PushEnv "failure expected"] [] @?=
         Left "Couldn't find requested VMValue in env"
+    , "PopEnv" ~: do
+        exec (fromList [("a", IntegerValue 42)]) [PopEnv "a", PushEnv "a"] [] @?= Left "Couldn't find requested VMValue in env"
+        exec empty [PopEnv "failure expected"] [] @?=
+          Left "No value to pop from env"
   ]

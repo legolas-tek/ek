@@ -15,7 +15,7 @@ module VirtualMachine
     , Env
     ) where
 
-import Data.Map (Map, lookup)
+import Data.Map (Map, lookup, delete)
 
 data VMValue = IntegerValue Integer
              | BooleanValue Bool
@@ -38,6 +38,7 @@ data Instruction = Push VMValue
                  | Dup
                  | Ret
                  | PushEnv String
+                 | PopEnv String
                  deriving (Show, Eq)
 
 type Stack = [VMValue]
@@ -61,6 +62,8 @@ exec env (JmpFalse _:insts) (BooleanValue True:stack) = exec env insts stack
 exec _ (JmpFalse _:_) _ = Left "Invalid condition"
 exec env (Dup:insts) (v:stack) = exec env insts (v:v:stack)
 exec _ (Dup:_) [] = Left "No value to duplicate"
+exec env (PopEnv value : insts) stack = popEnv value env
+  >>= \(val, env') -> exec env' insts (val : stack)
 exec env (PushEnv value : insts) stack =
   case sValue of
     Just val -> exec env insts (val : stack)
@@ -83,3 +86,9 @@ applyOp Eq a b = Right $ BooleanValue $ a == b
 applyOp Less (IntegerValue a) (IntegerValue b)
   = Right $ BooleanValue $ a < b
 applyOp _ _ _ = Left "Invalid operands for operator"
+
+popEnv :: String -> Env -> Either String (VMValue, Env)
+popEnv value env =
+  case Data.Map.lookup value env of
+    Just val -> Right (val, Data.Map.delete value env)
+    Nothing  -> Left "No value to pop from env"
