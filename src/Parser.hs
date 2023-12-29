@@ -1,8 +1,8 @@
 {-
 -- EPITECH PROJECT, 2023
--- glados
+-- Glados
 -- File description:
--- parser
+-- Parser
 -}
 
 module Parser
