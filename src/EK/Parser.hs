@@ -14,7 +14,7 @@ import EK.ExprParser
 import Parser
 import Token
 import EK.TokenParser
-import Control.Monad (liftM2)
+import Control.Monad (liftM2, liftM3)
 
 parseDocument :: [Token] -> Either String [TotalStmt]
 parseDocument tokens = runParser document tokens >>= parseExprs . fst
@@ -71,7 +71,7 @@ externDef = parseTokenType ExternKw >> parseTokenType FnKw >> ExternDef <$> func
 --- Function pattern
 
 funcPattern :: Parser Token FuncPattern
-funcPattern = liftM2 FuncPattern (some funcPatternItem) (optional typed)
+funcPattern = liftM3 FuncPattern (some funcPatternItem) (optional typed) (optional precedenceClause)
 
 funcPatternItem :: Parser Token FuncPatternItem
 funcPatternItem = placeholder PlaceholderPattern <|> (SymbolPattern <$> identifier) <|> argumentPatternItem
@@ -83,6 +83,9 @@ argumentPatternItem = do
   t <- optional typed
   parseTokenType ParenClose
   return $ ArgPattern name t
+
+precedenceClause :: Parser Token Prec
+precedenceClause = parseTokenType PrecedenceKw >> fromInteger <$> intLiteral
 
 --- Types
 
