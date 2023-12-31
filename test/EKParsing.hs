@@ -214,4 +214,52 @@ tests = test
                      ]
                     )
                   ]
+  , "precedence, + and * with parens" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "*", tkt UnderScore, tkt PrecedenceKw, int 7
+          , tkt ExternKw, tkt FnKw, tkt UnderScore, idt "+", tkt UnderScore, tkt PrecedenceKw, int 6
+          , tkt FnKw, idt "test", tkt Equal, int 1, idt "+", int 2, idt "*", tkt ParenOpen, int 3, idt "+", int 4, tkt ParenClose
+          ]
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "*", PlaceholderPattern] Nothing (Just 7))
+                  , ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern] Nothing (Just 6))
+                  , FuncDef (pat [SymbolPattern "test"])
+                    (Call ("_ + _" `precedence` 6)
+                     [ ExprCall $ IntegerLit 1
+                     , ExprCall $ Call ("_ * _" `precedence` 7)
+                       [ ExprCall $ IntegerLit 2
+                       , ExprCall $ Call ("_ + _" `precedence` 6)
+                         [ ExprCall $ IntegerLit 3
+                         , ExprCall $ IntegerLit 4
+                         ]
+                       ]
+                     ]
+                    )
+                  ]
+  , "precedence, boolean not and and" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "and", tkt UnderScore, tkt PrecedenceKw, int 3
+          , tkt ExternKw, tkt FnKw, idt "not", tkt UnderScore
+          , tkt FnKw, idt "test", tkt Equal, idt "not", int 1, idt "and", int 2
+          ]
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "and", PlaceholderPattern] Nothing (Just 3))
+                  , ExternDef (pat [SymbolPattern "not", PlaceholderPattern])
+                  , FuncDef (pat [SymbolPattern "test"])
+                    (Call ("_ and _" `precedence` 3)
+                     [ ExprCall $ Call "not _" [ExprCall $ IntegerLit 1]
+                     , ExprCall $ IntegerLit 2
+                     ]
+                    )
+                  ]
+  , "precedence, boolean not and and, loose not" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "and", tkt UnderScore, tkt PrecedenceKw, int 3
+          , tkt ExternKw, tkt FnKw, idt "not", tkt UnderScore, tkt PrecedenceKw, int 2
+          , tkt FnKw, idt "test", tkt Equal, idt "not", int 1, idt "and", int 2
+          ]
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "and", PlaceholderPattern] Nothing (Just 3))
+                  , ExternDef (FuncPattern [SymbolPattern "not", PlaceholderPattern] Nothing (Just 2))
+                  , FuncDef (pat [SymbolPattern "test"])
+                    (Call ("not _" `precedence` 2)
+                     [ ExprCall $ Call ("_ and _" `precedence` 3)
+                       [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2]
+                     ]
+                    )
+                  ]
   ]

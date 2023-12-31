@@ -59,8 +59,8 @@ parsePrec :: [FuncItem] -> Int -> Parser Token Expr
 parsePrec fi prec = primItem fi <|> parsePrefix fi fi prec >>= parseInfix fi fi prec
 
 parsePrefix :: [FuncItem] -> [FuncItem] -> Int -> Parser Token CallItem
-parsePrefix fi (fname@(FunctionName (Symbol s:ss) _):fis) prec
-  = (ExprCall <$> (identifierExact s >> Call fname <$> parseFollowUp fi ss prec)) <|> parsePrefix fi fis prec
+parsePrefix fi (fname@(FunctionName (Symbol s:ss) fnprec):fis) prec
+  = (ExprCall <$> (identifierExact s >> Call fname <$> parseFollowUp fi ss (max prec fnprec))) <|> parsePrefix fi fis prec
 parsePrefix fi (_:fis) prec = parsePrefix fi fis prec
 parsePrefix _ [] _ = fail "Could not resolve expression"
 
