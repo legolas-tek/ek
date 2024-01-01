@@ -37,7 +37,10 @@ operatorIdentifier :: Parser Token String
 operatorIdentifier = lexeme <$> parseTokenType OperatorIdentifier
 
 identifier :: Parser Token String
-identifier = textIdentifier <|> operatorIdentifier
+identifier = textIdentifier <|> operatorIdentifier <|> bracketIdentifier
+
+bracketIdentifier :: Parser Token String
+bracketIdentifier = lexeme <$> (parseTokenType BracketOpen <|> parseTokenType BracketClose)
 
 identifierExact :: String -> Parser Token String
 identifierExact s = identifier >>= \t -> if t == s then return s else fail $ "Expected " ++ s ++ " but found " ++ t
