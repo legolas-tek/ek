@@ -7,6 +7,7 @@
 
 module Parser
   ( Parser(..)
+  , parseOneIf
   , parseChar
   , parseAnyChar
   , parseAnyButChar
@@ -20,12 +21,14 @@ module Parser
   , mapError
   , some
   , many
+  , optional
   , (<|>)
   ) where
 
 import Control.Applicative
   ( Applicative(liftA2)
   , Alternative((<|>), some, many, empty)
+  , optional
   )
 import Control.Monad((>=>), MonadPlus)
 import Text.Printf (printf)
@@ -35,29 +38,32 @@ type ParserError = String
 type Parser' inp out = [inp] -> Either ParserError (out, [inp])
 newtype Parser inp out  = Parser { runParser :: Parser' inp out }
 
-parseOneIf :: (Char -> Bool) -> Parser' Char Char
-parseOneIf _ [] = Left "found EOF"
-parseOneIf predicate (x:xs)
+parseOneIf' :: Show inp => (inp -> Bool) -> Parser' inp inp
+parseOneIf' _ [] = Left "found EOF"
+parseOneIf' predicate (x:xs)
   | predicate x = Right (x, xs)
-  | otherwise   = Left $ "found '" ++ [x] ++ "'"
+  | otherwise   = Left $ "found " ++ show x
+
+parseOneIf :: Show inp => (inp -> Bool) -> Parser inp inp
+parseOneIf predicate = Parser $ parseOneIf' predicate
 
 parseChar :: Char -> Parser Char Char
 parseChar expected
   = printf "Expected '%c' but %s" expected
-    `mapError` Parser (parseOneIf (== expected))
+    `mapError` parseOneIf (== expected)
 
 parseAnyButChar :: Char -> Parser Char Char
 parseAnyButChar expected
   = printf "Unexpected '%c'" expected
-    `mapError` Parser (parseOneIf (/= expected))
+    `mapError` parseOneIf (/= expected)
 
 parseAnyChar :: [Char] -> Parser Char Char
 parseAnyChar allowed
   = printf "Expected one of '%s' but %s" allowed
-    `mapError` Parser (parseOneIf (`elem` allowed))
+    `mapError` parseOneIf (`elem` allowed)
 
 parseAny :: Parser Char Char
-parseAny = Parser $ parseOneIf $ const True
+parseAny = parseOneIf $ const True
 
 parseUInt :: Parser Char Integer
 parseUInt = read <$> some (parseAnyChar ['0'..'9'])
@@ -74,7 +80,7 @@ parseList p = parseChar '(' *> many (spaces >> p) <* spaces <* parseChar ')'
 parseString :: Parser Char [Char]
 parseString = parseChar '"' *> many (parseAnyButChar '"') <* parseChar '"'
 
-parseNot :: Parser Char out -> Parser Char ()
+parseNot :: Parser inp out -> Parser inp ()
 parseNot p = Parser $ \input -> parseNot' input (runParser p input)
   where parseNot' input (Left _) = Right ((), input)
         parseNot' _ _            = Left "Unexpected token"

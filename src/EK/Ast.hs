@@ -15,45 +15,70 @@ module EK.Ast
   , Type(..)
   , FuncPattern(..)
   , FuncPatternItem(..)
+  , patternToName
   ) where
 
 import Data.List (intercalate)
+import Data.String (IsString(..))
 
 data Symbol
   = Symbol String
   | Placeholder
+  deriving (Eq)
 
 newtype FunctionName = FunctionName [Symbol]
+  deriving (Eq)
 
 data Expr
   = IntegerLit Integer
   | StringLit String
   | Call FunctionName [CallItem]
+  deriving (Eq)
 
 data CallItem
   = ExprCall Expr
   | PlaceholderCall
+  deriving (Eq)
 
-data Stmt
+data Stmt expr
   = AtomDef String
   | TypeDef String Type
   | StructDef String [StructElem]
-  | FuncDef FuncPattern Expr
+  | FuncDef FuncPattern expr
   | ExternDef FuncPattern
+  deriving (Eq)
 
 data StructElem = StructElem String Type
+  deriving (Eq)
 
 data Type
   = TypeName String
   | IntRange (Maybe Integer) (Maybe Integer)
   | UnionType Type Type
+  deriving (Eq)
 
-data FuncPattern = FuncPattern [FuncPatternItem] (Maybe Type)
+data FuncPattern = FuncPattern
+  { funcPatternItems :: [FuncPatternItem]
+  , funcPatternType :: Maybe Type
+  } deriving (Eq)
 
 data FuncPatternItem
   = ArgPattern String (Maybe Type)
   | SymbolPattern String
   | PlaceholderPattern
+  deriving (Eq)
+
+patternToName :: FuncPattern -> FunctionName
+patternToName (FuncPattern items _) = FunctionName $ map patternToName' items
+  where
+    patternToName' (ArgPattern _ _) = Placeholder
+    patternToName' (SymbolPattern s) = Symbol s
+    patternToName' PlaceholderPattern = Placeholder
+
+instance IsString FunctionName where
+  fromString str = FunctionName (unshow <$> words str)
+    where unshow "_" = Placeholder
+          unshow s = Symbol s
 
 instance Show FunctionName where
   show (FunctionName symbols) = unwords (show <$> symbols)
@@ -74,14 +99,14 @@ showCall (Placeholder:xs) (PlaceholderCall:is) = "_" : showCall xs is
 showCall [] _ = []
 showCall _ [] = ["#error#"]
 
-instance Show Stmt where
+instance Show expr => Show (Stmt expr) where
   show (AtomDef s) = "atom " ++ s
   show (TypeDef s t) = "type " ++ s ++ " = " ++ show t
   show (StructDef s []) = "struct " ++ s ++ " {}"
   show (StructDef s elems) = "struct " ++ s ++ " { " ++ intercalate ", " (show <$> elems) ++ " }"
   show (FuncDef pattern expr) = "fn " ++ show pattern ++ " = " ++ show expr
   show (ExternDef pattern) = "extern fn " ++ show pattern
-  
+
 instance Show StructElem where
   show (StructElem s t) = s ++ " : " ++ show t
 
@@ -96,9 +121,27 @@ instance Show Type where
 instance Show FuncPattern where
   show (FuncPattern items (Just t)) = unwords (show <$> items) ++ " : " ++ show t
   show (FuncPattern items Nothing) = unwords (show <$> items)
-  
+
 instance Show FuncPatternItem where
   show (ArgPattern s (Just t)) = "(" ++ s ++ " : " ++ show t ++ ")"
   show (ArgPattern s Nothing) = "(" ++ s ++ ")"
   show (SymbolPattern s) = s
   show PlaceholderPattern = "_"
+
+instance Functor Stmt where
+  fmap f (FuncDef pat expr) = FuncDef pat (f expr)
+  fmap _ (AtomDef s) = AtomDef s
+  fmap _ (TypeDef s t) = TypeDef s t
+  fmap _ (StructDef s elems) = StructDef s elems
+  fmap _ (ExternDef pat) = ExternDef pat
+
+instance Traversable Stmt where
+  traverse f (FuncDef pat expr) = FuncDef pat <$> f expr
+  traverse _ (AtomDef s) = pure $ AtomDef s
+  traverse _ (TypeDef s t) = pure $ TypeDef s t
+  traverse _ (StructDef s elems) = pure $ StructDef s elems
+  traverse _ (ExternDef pat) = pure $ ExternDef pat
+
+instance Foldable Stmt where
+  foldMap f (FuncDef _ expr) = f expr
+  foldMap _ _ = mempty
