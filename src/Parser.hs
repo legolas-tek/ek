@@ -17,6 +17,7 @@ module Parser
   , parseUInt
   , spaces
   , parseList
+  , parseStringLit
   , parseString
   , parseNot
   , mapError
@@ -62,6 +63,11 @@ parseChar expected
   = printf "Expected '%c' but %s" expected
     `mapError` parseOneIf (== expected)
 
+parseString :: [Char] -> Parser Char [Char]
+parseString expected
+  = printf "Expected \"%s\" but %s" expected
+    `mapError` traverse parseChar expected
+
 parseAnyButChar :: Char -> Parser Char Char
 parseAnyButChar expected
   = printf "Unexpected '%c'" expected
@@ -87,8 +93,8 @@ spaces = many $ parseAnyChar " \t\n"
 parseList :: Parser Char out -> Parser Char [out]
 parseList p = parseChar '(' *> many (spaces >> p) <* spaces <* parseChar ')'
 
-parseString :: Parser Char [Char]
-parseString = parseChar '"' *> many (parseAnyButChar '"') <* parseChar '"'
+parseStringLit :: Parser Char [Char]
+parseStringLit = parseChar '"' *> many (parseAnyButChar '"') <* parseChar '"'
 
 parseNot :: Parser inp out -> Parser inp ()
 parseNot p = Parser $ \sourcePos input -> parseNot' sourcePos input (runParser' p sourcePos input)
