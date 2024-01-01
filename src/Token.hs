@@ -33,6 +33,7 @@ data TokenType = AtomKw
                | StringLiter
                | TextIdentifier
                | OperatorIdentifier
+               | Arrow
                deriving (Show, Eq)
 
 data Token = Token { lexeme  :: String
