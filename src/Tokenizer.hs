@@ -16,66 +16,73 @@ import Data.Char (isLetter)
 
 -- Identify the token type
 
-parseCurlyOpen :: Parser Char TokenType
-parseCurlyOpen = parseChar '{' >> return CurlyOpen
+parseCurlyOpen :: Parser Char (String, TokenType)
+parseCurlyOpen = parseChar '{' >> return ("{", CurlyOpen)
 
-parseCurlyClose :: Parser Char TokenType
-parseCurlyClose = parseChar '}' >> return CurlyClose
+parseCurlyClose :: Parser Char (String, TokenType)
+parseCurlyClose = parseChar '}' >> return ("}", CurlyClose)
 
-parseComma :: Parser Char TokenType
-parseComma = parseChar ',' >> return Comma
+parseComma :: Parser Char (String, TokenType)
+parseComma = parseChar ',' >> return (",", Comma)
 
-parseUnderscore :: Parser Char TokenType
-parseUnderscore = parseChar '_' >> return UnderScore
+parseUnderscore :: Parser Char (String, TokenType)
+parseUnderscore = parseChar '_' >> return ("_", UnderScore)
 
-parseParenOpen :: Parser Char TokenType
-parseParenOpen = parseChar '(' >> return ParenOpen
+parseParenOpen :: Parser Char (String, TokenType)
+parseParenOpen = parseChar '(' >> return ("(", ParenOpen)
 
-parseParenClose :: Parser Char TokenType
-parseParenClose = parseChar ')' >> return ParenClose
+parseParenClose :: Parser Char (String, TokenType)
+parseParenClose = parseChar ')' >> return (")", ParenClose)
 
-parseColon :: Parser Char TokenType
-parseColon = parseChar ':' >> return Colon
+parseColon :: Parser Char (String, TokenType)
+parseColon = parseChar ':' >> return (":", Colon)
 
-parseColonColon :: Parser Char TokenType
-parseColonColon = parseString "::" >> return ColonColon
+parseColonColon :: Parser Char (String, TokenType)
+parseColonColon = parseString "::" >> return ("::", ColonColon)
 
-parseBracketOpen :: Parser Char TokenType
-parseBracketOpen = parseChar '[' >> return BracketOpen
+parseBracketOpen :: Parser Char (String, TokenType)
+parseBracketOpen = parseChar '[' >> return ("[", BracketOpen)
 
-parseBracketClose :: Parser Char TokenType
-parseBracketClose = parseChar ']' >> return BracketClose
+parseBracketClose :: Parser Char (String, TokenType)
+parseBracketClose = parseChar ']' >> return ("]", BracketClose)
 
-parseIntLiter :: Parser Char TokenType
-parseIntLiter = parseInt >> return IntLiter
+parseIntLiter :: Parser Char (String, TokenType)
+parseIntLiter = parseInt >>= \integer -> return (show integer, IntLiter)
 
-parseStringLiter :: Parser Char TokenType
-parseStringLiter = parseStringLit >> return StringLiter
+parseStringLiter :: Parser Char (String, TokenType)
+parseStringLiter = parseStringLit >>= \string -> return (string, StringLiter)
 
-parseTextIdentifer :: Parser Char TokenType
+parseTextIdentifer :: Parser Char (String, TokenType)
 parseTextIdentifer = many (parseOneIf isLetter) >>= \identifier -> return $ case identifier of
-    "atom" -> AtomKw
-    "struct" -> StructKw
-    "type" -> TypeKw
-    "fn" -> FnKw
-    "extern" -> ExternKw
-    _ -> TextIdentifier
+    "atom" -> ("atom", AtomKw)
+    "struct" -> ("struct", StructKw)
+    "type" -> ("type", TypeKw)
+    "fn" -> ("fn", FnKw)
+    "extern" -> ("extern", ExternKw)
+    _ -> (identifier, TextIdentifier)
 
-parseOperatorId :: Parser Char TokenType
+parseOperatorId :: Parser Char (String, TokenType)
 parseOperatorId = many (parseOneIf (`elem` ".=/-+*!?%<>&|^~")) >>= \identifier -> return $ case identifier of
-    "=" -> Equal
-    "|" -> Pipe
-    ".." -> DotDot
-    "->" -> Arrow
-    _ -> OperatorIdentifier
+    "=" -> ("=", Equal)
+    "|" -> ("|", Pipe)
+    ".." -> ("..", DotDot)
+    "->" -> ("->", Arrow)
+    _ -> (identifier, OperatorIdentifier)
 
 
 -- Tokenizer
 
-tokenType :: Parser Char TokenType
-tokenType = parseCurlyOpen <|> parseCurlyClose <|> parseComma <|> parseUnderscore <|> parseParenOpen
+findTokenType :: Parser Char (String, TokenType)
+findTokenType = parseCurlyOpen <|> parseCurlyClose <|> parseComma <|> parseUnderscore <|> parseParenOpen
     <|> parseParenClose <|> parseColonColon <|> parseColon <|> parseBracketOpen
     <|> parseBracketClose <|> parseIntLiter <|> parseStringLiter <|> parseTextIdentifer <|> parseOperatorId
+
+token :: Parser Char Token
+token = do
+    _ <- useless
+    pos <- getPos
+    tokenT <- findTokenType
+    return $ Token (fst tokenT) pos (snd tokenT)
 
 -- Handling of useless characters, comments and line comments
 
@@ -97,4 +104,3 @@ commentContent = comment <|> nonComment
 
 commentEnd :: Parser Char Char
 commentEnd = parseChar '*' >> parseChar '/'
-
