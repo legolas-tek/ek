@@ -68,6 +68,16 @@ parseString expected
   = printf "Expected \"%s\" but %s" expected
     `mapError` traverse parseChar expected
 
+parseEscapedChar :: Parser Char Char
+parseEscapedChar = parseChar '\\' *>
+  (   parseChar '0' *> return '\0'
+  <|> parseChar '\\' *> return '\\'
+  <|> parseChar '"' *> return '\"'
+  <|> parseChar 't' *> return '\t'
+  <|> parseChar 'n' *> return '\n'
+  <|> parseChar 'r' *> return '\r'
+  )
+
 parseAnyButChar :: Char -> Parser Char Char
 parseAnyButChar expected
   = printf "Unexpected '%c'" expected
@@ -93,8 +103,8 @@ spaces = many $ parseAnyChar " \t\n"
 parseList :: Parser Char out -> Parser Char [out]
 parseList p = parseChar '(' *> many (spaces >> p) <* spaces <* parseChar ')'
 
-parseStringLit :: Parser Char [Char]
-parseStringLit = parseChar '"' *> many (parseAnyButChar '"') <* parseChar '"'
+parseStringLit :: Parser Char String
+parseStringLit = parseChar '"' *> many (parseEscapedChar <|> parseAnyButChar '"') <* parseChar '"'
 
 parseNot :: Parser inp out -> Parser inp ()
 parseNot p = Parser $ \sourcePos input -> parseNot' sourcePos input (runParser' p sourcePos input)
