@@ -15,6 +15,7 @@ data TokenType = AtomKw
                | TypeKw
                | FnKw
                | ExternKw
+               | LazyKw
                | Equal
                | CurlyOpen
                | CurlyClose

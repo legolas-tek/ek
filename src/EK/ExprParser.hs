@@ -33,7 +33,7 @@ parseBody :: [PartialStmt] -> PartialStmt -> Either String TotalStmt
 parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ funcItems partials) body
   where
     args = funcPatternItems pat >>= argFuncItems
-    argFuncItems (ArgPattern s _) = [FunctionName [Symbol s]]
+    argFuncItems (ArgPattern _ s _) = [FunctionName [Symbol s]]
     argFuncItems PlaceholderPattern = []
     argFuncItems (SymbolPattern _) = []
 

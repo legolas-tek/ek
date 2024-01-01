@@ -63,7 +63,7 @@ data FuncPattern = FuncPattern
   } deriving (Eq)
 
 data FuncPatternItem
-  = ArgPattern String (Maybe Type)
+  = ArgPattern Bool String (Maybe Type)
   | SymbolPattern String
   | PlaceholderPattern
   deriving (Eq)
@@ -71,7 +71,7 @@ data FuncPatternItem
 patternToName :: FuncPattern -> FunctionName
 patternToName (FuncPattern items _) = FunctionName $ map patternToName' items
   where
-    patternToName' (ArgPattern _ _) = Placeholder
+    patternToName' (ArgPattern _ _ _) = Placeholder
     patternToName' (SymbolPattern s) = Symbol s
     patternToName' PlaceholderPattern = Placeholder
 
@@ -123,8 +123,8 @@ instance Show FuncPattern where
   show (FuncPattern items Nothing) = unwords (show <$> items)
 
 instance Show FuncPatternItem where
-  show (ArgPattern s (Just t)) = "(" ++ s ++ " : " ++ show t ++ ")"
-  show (ArgPattern s Nothing) = "(" ++ s ++ ")"
+  show (ArgPattern lazy s (Just t)) = "(" ++ (if lazy then "lazy " else "") ++ s ++ " : " ++ show t ++ ")"
+  show (ArgPattern lazy s Nothing) = "(" ++ (if lazy then "lazy " else "") ++ s ++ ")"
   show (SymbolPattern s) = s
   show PlaceholderPattern = "_"
 
