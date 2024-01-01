@@ -1,0 +1,45 @@
+//
+// EPITECH PROJECT, 2024
+// Glados
+// File description:
+// EK Standard library - std
+//
+
+import bool
+import builtins
+
+fn (f) $ _ precedence 0 = f
+
+fn _ + _ precedence 6 = builtin add
+fn _ - _ precedence 6 = builtin sub
+fn _ * _ precedence 7 = builtin mul
+fn _ / _ precedence 7 = builtin div
+
+fn not (a) = (a == false)
+
+fn _ == _ precedence 4 = builtin eq
+fn (a) != (b) precedence 4 = not (a == b)
+fn _ < _ precedence 4 = builtin lt
+fn _ > _ precedence 4 = builtin gt
+fn (a) <= (b) precedence 4 = not (a > b)
+fn (a) >= (b) precedence 4 = not (a < b)
+
+fn (a) && (lazy b) precedence 3 = if a then b else false
+fn (a) || (lazy b) precedence 2 = if a then true else b
+
+fn if _ then _ else _ precedence 1 = builtin if
+
+fn (a) >> (b) precedence 1 = b
+
+fn print _ = builtin print
+fn exit _ = builtin exit
+
+fn panic (str) = print str >> exit 1
+
+fn assert (cond) message (str) = if cond then void else panic str
+
+fn clamp (val) min (min) max (max) precedence 5 = if val < min then min else if val > max then max else val
+
+fn (a) min (b) precedence 4 = if a < b then a else b
+fn (a) max (b) precedence 4 = if a > b then a else b
+
