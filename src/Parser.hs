@@ -47,7 +47,14 @@ parseChar expected
     `mapError` Parser (parseOneIf (== expected))
 
 parseEscapedChar :: Parser Char Char
-parseEscapedChar = parseChar '\\' *> parseChar '"'
+parseEscapedChar = parseChar '\\' *>
+  (   parseChar '0' *> return '\0'
+  <|> parseChar '\\' *> return '\\'
+  <|> parseChar '"' *> return '\"'
+  <|> parseChar 't' *> return '\t'
+  <|> parseChar 'n' *> return '\n'
+  <|> parseChar 'r' *> return '\r'
+  )
 
 parseAnyButChar :: Char -> Parser Char Char
 parseAnyButChar expected
