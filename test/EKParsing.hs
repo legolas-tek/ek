@@ -262,4 +262,20 @@ tests = test
                      ]
                     )
                   ]
+  , "precedence with if and eq" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "eq", tkt UnderScore, tkt PrecedenceKw, int 4
+          , tkt ExternKw, tkt FnKw, idt "if", tkt UnderScore, idt "then", tkt UnderScore, idt "else", tkt UnderScore, tkt PrecedenceKw, int 1
+          , tkt FnKw, idt "test", tkt Equal, idt "if", int 1, idt "eq", int 2, idt "then", int 3, idt "else", int 4
+          ]
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "eq", PlaceholderPattern] Nothing (Just 4))
+                  , ExternDef (FuncPattern [SymbolPattern "if", PlaceholderPattern, SymbolPattern "then", PlaceholderPattern, SymbolPattern "else", PlaceholderPattern] Nothing (Just 1))
+                  , FuncDef (pat [SymbolPattern "test"])
+                    (Call ("if _ then _ else _" `precedence` 1)
+                     [ ExprCall $ Call ("_ eq _" `precedence` 4)
+                       [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2]
+                     , ExprCall $ IntegerLit 3
+                     , ExprCall $ IntegerLit 4
+                     ]
+                    )
+                  ]
   ]
