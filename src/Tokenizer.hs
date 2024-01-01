@@ -9,7 +9,7 @@ module Tokenizer
     (
     ) where
 
-import Token (Token(..), TokenType(..))
+import Token
 import Parser
 
 import Data.Char (isLetter)
