@@ -9,9 +9,17 @@ module Tokenizer
     (
     ) where
 
-import Token (Token(..), TokenType)
+import Token (Token(..), TokenType(..))
 import Parser
 
+--tokenizer :: [Char] -> String -> [Token]
+--tokenizer content fileName = parse (tokenize content) fileName
+
+--parseCurlyOpen :: Parser Char Token
+--parseCurlyOpen = parseChar '{' >> return (Token {lexeme = , tokenType = CurlyOpen})
+
+--token :: Parser Char Token
+--token = useless >> parseAtomKw
 
 useless :: Parser Char [String]
 useless = many ((parseAnyChar " \n\t" >> return "") <|> comment <|> lineComment)

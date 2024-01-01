@@ -9,6 +9,7 @@ module Token
     ( Token(..)
     , TokenType(..)
     ) where
+import SourcePos(Parsable(..))
 
 data TokenType = AtomKw
                | StructKw
@@ -40,3 +41,6 @@ data Token = Token { lexeme  :: String
                    , fileName :: String
                    , tokenType :: TokenType
                    } deriving (Show)
+
+instance Parsable Token where
+    advance sourcePos _ = sourcePos
