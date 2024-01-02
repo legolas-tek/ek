@@ -12,7 +12,6 @@ import Test.HUnit
 import VirtualMachine
 
 import Data.Map (fromList, empty)
-import VirtualMachine (VMValue(AtomValue))
 
 tests :: Test
 tests = test
