@@ -57,23 +57,23 @@ funcItems (AtomDef name : xs) = FunctionName [Symbol name] primaryPrec : funcIte
 funcItems (_ : xs) = funcItems xs
 funcItems [] = []
 
-parsePrec :: [FuncItem] -> Int -> Parser Token Expr
+parsePrec :: [FuncItem] -> Prec -> Parser Token Expr
 parsePrec fi prec = primItem fi <|> parsePrefix fi prec >>= parseInfix fi prec
 
-parsePrefix :: [FuncItem] -> Int -> Parser Token CallItem
+parsePrefix :: [FuncItem] -> Prec -> Parser Token CallItem
 parsePrefix fi prec = getAlt (foldMap (Alt . parsePrefix' fi prec) fi) <|> fail "Could not resolve expression"
 
-parsePrefix' :: [FuncItem] -> Int -> FuncItem -> Parser Token CallItem
+parsePrefix' :: [FuncItem] -> Prec -> FuncItem -> Parser Token CallItem
 parsePrefix' fi prec fname@(FunctionName (Symbol s:ss) fnprec)
   = ExprCall <$> (identifierExact s >> Call fname <$> parseFollowUp fi ss (max prec fnprec))
 parsePrefix' _ _ _ = empty
 
-parseInfix :: [FuncItem] -> Int -> CallItem -> Parser Token Expr
+parseInfix :: [FuncItem] -> Prec -> CallItem -> Parser Token Expr
 parseInfix fi prec initial = getAlt (foldMap (Alt . parseInfix' fi prec initial) fi) <|> noInfix initial
   where noInfix (ExprCall i) = return i
         noInfix PlaceholderCall = fail "Invalid placeholder"
 
-parseInfix' :: [FuncItem] -> Int -> CallItem -> FuncItem -> Parser Token Expr
+parseInfix' :: [FuncItem] -> Prec -> CallItem -> FuncItem -> Parser Token Expr
 parseInfix' fi prec initial fname@(FunctionName (Placeholder:ss) fnprec)
   | prec <= fnprec
   = parseFollowUp fi ss (succ fnprec) >>= (parseInfix fi prec . ExprCall) . Call fname . (initial:)
@@ -81,7 +81,7 @@ parseInfix' fi prec initial fname@(FunctionName (Placeholder:ss) fnprec)
   = empty
 parseInfix' _ _ _ _ = empty
 
-parseFollowUp :: [FuncItem] -> [Symbol] -> Int -> Parser Token [CallItem]
+parseFollowUp :: [FuncItem] -> [Symbol] -> Prec -> Parser Token [CallItem]
 parseFollowUp fi (Symbol s:ss) prec
   = identifierExact s *> parseFollowUp fi ss prec
 parseFollowUp fi (Placeholder:ss) prec = do
