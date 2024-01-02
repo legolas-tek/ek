@@ -52,9 +52,9 @@ exec env (Call:insts) (FunctionValue fn:stack) = exec env fn stack
   >>= \stack' -> exec env insts stack'
 exec _ (Call:_) (OperatorValue _:_) = Left "Not enough arguments for operator"
 exec _ (Call:_) _ = Left "Cannot call value of non-function type"
-exec env (JmpFalse offset:insts) (AtomValue "False":stack)
+exec env (JmpFalse offset:insts) (AtomValue "false":stack)
   = exec env (drop offset insts) stack
-exec env (JmpFalse _:insts) (AtomValue "True":stack) = exec env insts stack
+exec env (JmpFalse _:insts) (AtomValue "true":stack) = exec env insts stack
 exec _ (JmpFalse _:_) _ = Left "Invalid condition"
 exec env (Dup:insts) (v:stack) = exec env insts (v:v:stack)
 exec _ (Dup:_) [] = Left "No value to duplicate"
@@ -76,10 +76,7 @@ applyOp Div (IntegerValue _) (IntegerValue 0)
   = Left "Division by zero"
 applyOp Div (IntegerValue a) (IntegerValue b)
   = Right $ IntegerValue $ a `div` b
-applyOp Eq a b = Right $ AtomValue (if a == b then "True" else "False")
+applyOp Eq a b = Right $ AtomValue (if a == b then "true" else "false")
 applyOp Less (IntegerValue a) (IntegerValue b)
-  = Right $ AtomValue (if a < b then "True" else "False")
+  = Right $ AtomValue (if a < b then "true" else "false")
 applyOp _ _ _ = Left "Invalid operands for operator"
-
--- applyAtomeEq :: IntegerValue -> IntegerValue -> AtomValue
--- applyAtomeEq a b 
