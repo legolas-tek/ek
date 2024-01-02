@@ -28,6 +28,7 @@ tests = test
       show (Call (FunctionName [Placeholder, Symbol "+", Placeholder] defaultPrec) [PlaceholderCall, ExprCall (IntegerLit 1)]) @?= "_ + (1)"
   , "type def" ~: do
       show' (AtomDef "foo") @?= "atom foo"
+      show' (ImportDef "foo") @?= "import foo"
       show' (TypeDef "foo" (TypeName "bar")) @?= "type foo = bar"
       show' (TypeDef "foo" (IntRange (Just 0) (Just 42))) @?= "type foo = [0..42]"
       show' (TypeDef "uint" (IntRange (Just 0) Nothing)) @?= "type uint = [0..]"
