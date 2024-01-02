@@ -15,7 +15,7 @@ module Tokenizer
 import Token
 import Parser
 
-import Data.Char (isLetter, toUpper)
+import Data.Char (isLetter)
 
 type TokenizerError = String
 
