@@ -50,7 +50,7 @@ getPos :: Parser inp SourcePos
 getPos = Parser $ \sourcePos input -> Right (sourcePos, input, sourcePos)
 
 eof :: (Show inp, Parsable inp) => Parser inp ()
-eof = const "Unexpected trailing token" `mapError` parseNot (parseOneIf $ const True)
+eof = parseNot (parseOneIf $ const True) <|> fail "Unexpected trailing token"
 
 runParser :: Parser inp out -> [inp] -> Either ParserError (out, [inp])
 runParser (Parser p) input = p (SourcePos "" 1 1) input >>= \(x, rest, _) -> Right (x, rest)
@@ -72,7 +72,7 @@ parseChar expected
   = printf "Expected '%c' but %s" expected
     `mapError` parseOneIf (== expected)
 
-parseString :: [Char] -> Parser Char [Char]
+parseString :: String -> Parser Char [Char]
 parseString expected
   = printf "Expected \"%s\" but %s" expected
     `mapError` traverse parseChar expected

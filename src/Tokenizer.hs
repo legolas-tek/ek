@@ -64,21 +64,23 @@ parseStringLiter :: Parser Char (String, TokenType)
 parseStringLiter = parseStringLit >>= \string -> return (string, StringLiter)
 
 parseTextIdentifer :: Parser Char (String, TokenType)
-parseTextIdentifer = many (parseOneIf isLetter) >>= \identifier -> return $ case identifier of
-    "atom" -> ("atom", AtomKw)
-    "struct" -> ("struct", StructKw)
-    "type" -> ("type", TypeKw)
-    "fn" -> ("fn", FnKw)
-    "extern" -> ("extern", ExternKw)
-    _ -> (identifier, TextIdentifier)
+parseTextIdentifer = many (parseOneIf isLetter) >>= identify
+  where identify identifier = return (identifier, case identifier of
+          "atom" -> AtomKw
+          "struct" -> StructKw
+          "type" -> TypeKw
+          "fn" -> FnKw
+          "extern" -> ExternKw
+          _ -> TextIdentifier)
 
 parseOperatorId :: Parser Char (String, TokenType)
-parseOperatorId = many (parseOneIf (`elem` ".=/-+*!?%<>&|^~")) >>= \identifier -> return $ case identifier of
-    "=" -> ("=", Equal)
-    "|" -> ("|", Pipe)
-    ".." -> ("..", DotDot)
-    "->" -> ("->", Arrow)
-    _ -> (identifier, OperatorIdentifier)
+parseOperatorId = many (parseOneIf (`elem` ".=/-+*!?%<>&|^~")) >>= identify
+  where identify identifier = return (identifier, case identifier of
+          "=" -> Equal
+          "|" -> Pipe
+          ".." -> DotDot
+          "->" -> Arrow
+          _ -> OperatorIdentifier)
 
 
 -- Tokenizer
@@ -101,7 +103,7 @@ useless :: Parser Char [String]
 useless = many ((parseAnyChar " \n\t" >> return "") <|> comment <|> lineComment)
 
 lineComment :: Parser Char String
-lineComment = parseChar '/' >> parseChar '/' >> many (parseAnyButChar '\n') >> return ""
+lineComment = parseString "//" >> many (parseAnyButChar '\n') >> return ""
 
 comment :: Parser Char String
 comment = commentStart >> many commentContent >> commentEnd >> return ""

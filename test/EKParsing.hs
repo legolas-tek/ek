@@ -19,7 +19,7 @@ import SourcePos
 import EK.Ast
 
 tk :: String -> TokenType -> Token
-tk s t = Token s (SourcePos "" 0 0) t
+tk s = Token s (SourcePos "" 0 0)
 
 tkt :: TokenType -> Token
 tkt = tk ""
