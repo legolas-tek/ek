@@ -51,6 +51,3 @@ parseTokenType expected = parseOneIf predicate
 parseNotStmtStart :: Parser Token Token
 parseNotStmtStart = parseOneIf predicate
   where predicate (Token { tokenType = tt }) = tt /= AtomKw && tt /= TypeKw && tt /= StructKw && tt /= FnKw && tt /= ExternKw
-
-eof :: Parser Token ()
-eof = const "Unexpected trailing token" `mapError` parseNot (parseOneIf $ const True)
