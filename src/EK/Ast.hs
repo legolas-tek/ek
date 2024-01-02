@@ -33,6 +33,7 @@ data Expr
   = IntegerLit Integer
   | StringLit String
   | Call FunctionName [CallItem]
+  | StructLit String [Expr]
   deriving (Eq)
 
 data CallItem
@@ -91,6 +92,7 @@ instance Show Expr where
   show (IntegerLit i) = show i
   show (StringLit s) = show s
   show (Call (FunctionName name) items) = unwords $ showCall name items
+  show (StructLit s elems) = s ++ " { " ++ intercalate ", " (show <$> elems) ++ " }"
 
 showCall :: [Symbol] -> [CallItem] -> [String]
 showCall ((Symbol s):xs) i = s : showCall xs i
