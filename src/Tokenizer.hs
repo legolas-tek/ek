@@ -76,6 +76,7 @@ identifyKw "struct" = StructKw
 identifyKw "type" = TypeKw
 identifyKw "fn" = FnKw
 identifyKw "extern" = ExternKw
+identifyKw "precedence" = PrecedenceKw
 identifyKw _ = TextIdentifier
 
 parseOperatorId :: Parser Char (String, TokenType)
