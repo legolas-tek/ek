@@ -14,6 +14,7 @@ import qualified Executing
 import qualified EKAstShowing
 import qualified EKParsing
 import qualified EKTyping
+import qualified Tokenizing
 
 tests :: Test
 tests = test
@@ -24,6 +25,7 @@ tests = test
   , "EK Ast Show" ~: EKAstShowing.tests
   , "EK Parsing" ~: EKParsing.tests
   , "EK Typing" ~: EKTyping.tests
+  , "Tokenize" ~: Tokenizing.tests
   ]
 
 main :: IO ()

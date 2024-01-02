@@ -10,6 +10,8 @@ module Token
     , TokenType(..)
     ) where
 
+import SourcePos
+
 data TokenType = AtomKw
                | StructKw
                | TypeKw
@@ -32,11 +34,13 @@ data TokenType = AtomKw
                | StringLiter
                | TextIdentifier
                | OperatorIdentifier
+               | Arrow
                deriving (Show, Eq)
 
 data Token = Token { lexeme  :: String
-                   , line :: Int
-                   , column :: Int
-                   , fileName :: String
+                   , sourcePos :: SourcePos
                    , tokenType :: TokenType
-                   } deriving (Show)
+                   } deriving (Show, Eq)
+
+instance Parsable Token where
+    advance _ = sourcePos
