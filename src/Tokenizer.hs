@@ -114,12 +114,12 @@ lineComment = parseString "//" >> many (parseAnyButChar '\n') >> return ""
 comment :: Parser Char String
 comment = commentStart >> many commentContent >> commentEnd >> return ""
 
-commentStart :: Parser Char Char
-commentStart = parseChar '/' >> parseChar '*'
+commentStart :: Parser Char String
+commentStart = parseString "/*"
 
 commentContent :: Parser Char String
 commentContent = comment <|> nonComment
   where nonComment = parseNot commentEnd >> parseAny >> return ""
 
-commentEnd :: Parser Char Char
-commentEnd = parseChar '*' >> parseChar '/'
+commentEnd :: Parser Char String
+commentEnd = parseString "*/"

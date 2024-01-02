@@ -23,6 +23,7 @@ tests = test
                 Token "=" (SourcePos "tokenize.hs" 1 8) Equal,
                 Token "2" (SourcePos "tokenize.hs" 1 10) IntLiter
                 ]
+
         tokenizer "tokenize.hs" "fn two = 2\nfn name = \"Jeremy\""
             @?= Right [Token "fn" (SourcePos "tokenize.hs" 1 1) FnKw,
                 Token "two" (SourcePos "tokenize.hs" 1 4) TextIdentifier,
@@ -33,6 +34,7 @@ tests = test
                 Token "=" (SourcePos "tokenize.hs" 2 9) Equal,
                 Token "Jeremy" (SourcePos "tokenize.hs" 2 11) StringLiter
                 ]
+
         tokenizer "tokenize.hs" "fn array = [1,2,3,4]"
             @?= Right [Token "fn" (SourcePos "tokenize.hs" 1 1) FnKw,
                 Token "array" (SourcePos "tokenize.hs" 1 4) TextIdentifier,
@@ -47,6 +49,31 @@ tests = test
                 Token "4" (SourcePos "tokenize.hs" 1 19) IntLiter,
                 Token "]" (SourcePos "tokenize.hs" 1 20) BracketClose
                 ]
+
+        tokenizer "tokenize.hs" "fn _ + _ precedence 6 = builtin add"
+            @?= Right [Token "fn" (SourcePos "tokenize.hs" 1 1) FnKw,
+                Token "_" (SourcePos "tokenize.hs" 1 4) UnderScore,
+                Token "+" (SourcePos "tokenize.hs" 1 6) OperatorIdentifier,
+                Token "_" (SourcePos "tokenize.hs" 1 8) UnderScore,
+                Token "precedence" (SourcePos "tokenize.hs" 1 10) TextIdentifier,
+                Token "6" (SourcePos "tokenize.hs" 1 21) IntLiter,
+                Token "=" (SourcePos "tokenize.hs" 1 23) Equal,
+                Token "builtin" (SourcePos "tokenize.hs" 1 25) TextIdentifier,
+                Token "add" (SourcePos "tokenize.hs" 1 33) TextIdentifier
+                ]
+
+        tokenizer "tokenize.hs" "fn tuple = (1,2,3)"
+            @?= Right [Token "fn" (SourcePos "tokenize.hs" 1 1) FnKw,
+                Token "tuple" (SourcePos "tokenize.hs" 1 4) TextIdentifier,
+                Token "=" (SourcePos "tokenize.hs" 1 10) Equal,
+                Token "(" (SourcePos "tokenize.hs" 1 12) ParenOpen,
+                Token "1" (SourcePos "tokenize.hs" 1 13) IntLiter,
+                Token "," (SourcePos "tokenize.hs" 1 14) Comma,
+                Token "2" (SourcePos "tokenize.hs" 1 15) IntLiter,
+                Token "," (SourcePos "tokenize.hs" 1 16) Comma,
+                Token "3" (SourcePos "tokenize.hs" 1 17) IntLiter,
+                Token ")" (SourcePos "tokenize.hs" 1 18) ParenClose
+                ]
     , "tokenizerWithComments" ~: do
         tokenizer "comments.hs" "fn two = 2\n//fn name = \"Jeremy\""
             @?= Right [Token "fn" (SourcePos "comments.hs" 1 1) FnKw,
@@ -54,6 +81,7 @@ tests = test
                 Token "=" (SourcePos "comments.hs" 1 8) Equal,
                 Token "2" (SourcePos "comments.hs" 1 10) IntLiter
                 ]
+
         tokenizer "comments.hs" "fn two = 2\n//fn name = \"Jeremy\"\nfn name = \"Jeremy\""
             @?= Right [Token "fn" (SourcePos "comments.hs" 1 1) FnKw,
                 Token "two" (SourcePos "comments.hs" 1 4) TextIdentifier,
@@ -64,6 +92,7 @@ tests = test
                 Token "=" (SourcePos "comments.hs" 3 9) Equal,
                 Token "Jeremy" (SourcePos "comments.hs" 3 11) StringLiter
                 ]
+
         tokenizer "comments.hs" "/* fn two = 2\nfn name = \"Jeremy\" */\nfn name = \"Jeremy\""
             @?= Right [Token "fn" (SourcePos "comments.hs" 3 1) FnKw,
                 Token "name" (SourcePos "comments.hs" 3 4) TextIdentifier,
@@ -154,5 +183,27 @@ tests = test
                 Token "true" (SourcePos "kw.hs" 1 13) TextIdentifier,
                 Token "|" (SourcePos "kw.hs" 1 18) Pipe,
                 Token "false" (SourcePos "kw.hs" 1 20) TextIdentifier
+                ]
+
+        tokenizer "kw.hs" "type strFn = string -> string"
+            @?= Right [Token "type" (SourcePos "kw.hs" 1 1) TypeKw,
+                Token "strFn" (SourcePos "kw.hs" 1 6) TextIdentifier,
+                Token "=" (SourcePos "kw.hs" 1 12) Equal,
+                Token "string" (SourcePos "kw.hs" 1 14) TextIdentifier,
+                Token "->" (SourcePos "kw.hs" 1 21) Arrow,
+                Token "string" (SourcePos "kw.hs" 1 24) TextIdentifier
+                ]
+
+        tokenizer "kw.hs" "extern fn builtin add: int -> int -> int"
+            @?= Right [Token "extern" (SourcePos "kw.hs" 1 1) ExternKw,
+                Token "fn" (SourcePos "kw.hs" 1 8) FnKw,
+                Token "builtin" (SourcePos "kw.hs" 1 11) TextIdentifier,
+                Token "add" (SourcePos "kw.hs" 1 19) TextIdentifier,
+                Token ":" (SourcePos "kw.hs" 1 22) Colon,
+                Token "int" (SourcePos "kw.hs" 1 24) TextIdentifier,
+                Token "->" (SourcePos "kw.hs" 1 28) Arrow,
+                Token "int" (SourcePos "kw.hs" 1 31) TextIdentifier,
+                Token "->" (SourcePos "kw.hs" 1 35) Arrow,
+                Token "int" (SourcePos "kw.hs" 1 38) TextIdentifier
                 ]
     ]
