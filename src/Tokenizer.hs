@@ -9,13 +9,13 @@
 
 module Tokenizer
     (
-    tokenizer
+    tokenizer,
     ) where
 
 import Token
 import Parser
 
-import Data.Char (isLetter)
+import Data.Char (isLetter, toUpper)
 
 type TokenizerError = String
 
@@ -67,22 +67,27 @@ parseStringLiter :: Parser Char (String, TokenType)
 parseStringLiter = parseStringLit >>= \string -> return (string, StringLiter)
 
 parseTextIdentifer :: Parser Char (String, TokenType)
-parseTextIdentifer = many (parseOneIf isLetter) >>= identify
-  where identify "atom" = return ("atom", AtomKw)
-        identify "struct" = return ("struct", StructKw)
-        identify "type" = return ("type", TypeKw)
-        identify "fn" = return ("fn", FnKw)
-        identify "extern" = return ("extern", ExternKw)
-        identify identifier = return (identifier, TextIdentifier)
+parseTextIdentifer = some (parseOneIf isLetter) >>= tup
+  where tup identifier = return (identifier, identifyKw identifier)
+
+identifyKw :: String -> TokenType
+identifyKw "atom" = AtomKw
+identifyKw "struct" = StructKw
+identifyKw "type" = TypeKw
+identifyKw "fn" = FnKw
+identifyKw "extern" = ExternKw
+identifyKw _ = TextIdentifier
 
 parseOperatorId :: Parser Char (String, TokenType)
-parseOperatorId = many (parseOneIf (`elem` ".=/-+*!?%<>&|^~")) >>= identify
-  where identify "=" = return ("=", Equal)
-        identify "|" = return ("|", Pipe)
-        identify ".." = return ("..", DotDot)
-        identify "->" = return ("->", Arrow)
-        identify operator = return (operator, OperatorIdentifier)
+parseOperatorId = some (parseOneIf (`elem` ".=/-+*!?%<>&|^~")) >>= tup
+  where tup identifier = return (identifier, identifyOp identifier)
 
+identifyOp :: String -> TokenType
+identifyOp "=" = Equal
+identifyOp "|" = Pipe
+identifyOp ".." = DotDot
+identifyOp "->" = Arrow
+identifyOp _ = OperatorIdentifier
 
 -- Tokenizer
 

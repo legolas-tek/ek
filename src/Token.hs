@@ -40,7 +40,7 @@ data TokenType = AtomKw
 data Token = Token { lexeme  :: String
                    , sourcePos :: SourcePos
                    , tokenType :: TokenType
-                   } deriving (Show)
+                   } deriving (Show, Eq)
 
 instance Parsable Token where
     advance _ = sourcePos

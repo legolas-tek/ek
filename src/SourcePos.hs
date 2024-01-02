@@ -13,7 +13,7 @@ module SourcePos
 data SourcePos = SourcePos { sourceName :: String
                            , sourceLine :: Int
                            , sourceColumn :: Int
-                           }
+                           } deriving (Eq)
 class Parsable a where
     advance :: SourcePos -> a -> SourcePos
 
