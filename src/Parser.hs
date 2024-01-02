@@ -35,11 +35,11 @@ import Control.Applicative
   , Alternative((<|>), some, many, empty)
   , optional
   )
-import Control.Monad(MonadPlus)
+import Control.Monad (MonadPlus)
 import Data.Functor (($>))
 import Text.Printf (printf)
 
-import SourcePos (SourcePos(..), Parsable(..), advance)
+import SourcePos
 
 type ParserError = String
 

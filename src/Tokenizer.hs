@@ -27,35 +27,38 @@ tokenizer = runParserOnFile tokens
 
 -- Identify the token type
 
+extractTokenType :: String -> TokenType -> Parser Char (String, TokenType)
+extractTokenType val tokenTypeVal = parseString val >> return (val, tokenTypeVal)
+
 parseCurlyOpen :: Parser Char (String, TokenType)
-parseCurlyOpen = parseChar '{' >> return ("{", CurlyOpen)
+parseCurlyOpen = extractTokenType "{" CurlyOpen
 
 parseCurlyClose :: Parser Char (String, TokenType)
-parseCurlyClose = parseChar '}' >> return ("}", CurlyClose)
+parseCurlyClose = extractTokenType "}" CurlyClose
 
 parseComma :: Parser Char (String, TokenType)
-parseComma = parseChar ',' >> return (",", Comma)
+parseComma = extractTokenType "," Comma
 
 parseUnderscore :: Parser Char (String, TokenType)
-parseUnderscore = parseChar '_' >> return ("_", UnderScore)
+parseUnderscore = extractTokenType "_" UnderScore
 
 parseParenOpen :: Parser Char (String, TokenType)
-parseParenOpen = parseChar '(' >> return ("(", ParenOpen)
+parseParenOpen = extractTokenType "(" ParenOpen
 
 parseParenClose :: Parser Char (String, TokenType)
-parseParenClose = parseChar ')' >> return (")", ParenClose)
+parseParenClose = extractTokenType ")" ParenClose
 
 parseColon :: Parser Char (String, TokenType)
-parseColon = parseChar ':' >> return (":", Colon)
+parseColon = extractTokenType ":" Colon
 
 parseColonColon :: Parser Char (String, TokenType)
-parseColonColon = parseString "::" >> return ("::", ColonColon)
+parseColonColon = extractTokenType "::" ColonColon
 
 parseBracketOpen :: Parser Char (String, TokenType)
-parseBracketOpen = parseChar '[' >> return ("[", BracketOpen)
+parseBracketOpen = extractTokenType "[" BracketOpen
 
 parseBracketClose :: Parser Char (String, TokenType)
-parseBracketClose = parseChar ']' >> return ("]", BracketClose)
+parseBracketClose = extractTokenType "]" BracketClose
 
 parseIntLiter :: Parser Char (String, TokenType)
 parseIntLiter = parseInt >>= \integer -> return (show integer, IntLiter)
@@ -65,22 +68,20 @@ parseStringLiter = parseStringLit >>= \string -> return (string, StringLiter)
 
 parseTextIdentifer :: Parser Char (String, TokenType)
 parseTextIdentifer = many (parseOneIf isLetter) >>= identify
-  where identify identifier = return (identifier, case identifier of
-          "atom" -> AtomKw
-          "struct" -> StructKw
-          "type" -> TypeKw
-          "fn" -> FnKw
-          "extern" -> ExternKw
-          _ -> TextIdentifier)
+  where identify "atom" = return ("atom", AtomKw)
+        identify "struct" = return ("struct", StructKw)
+        identify "type" = return ("type", TypeKw)
+        identify "fn" = return ("fn", FnKw)
+        identify "extern" = return ("extern", ExternKw)
+        identify identifier = return (identifier, TextIdentifier)
 
 parseOperatorId :: Parser Char (String, TokenType)
 parseOperatorId = many (parseOneIf (`elem` ".=/-+*!?%<>&|^~")) >>= identify
-  where identify identifier = return (identifier, case identifier of
-          "=" -> Equal
-          "|" -> Pipe
-          ".." -> DotDot
-          "->" -> Arrow
-          _ -> OperatorIdentifier)
+  where identify "=" = return ("=", Equal)
+        identify "|" = return ("|", Pipe)
+        identify ".." = return ("..", DotDot)
+        identify "->" = return ("->", Arrow)
+        identify operator = return (operator, OperatorIdentifier)
 
 
 -- Tokenizer
