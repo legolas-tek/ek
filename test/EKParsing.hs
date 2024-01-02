@@ -15,10 +15,11 @@ import Test.HUnit
 
 import EK.Parser
 import Token
+import SourcePos
 import EK.Ast
 
 tk :: String -> TokenType -> Token
-tk s = Token s 0 0 ""
+tk s t = Token s (SourcePos "" 0 0) t
 
 tkt :: TokenType -> Token
 tkt = tk ""

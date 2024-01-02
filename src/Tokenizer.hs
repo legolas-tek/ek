@@ -5,14 +5,25 @@
 -- Tokenizer
 -}
 
+{-# OPTIONS_GHC -Wno-unused-do-bind #-}
+
 module Tokenizer
     (
+    tokenizer
     ) where
 
 import Token
 import Parser
 
 import Data.Char (isLetter)
+
+type TokenizerError = String
+
+tokens :: Parser Char [Token]
+tokens = many token <* useless <* eof
+
+tokenizer :: String -> String -> Either TokenizerError [Token]
+tokenizer = runParserOnFile tokens
 
 -- Identify the token type
 
@@ -79,10 +90,10 @@ findTokenType = parseCurlyOpen <|> parseCurlyClose <|> parseComma <|> parseUnder
 
 token :: Parser Char Token
 token = do
-    _ <- useless
+    useless
     pos <- getPos
-    tokenT <- findTokenType
-    return $ Token (fst tokenT) pos (snd tokenT)
+    (lexemeValue, tokenTypeValue) <- findTokenType
+    return $ Token lexemeValue pos tokenTypeValue
 
 -- Handling of useless characters, comments and line comments
 

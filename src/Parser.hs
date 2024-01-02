@@ -25,6 +25,8 @@ module Parser
   , many
   , optional
   , getPos
+  , eof
+  , runParserOnFile
   , (<|>)
   ) where
 
@@ -34,6 +36,7 @@ import Control.Applicative
   , optional
   )
 import Control.Monad(MonadPlus)
+import Data.Functor (($>))
 import Text.Printf (printf)
 
 import SourcePos (SourcePos(..), Parsable(..), advance)
@@ -46,14 +49,20 @@ newtype Parser inp out  = Parser {runParser' :: Parser' inp out}
 getPos :: Parser inp SourcePos
 getPos = Parser $ \sourcePos input -> Right (sourcePos, input, sourcePos)
 
+eof :: (Show inp, Parsable inp) => Parser inp ()
+eof = const "Unexpected trailing token" `mapError` parseNot (parseOneIf $ const True)
+
 runParser :: Parser inp out -> [inp] -> Either ParserError (out, [inp])
 runParser (Parser p) input = p (SourcePos "" 1 1) input >>= \(x, rest, _) -> Right (x, rest)
 
+runParserOnFile :: Parser inp out -> String -> [inp] -> Either ParserError out
+runParserOnFile (Parser p) fileName fileContent = p (SourcePos fileName 1 1) fileContent >>= \(x, _, _) -> Right x
+
 parseOneIf' :: (Show inp, Parsable inp) => (inp -> Bool) -> Parser' inp inp
-parseOneIf'  _ sourcePos [] = Left ("found EOF at" ++ show sourcePos)
+parseOneIf'  _ sourcePos [] = Left ("found EOF at: " ++ show sourcePos)
 parseOneIf' predicate sourcePos (x:xs)
   | predicate x = Right (x, xs, advance sourcePos x)
-  | otherwise   = Left $ "found " ++ show x
+  | otherwise   = Left $ "found " ++ show x ++ " at: " ++ show sourcePos
 
 parseOneIf :: (Show inp, Parsable inp) => (inp -> Bool) -> Parser inp inp
 parseOneIf predicate = Parser $ parseOneIf' predicate
@@ -70,12 +79,12 @@ parseString expected
 
 parseEscapedChar :: Parser Char Char
 parseEscapedChar = parseChar '\\' *>
-  (   parseChar '0' *> return '\0'
-  <|> parseChar '\\' *> return '\\'
-  <|> parseChar '"' *> return '\"'
-  <|> parseChar 't' *> return '\t'
-  <|> parseChar 'n' *> return '\n'
-  <|> parseChar 'r' *> return '\r'
+  (   (parseChar '0' $> '\0')
+  <|> (parseChar '\\' $> '\\')
+  <|> (parseChar '"' $> '"')
+  <|> (parseChar 't' $> '\t')
+  <|> (parseChar 'n' $> '\n')
+  <|> (parseChar 'r' $> '\r')
   )
 
 parseAnyButChar :: Char -> Parser Char Char
