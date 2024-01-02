@@ -57,7 +57,7 @@ tests = test
                 , Token "_" (SourcePos "tokenize.hs" 1 4) UnderScore
                 , Token "+" (SourcePos "tokenize.hs" 1 6) OperatorIdentifier
                 , Token "_" (SourcePos "tokenize.hs" 1 8) UnderScore
-                , Token "precedence" (SourcePos "tokenize.hs" 1 10) TextIdentifier
+                , Token "precedence" (SourcePos "tokenize.hs" 1 10) PrecedenceKw
                 , Token "6" (SourcePos "tokenize.hs" 1 21) IntLiter
                 , Token "=" (SourcePos "tokenize.hs" 1 23) Equal
                 , Token "builtin" (SourcePos "tokenize.hs" 1 25) TextIdentifier
