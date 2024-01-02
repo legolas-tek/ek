@@ -25,7 +25,7 @@ document :: Parser Token [PartialStmt]
 document = many stmt <* eof
 
 stmt :: Parser Token PartialStmt
-stmt = atomDef <|> typeDef <|> structDef <|> funcDef <|> externDef
+stmt = atomDef <|> typeDef <|> structDef <|> funcDef <|> externDef <|> importDef
 
 atomDef :: Parser Token PartialStmt
 atomDef = parseTokenType AtomKw >> AtomDef <$> textIdentifier
@@ -50,6 +50,9 @@ structElem :: Parser Token StructElem
 structElem = do
   name <- textIdentifier
   StructElem name <$> typed
+
+importDef :: Parser Token PartialStmt
+importDef = parseTokenType ImportKw >> ImportDef <$> textIdentifier
 
 -- structElem separated by commas, with an optional trailing comma
 structElems :: Parser Token [StructElem]

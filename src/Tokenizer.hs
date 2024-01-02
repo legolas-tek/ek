@@ -77,6 +77,7 @@ identifyKw "type" = TypeKw
 identifyKw "fn" = FnKw
 identifyKw "extern" = ExternKw
 identifyKw "precedence" = PrecedenceKw
+identifyKw "import" = ImportKw
 identifyKw _ = TextIdentifier
 
 parseOperatorId :: Parser Char (String, TokenType)

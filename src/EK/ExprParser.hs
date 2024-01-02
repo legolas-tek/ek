@@ -46,6 +46,7 @@ parseBody _ (ExternDef pat) = return $ ExternDef pat
 parseBody _ (AtomDef name) = return $ AtomDef name
 parseBody _ (TypeDef name ty) = return $ TypeDef name ty
 parseBody _ (StructDef name elems) = return $ StructDef name elems
+parseBody _ (ImportDef name) = return $ ImportDef name
 
 parseExpr :: [FuncItem] -> [Token] -> Either String Expr
 parseExpr fi tokens = fst <$> runParser (parsePrec fi lowestPrec <* eof) tokens

@@ -18,6 +18,7 @@ data TokenType = AtomKw
                | FnKw
                | ExternKw
                | PrecedenceKw
+               | ImportKw
                | Equal
                | CurlyOpen
                | CurlyClose
