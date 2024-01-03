@@ -46,7 +46,7 @@ compileExpr (IntegerLit i) _ = Right [Push (IntegerValue i)]
 compileExpr (StringLit s) _ = Right [Push (StringValue s)]
 compileExpr (EK.Ast.Call name callItems) env = do
   callInsts <- compileCallItems callItems env
-  return (callInsts ++ [PopEnv (getFunctionName name), VirtualMachine.Call])
+  return (callInsts ++ [PopEnv (show name), VirtualMachine.Call])
 
 compileCallItems :: [CallItem] -> Env -> Either String Insts
 compileCallItems items env = concat <$> mapM (`compileCallItem` env) items
@@ -54,10 +54,3 @@ compileCallItems items env = concat <$> mapM (`compileCallItem` env) items
 compileCallItem :: CallItem -> Env -> Either String Insts
 compileCallItem (ExprCall expr) env = compileExpr expr env
 compileCallItem PlaceholderCall _ = Right []
-
-getFunctionName :: FunctionName -> String
-getFunctionName (FunctionName symbols) = concatMap getSymbol symbols
-
-getSymbol :: Symbol -> String
-getSymbol (Symbol s) = s
-getSymbol Placeholder = ""
