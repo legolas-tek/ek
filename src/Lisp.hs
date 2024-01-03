@@ -23,7 +23,7 @@ list :: Parser Char SExpr
 list = List <$> parseList parseSExpr
 
 string :: Parser Char SExpr
-string = StringLit <$> parseString
+string = StringLit <$> parseStringLit
 
 parseSExpr :: Parser Char SExpr
 parseSExpr = useless >> integerLit <|> symbol <|> list <|> string
@@ -35,7 +35,7 @@ lineComment :: Parser Char String
 lineComment = parseChar ';' >> many (parseAnyButChar '\n') >> return ""
 
 comment :: Parser Char String
-comment = commentStart >> many (commentContent) >> commentEnd >> return ""
+comment = commentStart >> many commentContent >> commentEnd >> return ""
 
 commentStart :: Parser Char Char
 commentStart = parseChar '#' >> parseChar '|'

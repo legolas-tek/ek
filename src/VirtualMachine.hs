@@ -18,7 +18,7 @@ module VirtualMachine
 import Data.Map (Map, lookup, delete)
 
 data VMValue = IntegerValue Integer
-             | BooleanValue Bool
+             | AtomValue String
              | OperatorValue Operator
              | FunctionValue Insts
              | StringValue String
@@ -56,9 +56,9 @@ exec env (Call:insts) (FunctionValue fn:stack) = exec env fn stack
 exec env (Call:insts) (StringValue s:stack) = exec env insts (StringValue s:stack)
 exec _ (Call:_) (OperatorValue _:_) = Left "Not enough arguments for operator"
 exec _ (Call:_) _ = Left "Cannot call value of non-function type"
-exec env (JmpFalse offset:insts) (BooleanValue False:stack)
+exec env (JmpFalse offset:insts) (AtomValue "false":stack)
   = exec env (drop offset insts) stack
-exec env (JmpFalse _:insts) (BooleanValue True:stack) = exec env insts stack
+exec env (JmpFalse _:insts) (AtomValue "true":stack) = exec env insts stack
 exec _ (JmpFalse _:_) _ = Left "Invalid condition"
 exec env (Dup:insts) (v:stack) = exec env insts (v:v:stack)
 exec _ (Dup:_) [] = Left "No value to duplicate"
@@ -82,9 +82,9 @@ applyOp Div (IntegerValue _) (IntegerValue 0)
   = Left "Division by zero"
 applyOp Div (IntegerValue a) (IntegerValue b)
   = Right $ IntegerValue $ a `div` b
-applyOp Eq a b = Right $ BooleanValue $ a == b
+applyOp Eq a b = Right $ AtomValue (if a == b then "true" else "false")
 applyOp Less (IntegerValue a) (IntegerValue b)
-  = Right $ BooleanValue $ a < b
+  = Right $ AtomValue (if a < b then "true" else "false")
 applyOp _ _ _ = Left "Invalid operands for operator"
 
 popEnv :: String -> Env -> Either String (VMValue, Env)

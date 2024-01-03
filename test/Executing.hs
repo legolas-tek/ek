@@ -21,32 +21,32 @@ tests = test
       exec empty [Push $ StringValue "Hello", Ret] [] @?= Right [StringValue "Hello"]
   , "errorHandling" ~: do
       exec empty [Push $ IntegerValue 10, Push $ OperatorValue Add, Call, Ret] [] @?= Left "Not enough arguments for operator"
-      exec empty [Push $ IntegerValue 10, Push $ BooleanValue True, Push $ OperatorValue Add, Call, Ret] [] @?= Left "Invalid operands for operator"
+      exec empty [Push $ IntegerValue 10, Push $ AtomValue "true", Push $ OperatorValue Add, Call, Ret] [] @?= Left "Invalid operands for operator"
       exec empty [Push $ IntegerValue 0, Push $ IntegerValue 10, Push $ OperatorValue Div, Call, Ret] [] @?= Left "Division by zero"
   , "comparison" ~: do
       exec empty [ Push $ IntegerValue 10
            , Push $ IntegerValue 10
            , Push $ OperatorValue Eq
            , Call, Ret
-           ] [] @?= Right [BooleanValue True]
+           ] [] @?= Right [AtomValue "true"]
       exec empty [ Push $ IntegerValue 10
            , Push $ IntegerValue 11
            , Push $ OperatorValue Eq
            , Call, Ret
-           ] [] @?= Right [BooleanValue False]
-      exec empty [Push $ IntegerValue 2, Push $ IntegerValue 5, Push $ OperatorValue Less, Call, Ret] [] @?= Right [BooleanValue False]
-      exec empty [Push $ IntegerValue 5, Push $ IntegerValue 2, Push $ OperatorValue Less, Call, Ret] [] @?= Right [BooleanValue True]
+           ] [] @?= Right [AtomValue "false"]
+      exec empty [Push $ IntegerValue 2, Push $ IntegerValue 5, Push $ OperatorValue Less, Call, Ret] [] @?= Right [AtomValue "false"]
+      exec empty [Push $ IntegerValue 5, Push $ IntegerValue 2, Push $ OperatorValue Less, Call, Ret] [] @?= Right [AtomValue "true"]
   , "conditionalJump" ~: do
       let conditionalJump v =
-            [ Push $ BooleanValue v
+            [ Push $ AtomValue v
             , JmpFalse 2
             , Push $ IntegerValue 1
             , Ret
             , Push $ IntegerValue 2
             , Ret
             ]
-      exec empty (conditionalJump True) [] @?= Right [IntegerValue 1]
-      exec empty (conditionalJump False) [] @?= Right [IntegerValue 2]
+      exec empty (conditionalJump "true") [] @?= Right [IntegerValue 1]
+      exec empty (conditionalJump "false") [] @?= Right [IntegerValue 2]
   , "function" ~: do
       let absFn = [ Dup
                   , Push $ IntegerValue 0
