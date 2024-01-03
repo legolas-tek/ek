@@ -28,6 +28,7 @@ tests = test
   , "EK Typing" ~: EKTyping.tests
   , "Compilation" ~: Compilation.tests
   , "Tokenize" ~: Tokenizing.tests
+  , "Serializing" ~: Serializing.tests
   ]
 
 main :: IO ()
