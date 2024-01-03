@@ -86,6 +86,12 @@ tests = test
   , "rwo int in StructLit" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, int 43, tkt CurlyClose]
         @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, IntegerLit 43])]
+  , "one string in StructLit" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, tk "foo" StringLiter, tkt CurlyClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [StringLit "foo"])]
+  , "many elements in StructLit" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, tk "foo" StringLiter, tkt Comma, int 43, tkt CurlyClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, StringLit "foo", IntegerLit 43])]
   , "one int and one string in StructLit" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, tk "foo" StringLiter, tkt CurlyClose]
         @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, StringLit "foo"])]
