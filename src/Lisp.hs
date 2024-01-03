@@ -23,7 +23,7 @@ list :: Parser Char SExpr
 list = List <$> parseList parseSExpr
 
 string :: Parser Char SExpr
-string = StringLit <$> parseString
+string = StringLit <$> parseStringLit
 
 parseSExpr :: Parser Char SExpr
 parseSExpr = useless >> integerLit <|> symbol <|> list <|> string

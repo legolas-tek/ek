@@ -15,18 +15,22 @@ module EK.Ast
   , Type(..)
   , FuncPattern(..)
   , FuncPatternItem(..)
+  , Prec
   , patternToName
+  , defaultPrec
+  , precedence
   ) where
 
 import Data.List (intercalate)
 import Data.String (IsString(..))
+import Data.Maybe (fromMaybe)
 
 data Symbol
   = Symbol String
   | Placeholder
   deriving (Eq)
 
-newtype FunctionName = FunctionName [Symbol]
+data FunctionName = FunctionName [Symbol] Prec
   deriving (Eq)
 
 data Expr
@@ -58,9 +62,12 @@ data Type
   | UnionType Type Type
   deriving (Eq)
 
+type Prec = Int
+
 data FuncPattern = FuncPattern
   { funcPatternItems :: [FuncPatternItem]
   , funcPatternType :: Maybe Type
+  , funcPatternPrec :: Maybe Prec
   } deriving (Eq)
 
 data FuncPatternItem
@@ -70,19 +77,26 @@ data FuncPatternItem
   deriving (Eq)
 
 patternToName :: FuncPattern -> FunctionName
-patternToName (FuncPattern items _) = FunctionName $ map patternToName' items
+patternToName (FuncPattern items _ prec) = FunctionName (map patternToName' items) (defaultPrec `fromMaybe` prec)
   where
     patternToName' (ArgPattern _ _ _) = Placeholder
     patternToName' (SymbolPattern s) = Symbol s
     patternToName' PlaceholderPattern = Placeholder
 
+defaultPrec :: Prec
+defaultPrec = 9 -- same as haskell
+
 instance IsString FunctionName where
-  fromString str = FunctionName (unshow <$> words str)
+  fromString str = FunctionName (unshow <$> words str) defaultPrec
     where unshow "_" = Placeholder
           unshow s = Symbol s
 
 instance Show FunctionName where
-  show (FunctionName symbols) = unwords (show <$> symbols)
+  show (FunctionName symbols prec) = unwords (show <$> symbols)
+    ++ (if prec /= defaultPrec then " precedence " ++ show prec else "")
+
+precedence :: FunctionName -> Prec -> FunctionName
+precedence (FunctionName symbols _) prec = FunctionName symbols prec
 
 instance Show Symbol where
   show (Symbol s) = s
@@ -91,7 +105,7 @@ instance Show Symbol where
 instance Show Expr where
   show (IntegerLit i) = show i
   show (StringLit s) = show s
-  show (Call (FunctionName name) items) = unwords $ showCall name items
+  show (Call (FunctionName name _) items) = unwords $ showCall name items
   show (StructLit s elems) = s ++ " { " ++ intercalate ", " (show <$> elems) ++ " }"
 
 showCall :: [Symbol] -> [CallItem] -> [String]
@@ -121,8 +135,11 @@ instance Show Type where
   show (UnionType a b) = show a ++ " | " ++ show b
 
 instance Show FuncPattern where
-  show (FuncPattern items (Just t)) = unwords (show <$> items) ++ " : " ++ show t
-  show (FuncPattern items Nothing) = unwords (show <$> items)
+  show (FuncPattern items typ prec) = unwords (show <$> items) ++ showType typ ++ showPrec prec
+    where showPrec (Just p) = " precedence " ++ show p
+          showPrec Nothing = ""
+          showType (Just t) = " : " ++ show t
+          showType Nothing = ""
 
 instance Show FuncPatternItem where
   show (ArgPattern lazy s (Just t)) = "(" ++ (if lazy then "lazy " else "") ++ s ++ " : " ++ show t ++ ")"

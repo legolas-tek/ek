@@ -46,8 +46,8 @@ printPrompt new = hIsTerminalDevice stdin >>= \isTerm ->
 mainLoop :: Environment -> String -> IO ()
 mainLoop env rest = do
     printPrompt $ null rest
-    eof <- isEOF
-    when eof $ exitWith (ExitSuccess)
+    eofVal <- isEOF
+    when eofVal exitSuccess
     line <- getLine
     (env', rest') <- printResult env (handleResult (rest ++ line) env)
     mainLoop env' rest'
