@@ -178,6 +178,16 @@ tests = test
                   , FuncDef (pat [SymbolPattern "sub", PlaceholderPattern, PlaceholderPattern]) (IntegerLit 2)
                   , FuncDef (pat [SymbolPattern "test"]) (Call "add _ _" [ExprCall $ Call "sub _ _" [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2], ExprCall $ IntegerLit 3])
                   ]
+  , "ArgPattern parsing lazy" ~: do
+      doc [ tkt FnKw, tkt ParenOpen, tkt LazyKw, idt "a", tkt Colon, idt "int", tkt ParenClose, idt "zero", tkt Equal, int 0
+          ]
+        @?= Right [ FuncDef (pat [ArgPattern True "a" (Just $ TypeName "int"), SymbolPattern "zero"]) (IntegerLit 0)
+                  ]
+  , "ArgPattern parsing not lazy" ~: do
+      doc [ tkt FnKw, tkt ParenOpen, idt "a", tkt Colon, idt "int", tkt ParenClose, idt "zero", tkt Equal, int 0
+          ]
+        @?= Right [ FuncDef (pat [ArgPattern False "a" (Just $ TypeName "int"), SymbolPattern "zero"]) (IntegerLit 0)
+                  ]
   , "atom reference" ~: do
       doc [ tkt FnKw, idt "fruit", tkt Equal, idt "apple"
           , tkt AtomKw, idt "apple"
