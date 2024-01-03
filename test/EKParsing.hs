@@ -69,7 +69,7 @@ tests = test
         @?= Right [StructDef "foo" [StructElem "bar" (TypeName "baz"), StructElem "snd" (TypeName "bool")]]
   , "extern function" ~: do
       doc [tkt ExternKw, tkt FnKw, idt "nbcpu", tkt Colon, idt "int"] @?= Right [ExternDef $ FuncPattern [SymbolPattern "nbcpu"] (Just $ TypeName "int") Nothing]
-      doc [tkt ExternKw, tkt FnKw, tkt ParenOpen, idt "a", tkt Colon, idt "int", tkt ParenClose, idt "!", tkt Colon, idt "int"] @?= Right [ExternDef $ FuncPattern [ArgPattern "a" $ Just $ TypeName "int", SymbolPattern "!"] (Just $ TypeName "int") Nothing]
+      doc [tkt ExternKw, tkt FnKw, tkt ParenOpen, idt "a", tkt Colon, idt "int", tkt ParenClose, idt "!", tkt Colon, idt "int"] @?= Right [ExternDef $ FuncPattern [ArgPattern False "a" $ Just $ TypeName "int", SymbolPattern "!"] (Just $ TypeName "int") Nothing]
   , "simple var function" ~: do
       doc [tkt FnKw, idt "key", tkt Colon, idt "int", tkt Equal, int 42]
         @?= Right [FuncDef (FuncPattern [SymbolPattern "key"] (Just $ TypeName "int") Nothing) (IntegerLit 42)]
@@ -115,7 +115,7 @@ tests = test
       doc [ tkt FnKw, tkt ParenOpen, idt "a", tkt ParenClose, idt "zero", tkt Equal, int 0
           , tkt FnKw, idt "test", tkt Equal, int 42, idt "zero"
           ]
-        @?= Right [ FuncDef (pat [ArgPattern "a" Nothing, SymbolPattern "zero"]) (IntegerLit 0)
+        @?= Right [ FuncDef (pat [ArgPattern False "a" Nothing, SymbolPattern "zero"]) (IntegerLit 0)
                   , FuncDef (pat [SymbolPattern "test"]) (Call "_ zero" [ExprCall $ IntegerLit 42])
                   ]
   , "simple infix operator" ~: do
@@ -129,21 +129,21 @@ tests = test
       doc [ tkt FnKw, tkt ParenOpen, idt "a", tkt ParenClose, idt "zero", tkt Equal, int 0
           , tkt FnKw, idt "test", tkt Equal, int 42, idt "zero", idt "zero"
           ]
-        @?= Right [ FuncDef (pat [ArgPattern "a" Nothing, SymbolPattern "zero"]) (IntegerLit 0)
+        @?= Right [ FuncDef (pat [ArgPattern False "a" Nothing, SymbolPattern "zero"]) (IntegerLit 0)
                   , FuncDef (pat [SymbolPattern "test"]) (Call "_ zero" [ExprCall $ Call "_ zero" [ExprCall $ IntegerLit 42]])
                   ]
   , "simple infix function using arg" ~: do
       doc [ tkt FnKw, tkt ParenOpen, idt "a", tkt ParenClose, idt "qed", tkt Equal, idt "a"
           , tkt FnKw, idt "test", tkt Equal, int 42, idt "qed"
           ]
-        @?= Right [ FuncDef (pat [ArgPattern "a" Nothing, SymbolPattern "qed"]) (Call "a" [])
+        @?= Right [ FuncDef (pat [ArgPattern False "a" Nothing, SymbolPattern "qed"]) (Call "a" [])
                   , FuncDef (pat [SymbolPattern "test"]) (Call "_ qed" [ExprCall $ IntegerLit 42])
                   ]
   , "double prefix function" ~: do
       doc [ tkt FnKw, idt "zero", tkt ParenOpen, idt "a", tkt ParenClose, tkt Equal, int 0
           , tkt FnKw, idt "test", tkt Equal, idt "zero", idt "zero", int 42
           ]
-        @?= Right [ FuncDef (pat [SymbolPattern "zero", ArgPattern "a" Nothing]) (IntegerLit 0)
+        @?= Right [ FuncDef (pat [SymbolPattern "zero", ArgPattern False "a" Nothing]) (IntegerLit 0)
                   , FuncDef (pat [SymbolPattern "test"]) (Call "zero _" [ExprCall $ Call "zero _" [ExprCall $ IntegerLit 42]])
                   ]
   , "prefix function with 2 unseparated args" ~: do
@@ -177,6 +177,16 @@ tests = test
         @?= Right [ FuncDef (pat [SymbolPattern "add", PlaceholderPattern, PlaceholderPattern]) (IntegerLit 3)
                   , FuncDef (pat [SymbolPattern "sub", PlaceholderPattern, PlaceholderPattern]) (IntegerLit 2)
                   , FuncDef (pat [SymbolPattern "test"]) (Call "add _ _" [ExprCall $ Call "sub _ _" [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2], ExprCall $ IntegerLit 3])
+                  ]
+  , "ArgPattern parsing lazy" ~: do
+      doc [ tkt FnKw, tkt ParenOpen, tkt LazyKw, idt "a", tkt Colon, idt "int", tkt ParenClose, idt "zero", tkt Equal, int 0
+          ]
+        @?= Right [ FuncDef (pat [ArgPattern True "a" (Just $ TypeName "int"), SymbolPattern "zero"]) (IntegerLit 0)
+                  ]
+  , "ArgPattern parsing not lazy" ~: do
+      doc [ tkt FnKw, tkt ParenOpen, idt "a", tkt Colon, idt "int", tkt ParenClose, idt "zero", tkt Equal, int 0
+          ]
+        @?= Right [ FuncDef (pat [ArgPattern False "a" (Just $ TypeName "int"), SymbolPattern "zero"]) (IntegerLit 0)
                   ]
   , "atom reference" ~: do
       doc [ tkt FnKw, idt "fruit", tkt Equal, idt "apple"
