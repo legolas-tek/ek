@@ -65,7 +65,7 @@ parsePrefix fi prec = getAlt (foldMap (Alt . parsePrefix' fi prec) fi) <|> fail 
 
 parsePrefix' :: [FuncItem] -> Prec -> FuncItem -> Parser Token CallItem
 parsePrefix' fi prec fname@(FunctionName (Symbol s:ss) fnprec)
-  = ExprCall <$> (identifierExact s >> Call fname <$> parseFollowUp fi ss (max prec fnprec))
+  = ExprCall <$> (identifierExact s >> createCall fname <$> parseFollowUp fi ss (max prec fnprec))
 parsePrefix' _ _ _ = empty
 
 parseInfix :: [FuncItem] -> Prec -> CallItem -> Parser Token Expr
@@ -76,7 +76,7 @@ parseInfix fi prec initial = getAlt (foldMap (Alt . parseInfix' fi prec initial)
 parseInfix' :: [FuncItem] -> Prec -> CallItem -> FuncItem -> Parser Token Expr
 parseInfix' fi prec initial fname@(FunctionName (Placeholder:ss) fnprec)
   | prec <= fnprec
-  = parseFollowUp fi ss (succ fnprec) >>= (parseInfix fi prec . ExprCall) . Call fname . (initial:)
+  = parseFollowUp fi ss (succ fnprec) >>= (parseInfix fi prec . ExprCall) . createCall fname . (initial:)
   | otherwise
   = empty
 parseInfix' _ _ _ _ = empty
@@ -85,8 +85,8 @@ parseFollowUp :: [FuncItem] -> [Symbol] -> Prec -> Parser Token [CallItem]
 parseFollowUp fi (Symbol s:ss) prec
   = identifierExact s *> parseFollowUp fi ss prec
 parseFollowUp fi (Placeholder:ss) prec = do
-  e <- parsePrec fi prec -- TODO: use prec from fn
-  (ExprCall e :) <$> parseFollowUp fi ss prec
+  e <- placeholder PlaceholderCall <|> (ExprCall <$> parsePrec fi prec)
+  (e:) <$> parseFollowUp fi ss prec
 parseFollowUp _ [] _ = return []
 
 primItem :: [FuncItem] -> Parser Token CallItem
@@ -103,3 +103,8 @@ stringExpr = StringLit <$> stringLiteral
 
 parenExpr :: [FuncItem] -> Parser Token Expr
 parenExpr funcItems = parseTokenType ParenOpen *> parsePrec funcItems lowestPrec <* parseTokenType ParenClose
+
+-- Utility functions
+
+createCall :: FuncItem -> [CallItem] -> Expr
+createCall fn items = Call fn $ map (\(ExprCall x) -> x) items

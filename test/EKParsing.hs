@@ -90,7 +90,7 @@ tests = test
           , tkt ExternKw, tkt FnKw, idt "false"
           ]
         @?= Right [ ExternDef $ pat [SymbolPattern "not", PlaceholderPattern]
-                  , FuncDef (pat [SymbolPattern "funny"]) (Call "not _" [ExprCall $ Call "false" []])
+                  , FuncDef (pat [SymbolPattern "funny"]) (Call "not _" [Call "false" []])
                   , ExternDef $ pat [SymbolPattern "false"]
                   ]
   , "simple prefix function, with parens" ~: do
@@ -99,7 +99,7 @@ tests = test
           , tkt ExternKw, tkt FnKw, idt "false"
           ]
         @?= Right [ ExternDef $ pat [SymbolPattern "not", PlaceholderPattern]
-                  , FuncDef (pat [SymbolPattern "funny"]) (Call "not _" [ExprCall $ Call "false" []])
+                  , FuncDef (pat [SymbolPattern "funny"]) (Call "not _" [Call "false" []])
                   , ExternDef $ pat [SymbolPattern "false"]
                   ]
   , "function with ternary" ~: do
@@ -107,7 +107,7 @@ tests = test
           , tkt ExternKw, tkt FnKw, idt "tty", tkt Colon, idt "bool"
           , tkt ExternKw, tkt FnKw, idt "if", tkt UnderScore, idt "then", tkt UnderScore, idt "else", tkt UnderScore
           ]
-        @?= Right [ FuncDef (pat [SymbolPattern "prompt"]) (Call "if _ then _ else _" [ExprCall $ Call "tty" [], ExprCall $ StringLit "> ", ExprCall $ StringLit ""])
+        @?= Right [ FuncDef (pat [SymbolPattern "prompt"]) (Call "if _ then _ else _" [Call "tty" [], StringLit "> ", StringLit ""])
                   , ExternDef $ FuncPattern [SymbolPattern "tty"] (Just $ TypeName "bool") Nothing
                   , ExternDef $ pat [SymbolPattern "if", PlaceholderPattern, SymbolPattern "then", PlaceholderPattern, SymbolPattern "else", PlaceholderPattern]
                   ]
@@ -116,49 +116,49 @@ tests = test
           , tkt FnKw, idt "test", tkt Equal, int 42, idt "zero"
           ]
         @?= Right [ FuncDef (pat [ArgPattern False "a" Nothing, SymbolPattern "zero"]) (IntegerLit 0)
-                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ zero" [ExprCall $ IntegerLit 42])
+                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ zero" [IntegerLit 42])
                   ]
   , "simple infix operator" ~: do
       doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, tk "+" OperatorIdentifier, tkt UnderScore
           , tkt FnKw, idt "test", tkt Equal, int 3, tk "+" OperatorIdentifier, int 7
           ]
         @?= Right [ ExternDef $ pat [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern]
-                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ + _" [ExprCall $ IntegerLit 3, ExprCall $ IntegerLit 7])
+                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ + _" [IntegerLit 3, IntegerLit 7])
                   ]
   , "double infix function" ~: do
       doc [ tkt FnKw, tkt ParenOpen, idt "a", tkt ParenClose, idt "zero", tkt Equal, int 0
           , tkt FnKw, idt "test", tkt Equal, int 42, idt "zero", idt "zero"
           ]
         @?= Right [ FuncDef (pat [ArgPattern False "a" Nothing, SymbolPattern "zero"]) (IntegerLit 0)
-                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ zero" [ExprCall $ Call "_ zero" [ExprCall $ IntegerLit 42]])
+                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ zero" [Call "_ zero" [IntegerLit 42]])
                   ]
   , "simple infix function using arg" ~: do
       doc [ tkt FnKw, tkt ParenOpen, idt "a", tkt ParenClose, idt "qed", tkt Equal, idt "a"
           , tkt FnKw, idt "test", tkt Equal, int 42, idt "qed"
           ]
         @?= Right [ FuncDef (pat [ArgPattern False "a" Nothing, SymbolPattern "qed"]) (Call "a" [])
-                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ qed" [ExprCall $ IntegerLit 42])
+                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ qed" [IntegerLit 42])
                   ]
   , "double prefix function" ~: do
       doc [ tkt FnKw, idt "zero", tkt ParenOpen, idt "a", tkt ParenClose, tkt Equal, int 0
           , tkt FnKw, idt "test", tkt Equal, idt "zero", idt "zero", int 42
           ]
         @?= Right [ FuncDef (pat [SymbolPattern "zero", ArgPattern False "a" Nothing]) (IntegerLit 0)
-                  , FuncDef (pat [SymbolPattern "test"]) (Call "zero _" [ExprCall $ Call "zero _" [ExprCall $ IntegerLit 42]])
+                  , FuncDef (pat [SymbolPattern "test"]) (Call "zero _" [Call "zero _" [IntegerLit 42]])
                   ]
   , "prefix function with 2 unseparated args" ~: do
       doc [ tkt FnKw, idt "add", tkt UnderScore, tkt UnderScore, tkt Equal, int 3
           , tkt FnKw, idt "test", tkt Equal, idt "add", int 1, int 2
           ]
         @?= Right [ FuncDef (pat [SymbolPattern "add", PlaceholderPattern, PlaceholderPattern]) (IntegerLit 3)
-                  , FuncDef (pat [SymbolPattern "test"]) (Call "add _ _" [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2])
+                  , FuncDef (pat [SymbolPattern "test"]) (Call "add _ _" [IntegerLit 1, IntegerLit 2])
                   ]
   , "postfix function with 2 unseparated args" ~: do
       doc [ tkt FnKw, tkt UnderScore, tkt UnderScore, idt "add", tkt Equal, int 3
           , tkt FnKw, idt "test", tkt Equal, int 1, int 2, idt "add"
           ]
         @?= Right [ FuncDef (pat [PlaceholderPattern, PlaceholderPattern, SymbolPattern "add"]) (IntegerLit 3)
-                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ _ add" [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2])
+                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ _ add" [IntegerLit 1, IntegerLit 2])
                   ]
   , "postfix function with 2 unseparated args, multiple" ~: do
       doc [ tkt FnKw, tkt UnderScore, tkt UnderScore, idt "add", tkt Equal, int 3
@@ -167,7 +167,7 @@ tests = test
           ]
         @?= Right [ FuncDef (pat [PlaceholderPattern, PlaceholderPattern, SymbolPattern "add"]) (IntegerLit 3)
                   , FuncDef (pat [PlaceholderPattern, PlaceholderPattern, SymbolPattern "sub"]) (IntegerLit 2)
-                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ _ add" [ExprCall $ Call "_ _ sub" [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2], ExprCall $ IntegerLit 3])
+                  , FuncDef (pat [SymbolPattern "test"]) (Call "_ _ add" [Call "_ _ sub" [IntegerLit 1, IntegerLit 2], IntegerLit 3])
                   ]
   , "prefix function with 2 unseparated args, multiple" ~: do
       doc [ tkt FnKw, idt "add", tkt UnderScore, tkt UnderScore, tkt Equal, int 3
@@ -176,7 +176,7 @@ tests = test
           ]
         @?= Right [ FuncDef (pat [SymbolPattern "add", PlaceholderPattern, PlaceholderPattern]) (IntegerLit 3)
                   , FuncDef (pat [SymbolPattern "sub", PlaceholderPattern, PlaceholderPattern]) (IntegerLit 2)
-                  , FuncDef (pat [SymbolPattern "test"]) (Call "add _ _" [ExprCall $ Call "sub _ _" [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2], ExprCall $ IntegerLit 3])
+                  , FuncDef (pat [SymbolPattern "test"]) (Call "add _ _" [Call "sub _ _" [IntegerLit 1, IntegerLit 2], IntegerLit 3])
                   ]
   , "ArgPattern parsing lazy" ~: do
       doc [ tkt FnKw, tkt ParenOpen, tkt LazyKw, idt "a", tkt Colon, idt "int", tkt ParenClose, idt "zero", tkt Equal, int 0
@@ -216,12 +216,12 @@ tests = test
                   , ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern] Nothing (Just 6))
                   , FuncDef (pat [SymbolPattern "test"])
                     (Call ("_ + _" `precedence` 6)
-                     [ ExprCall $ Call ("_ + _" `precedence` 6)
-                       [ ExprCall $ IntegerLit 1
-                       , ExprCall $ Call ("_ * _" `precedence` 7)
-                         [ ExprCall $ IntegerLit 2, ExprCall $ IntegerLit 3]
+                     [ Call ("_ + _" `precedence` 6)
+                       [ IntegerLit 1
+                       , Call ("_ * _" `precedence` 7)
+                         [ IntegerLit 2, IntegerLit 3]
                        ]
-                     , ExprCall $ IntegerLit 4
+                     , IntegerLit 4
                      ]
                     )
                   ]
@@ -234,12 +234,12 @@ tests = test
                   , ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern] Nothing (Just 6))
                   , FuncDef (pat [SymbolPattern "test"])
                     (Call ("_ + _" `precedence` 6)
-                     [ ExprCall $ IntegerLit 1
-                     , ExprCall $ Call ("_ * _" `precedence` 7)
-                       [ ExprCall $ IntegerLit 2
-                       , ExprCall $ Call ("_ + _" `precedence` 6)
-                         [ ExprCall $ IntegerLit 3
-                         , ExprCall $ IntegerLit 4
+                     [ IntegerLit 1
+                     , Call ("_ * _" `precedence` 7)
+                       [ IntegerLit 2
+                       , Call ("_ + _" `precedence` 6)
+                         [ IntegerLit 3
+                         , IntegerLit 4
                          ]
                        ]
                      ]
@@ -254,8 +254,8 @@ tests = test
                   , ExternDef (pat [SymbolPattern "not", PlaceholderPattern])
                   , FuncDef (pat [SymbolPattern "test"])
                     (Call ("_ and _" `precedence` 3)
-                     [ ExprCall $ Call "not _" [ExprCall $ IntegerLit 1]
-                     , ExprCall $ IntegerLit 2
+                     [ Call "not _" [IntegerLit 1]
+                     , IntegerLit 2
                      ]
                     )
                   ]
@@ -268,8 +268,8 @@ tests = test
                   , ExternDef (FuncPattern [SymbolPattern "not", PlaceholderPattern] Nothing (Just 2))
                   , FuncDef (pat [SymbolPattern "test"])
                     (Call ("not _" `precedence` 2)
-                     [ ExprCall $ Call ("_ and _" `precedence` 3)
-                       [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2]
+                     [ Call ("_ and _" `precedence` 3)
+                       [IntegerLit 1, IntegerLit 2]
                      ]
                     )
                   ]
@@ -282,11 +282,28 @@ tests = test
                   , ExternDef (FuncPattern [SymbolPattern "if", PlaceholderPattern, SymbolPattern "then", PlaceholderPattern, SymbolPattern "else", PlaceholderPattern] Nothing (Just 1))
                   , FuncDef (pat [SymbolPattern "test"])
                     (Call ("if _ then _ else _" `precedence` 1)
-                     [ ExprCall $ Call ("_ eq _" `precedence` 4)
-                       [ExprCall $ IntegerLit 1, ExprCall $ IntegerLit 2]
-                     , ExprCall $ IntegerLit 3
-                     , ExprCall $ IntegerLit 4
+                     [ Call ("_ eq _" `precedence` 4)
+                       [IntegerLit 1, IntegerLit 2]
+                     , IntegerLit 3
+                     , IntegerLit 4
                      ]
                     )
+                  ]
+  , "placeholder in call" ~: do
+      doc [ tkt FnKw, idt "test", tkt Equal, idt "a", tkt UnderScore
+          , tkt FnKw, idt "a", tkt UnderScore, tkt Equal, int 1
+          ]
+        @?= Right [ FuncDef (pat [SymbolPattern "test"])
+                    (Lambda "$a" (Call "a _" [Call "$a" []]))
+                  , FuncDef (pat [SymbolPattern "a", PlaceholderPattern])
+                    (IntegerLit 1)
+                  ]
+  , "2 placeholders in call" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "plus", tkt UnderScore
+          , tkt FnKw, idt "addition", tkt Equal, tkt UnderScore, idt "plus", tkt UnderScore
+          ]
+        @?= Right [ ExternDef (pat [PlaceholderPattern, SymbolPattern "plus", PlaceholderPattern])
+                  , FuncDef (pat [SymbolPattern "addition"])
+                    (Lambda "$a" (Lambda "$b" (Call "_ plus _" [Call "$a" [], Call "$b" []])))
                   ]
   ]

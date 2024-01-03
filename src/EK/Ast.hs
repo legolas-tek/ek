@@ -36,7 +36,7 @@ data FunctionName = FunctionName [Symbol] Prec
 data Expr
   = IntegerLit Integer
   | StringLit String
-  | Call FunctionName [CallItem]
+  | Call FunctionName [Expr]
   | Lambda String Expr
   deriving (Eq)
 
@@ -105,13 +105,12 @@ instance Show Symbol where
 instance Show Expr where
   show (IntegerLit i) = show i
   show (StringLit s) = show s
-  show (Call (FunctionName name _) items) = unwords $ showCall name items
+  show (Call (FunctionName name _) items) = "(" ++ unwords (showCall name items) ++ ")"
   show (Lambda arg expr) = "(\\" ++ arg ++ " = " ++ show expr ++ ")"
 
-showCall :: [Symbol] -> [CallItem] -> [String]
+showCall :: [Symbol] -> [Expr] -> [String]
 showCall ((Symbol s):xs) i = s : showCall xs i
-showCall (Placeholder:xs) ((ExprCall e):is) = ("(" ++ show e ++ ")") : showCall xs is
-showCall (Placeholder:xs) (PlaceholderCall:is) = "_" : showCall xs is
+showCall (Placeholder:xs) (e:is) = show e : showCall xs is
 showCall [] _ = []
 showCall _ [] = ["#error#"]
 
