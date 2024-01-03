@@ -19,7 +19,6 @@ import Data.Map (Map, lookup, delete)
 
 data VMValue = IntegerValue Integer
              | AtomValue String
-             | OperatorValue Operator
              | FunctionValue Insts
              | StringValue String
              deriving (Show, Eq)
@@ -34,6 +33,7 @@ data Operator = Add
 
 data Instruction = Push VMValue
                  | Call
+                 | CallOp Operator
                  | JmpFalse Int
                  | Dup
                  | Ret
@@ -52,11 +52,11 @@ exec _ _ [] [] = Left "No value on stack"
 exec _ _ (Ret:_) (s:_) = Right s
 exec _ _ (Ret:_) [] = Left "No value on stack"
 exec env args (Push v:insts) stack = exec env args insts (v:stack)
-exec env args (Call:insts) (OperatorValue op:v1:v2:stack) = applyOp op v1 v2
+exec env args (CallOp op:insts) (v1:v2:stack) = applyOp op v1 v2
   >>= \result -> exec env args insts (result:stack)
-exec env args (Call:insts) (FunctionValue fn:arg:stack) = exec env [arg] fn []
+exec _ _ (CallOp _:_) _ = Left "Not enough arguments for operator"
+exec env args (Call:insts) (arg:FunctionValue fn:stack) = exec env [arg] fn []
   >>= \result -> exec env args insts (result:stack)
-exec _ _ (Call:_) (OperatorValue _:_) = Left "Not enough arguments for operator"
 exec _ _ (Call:_) _ = Left "Cannot call value of non-function type"
 exec env args (JmpFalse offset:insts) (AtomValue "false":stack)
   = exec env args (drop offset insts) stack
@@ -66,7 +66,7 @@ exec env args (Dup:insts) (v:stack) = exec env args insts (v:v:stack)
 exec _ _ (Dup:_) [] = Left "No value to duplicate"
 exec env args (PopEnv value : insts) stack = popEnv value env
   >>= \(val, env') -> exec env' args insts (val : stack)
-exec env args (LoadArg offset:insts) stack = exec env args insts (stack !! (length stack - offset - 1):stack)
+exec env args (LoadArg offset:insts) stack = exec env args insts (args !! offset:stack)
 
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)
