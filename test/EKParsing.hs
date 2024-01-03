@@ -294,7 +294,7 @@ tests = test
           , tkt FnKw, idt "a", tkt UnderScore, tkt Equal, int 1
           ]
         @?= Right [ FuncDef (pat [SymbolPattern "test"])
-                    (Lambda "$a" (Call "a _" [Call "$a" []]))
+                    (Lambda "$0" (Call "a _" [Call "$0" []]))
                   , FuncDef (pat [SymbolPattern "a", PlaceholderPattern])
                     (IntegerLit 1)
                   ]
@@ -304,6 +304,6 @@ tests = test
           ]
         @?= Right [ ExternDef (pat [PlaceholderPattern, SymbolPattern "plus", PlaceholderPattern])
                   , FuncDef (pat [SymbolPattern "addition"])
-                    (Lambda "$a" (Lambda "$b" (Call "_ plus _" [Call "$a" [], Call "$b" []])))
+                    (Lambda "$0" (Lambda "$1" (Call "_ plus _" [Call "$0" [], Call "$1" []])))
                   ]
   ]

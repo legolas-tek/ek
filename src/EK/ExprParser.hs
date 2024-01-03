@@ -19,6 +19,7 @@ import Parser
 import EK.TokenParser
 import Control.Applicative (Alternative(empty))
 import Data.Monoid (Alt(..))
+import Data.List (findIndex)
 
 type TotalStmt = EK.Ast.Stmt Expr
 type PartialStmt = EK.Ast.Stmt [Token]
@@ -107,4 +108,15 @@ parenExpr funcItems = parseTokenType ParenOpen *> parsePrec funcItems lowestPrec
 -- Utility functions
 
 createCall :: FuncItem -> [CallItem] -> Expr
-createCall fn items = Call fn $ map (\(ExprCall x) -> x) items
+createCall = createCallN 0
+
+createCallN :: Int -> FuncItem -> [CallItem] -> Expr
+createCallN n fn items = createCall' (findIndex isPlaceholder items)
+  where createCall' Nothing = Call fn $ [e | (ExprCall e) <- items]
+        createCall' (Just i) = Lambda argname $ createCallN (succ n) fn $ replaceAt i (ExprCall $ Call (FunctionName [Symbol argname] defaultPrec) []) items
+        argname = "$" ++ show n
+        isPlaceholder PlaceholderCall = True
+        isPlaceholder _ = False
+
+replaceAt :: Int -> a -> [a] -> [a]
+replaceAt n element xs = take n xs ++ [element] ++ drop (n + 1) xs
