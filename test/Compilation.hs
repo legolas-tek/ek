@@ -5,6 +5,8 @@
 -- Compiler tests
 --}
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Compilation (tests) where
 
 import Test.HUnit
@@ -17,47 +19,65 @@ tests :: Test
 tests = test
   [ "func def" ~: do
       "test" @?= "test"
---       let stmts =
---             [ FuncDef
---                 (FuncPattern
---                    [ SymbolPattern "foo"
---                    , ArgPattern "a" Nothing
---                    , ArgPattern "b" Nothing
---                    , ArgPattern "c" Nothing
---                    ]
---                    Nothing)
---                 (IntegerLit 42)
---             ]
---       let expected =
---             [ PushEnv "a"
---             , PushEnv "b"
---             , PushEnv "c"
---             , Push (IntegerValue 42)
---             , Ret
---             ]
---       compileToVM stmts @?= Right expected
---     , "call with expressions" ~: do
---         let stmts =
---               [ FuncDef
---                   (FuncPattern
---                      [ SymbolPattern "foo"
---                      , ArgPattern "a" Nothing
---                      , ArgPattern "b" Nothing
---                      , ArgPattern "c" Nothing
---                      ]
---                      Nothing)
---                   (EK.Ast.Call (FunctionName [Symbol "foo"]) [ExprCall (IntegerLit 1), ExprCall (StringLit "hello"), ExprCall (IntegerLit 42)])
---               ]
---         let expected =
---               [ PushEnv "a"
---               , PushEnv "b"
---               , PushEnv "c"
---               , Push (IntegerValue 1)
---               , Push (StringValue "hello")
---               , Push (IntegerValue 42)
---               , PopEnv "foo"
---               , VirtualMachine.Call
---               , Ret
---               ]
---         compileToVM stmts @?= Right expected
+      let stmts =
+            [ FuncDef
+                (FuncPattern
+                   [ SymbolPattern "foo"
+                   , ArgPattern "a" Nothing
+                   , ArgPattern "b" Nothing
+                   , ArgPattern "c" Nothing
+                   ]
+                   Nothing
+                   Nothing)
+                (IntegerLit 42)
+            ]
+      let expected =
+            [ Push (IntegerValue 42)
+            , Ret
+            ]
+      compileToVM stmts @?= Right expected
+    , "call with expressions" ~: do
+        let stmts =
+              [ FuncDef
+                  (FuncPattern
+                     [ SymbolPattern "foo"
+                     , ArgPattern "a" Nothing
+                     , ArgPattern "b" Nothing
+                     , ArgPattern "c" Nothing
+                     ]
+                     Nothing
+                     Nothing)
+                  (EK.Ast.Call (FunctionName [Symbol "foo"] defaultPrec)
+                               [ExprCall (IntegerLit 1)
+                               , ExprCall (StringLit "hello")
+                               , ExprCall (IntegerLit 42)
+                               ]
+                  )
+              ]
+        let expected =
+              [ PopEnv "foo"
+              , Push (IntegerValue 1)
+              , VirtualMachine.Call
+              , Push (StringValue "hello")
+              , VirtualMachine.Call
+              , Push (IntegerValue 42)
+              , VirtualMachine.Call
+              , Ret
+              ]
+        compileToVM stmts @?= Right expected
+    , "test a function with args" ~: do
+        let stmts =
+              [ FuncDef
+                  (FuncPattern
+                     [ SymbolPattern "id"
+                     , ArgPattern "a" Nothing
+                     ]
+                     Nothing
+                     Nothing)
+                  (EK.Ast.Call "a" [])
+              ]
+        let expected = [ LoadArg 0
+                       , Ret
+                       ]
+        compileToVM stmts @?= Right expected
   ]
