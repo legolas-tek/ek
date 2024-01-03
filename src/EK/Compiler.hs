@@ -9,13 +9,13 @@ module EK.Compiler
   ( compileToVM
   ) where
 
-import VirtualMachine
+import VirtualMachine hiding (Env)
 import EK.Ast
 
-import Data.Map (empty)
+type Env = [String]
 
 compileToVM :: [Stmt Expr] -> Either String Insts
-compileToVM stmts = compileFuncDefs stmts empty
+compileToVM stmts = compileFuncDefs stmts []
 
 compileFuncDefs :: [Stmt Expr] -> Env -> Either String Insts
 compileFuncDefs [] _ = Right []
@@ -26,31 +26,30 @@ compileFuncDefs (stmt:rest) env =
       restInsts <- compileFuncDefs rest env
       return (insts ++ restInsts)
 
+addArgToEnv :: Env -> FuncPatternItem -> Env
+addArgToEnv env (ArgPattern _ name _) = name : env
+addArgToEnv env (SymbolPattern name) = name : env
+addArgToEnv env PlaceholderPattern = env
+
+addArgsToEnv :: FuncPattern -> Env -> Env
+addArgsToEnv (FuncPattern items _ _) initEnv = foldl addArgToEnv initEnv items
+
 compileFuncDef :: Stmt Expr -> Env -> Either String Insts
 compileFuncDef (FuncDef pattern expr) env = do
-  exprInsts <- compileExpr expr env
-  let patternInsts = compilePattern pattern env
-  return (patternInsts ++ exprInsts ++ [Ret])
+  exprInsts <- compileExpr expr (addArgsToEnv pattern env)
+  return (exprInsts ++ [Ret])
 compileFuncDef _ _ = Right []
-
-compilePattern :: FuncPattern -> Env -> Insts
-compilePattern (FuncPattern items _ _) _ =
-  concatMap compilePatternItem items
-  where
-    compilePatternItem (ArgPattern _ _ _) = []
-    compilePatternItem (SymbolPattern _) = []
-    compilePatternItem PlaceholderPattern = []
 
 compileExpr :: Expr -> Env -> Either String Insts
 compileExpr (IntegerLit i) _ = Right [Push (IntegerValue i)]
 compileExpr (StringLit s) _ = Right [Push (StringValue s)]
 compileExpr (EK.Ast.Call name callItems) env = do
   callInsts <- compileCallItems callItems env
-  return (callInsts ++ [PopEnv (show name), VirtualMachine.Call])
+  return (PopEnv (show name) : callInsts)
 
 compileCallItems :: [CallItem] -> Env -> Either String Insts
 compileCallItems items env = concat <$> mapM (`compileCallItem` env) items
 
 compileCallItem :: CallItem -> Env -> Either String Insts
-compileCallItem (ExprCall expr) env = compileExpr expr env
+compileCallItem (ExprCall expr) env = compileExpr expr env >>= \insts -> return (insts ++ [VirtualMachine.Call])
 compileCallItem PlaceholderCall _ = Right []
