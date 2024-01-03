@@ -37,7 +37,7 @@ compilePattern :: FuncPattern -> Env -> Insts
 compilePattern (FuncPattern items _ _) _ =
   concatMap compilePatternItem items
   where
-    compilePatternItem (ArgPattern _ _) = []
+    compilePatternItem (ArgPattern _ _ _) = []
     compilePatternItem (SymbolPattern _) = []
     compilePatternItem PlaceholderPattern = []
 
