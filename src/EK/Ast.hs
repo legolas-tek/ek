@@ -37,6 +37,7 @@ data Expr
   = IntegerLit Integer
   | StringLit String
   | Call FunctionName [CallItem]
+  | Lambda String Expr
   deriving (Eq)
 
 data CallItem
@@ -78,7 +79,7 @@ data FuncPatternItem
 patternToName :: FuncPattern -> FunctionName
 patternToName (FuncPattern items _ prec) = FunctionName (map patternToName' items) (defaultPrec `fromMaybe` prec)
   where
-    patternToName' (ArgPattern _ _ _) = Placeholder
+    patternToName' (ArgPattern {}) = Placeholder
     patternToName' (SymbolPattern s) = Symbol s
     patternToName' PlaceholderPattern = Placeholder
 
@@ -95,7 +96,7 @@ instance Show FunctionName where
     ++ (if prec /= defaultPrec then " precedence " ++ show prec else "")
 
 precedence :: FunctionName -> Prec -> FunctionName
-precedence (FunctionName symbols _) prec = FunctionName symbols prec
+precedence (FunctionName symbols _) = FunctionName symbols
 
 instance Show Symbol where
   show (Symbol s) = s
@@ -105,6 +106,7 @@ instance Show Expr where
   show (IntegerLit i) = show i
   show (StringLit s) = show s
   show (Call (FunctionName name _) items) = unwords $ showCall name items
+  show (Lambda arg expr) = "(\\" ++ arg ++ " = " ++ show expr ++ ")"
 
 showCall :: [Symbol] -> [CallItem] -> [String]
 showCall ((Symbol s):xs) i = s : showCall xs i
