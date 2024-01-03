@@ -14,6 +14,7 @@ import EK.ExprParser
 import Parser
 import Token
 import EK.TokenParser
+import Data.Maybe (isJust)
 import Control.Monad (liftM2, liftM3)
 
 parseDocument :: [Token] -> Either String [TotalStmt]
@@ -79,10 +80,11 @@ funcPatternItem = placeholder PlaceholderPattern <|> (SymbolPattern <$> identifi
 argumentPatternItem :: Parser Token FuncPatternItem
 argumentPatternItem = do
   parseTokenType ParenOpen
+  lazy <- optional (parseTokenType LazyKw)
   name <- identifier
   t <- optional typed
   parseTokenType ParenClose
-  return $ ArgPattern name t
+  return $ ArgPattern (isJust lazy) name t
 
 precedenceClause :: Parser Token Prec
 precedenceClause = parseTokenType PrecedenceKw >> fromInteger <$> intLiteral
