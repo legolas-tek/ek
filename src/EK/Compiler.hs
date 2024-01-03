@@ -14,10 +14,10 @@ import EK.Ast
 
 import Data.Map (empty)
 
-compileToVM :: [Stmt] -> Either String Insts
+compileToVM :: [Stmt Expr] -> Either String Insts
 compileToVM stmts = compileFuncDefs stmts empty
 
-compileFuncDefs :: [Stmt] -> Env -> Either String Insts
+compileFuncDefs :: [Stmt Expr] -> Env -> Either String Insts
 compileFuncDefs [] _ = Right []
 compileFuncDefs (stmt:rest) env =
   case compileFuncDef stmt env of
@@ -26,7 +26,7 @@ compileFuncDefs (stmt:rest) env =
       restInsts <- compileFuncDefs rest env
       return (insts ++ restInsts)
 
-compileFuncDef :: Stmt -> Env -> Either String Insts
+compileFuncDef :: Stmt Expr -> Env -> Either String Insts
 compileFuncDef (FuncDef pattern expr) env = do
   exprInsts <- compileExpr expr env
   let patternInsts = compilePattern pattern env
@@ -34,10 +34,10 @@ compileFuncDef (FuncDef pattern expr) env = do
 compileFuncDef _ _ = Right []
 
 compilePattern :: FuncPattern -> Env -> Insts
-compilePattern (FuncPattern items _) _ =
+compilePattern (FuncPattern items _ _) _ =
   concatMap compilePatternItem items
   where
-    compilePatternItem (ArgPattern s _) = [PushEnv s]
+    compilePatternItem (ArgPattern _ _) = []
     compilePatternItem (SymbolPattern _) = []
     compilePatternItem PlaceholderPattern = []
 
