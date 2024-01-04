@@ -54,7 +54,7 @@ tests = test
                   )
               ]
         let expected =
-              [ PopEnv "foo"
+              [ GetEnv "foo"
               , Push (IntegerValue 1)
               , VirtualMachine.Call
               , Push (StringValue "hello")

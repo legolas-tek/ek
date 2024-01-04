@@ -46,7 +46,7 @@ compileExpr (EK.Ast.Call name callItems) env = do
   callInsts <- compileCallItems callItems env
   return (case elemIndex (show name) env of
     Just i -> LoadArg i : callInsts
-    Nothing -> PopEnv (show name) : callInsts)
+    Nothing -> GetEnv (show name) : callInsts)
 
 compileCallItems :: [CallItem] -> Env -> Either String Insts
 compileCallItems items env = concat <$> mapM (`compileCallItem` env) items

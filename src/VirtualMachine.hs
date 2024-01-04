@@ -15,7 +15,7 @@ module VirtualMachine
     , Env
     ) where
 
-import Data.Map (Map, lookup, delete)
+import Data.Map (Map, lookup)
 
 data VMValue = IntegerValue Integer
              | AtomValue String
@@ -38,7 +38,7 @@ data Instruction = Push VMValue
                  | Dup
                  | Ret
                  | LoadArg Int
-                 | PopEnv String
+                 | GetEnv String
                  deriving (Show, Eq)
 
 type Args = [VMValue]
@@ -64,9 +64,10 @@ exec env args (JmpFalse _:insts) (AtomValue "true":stack) = exec env args insts 
 exec _ _ (JmpFalse _:_) _ = Left "Invalid condition"
 exec env args (Dup:insts) (v:stack) = exec env args insts (v:v:stack)
 exec _ _ (Dup:_) [] = Left "No value to duplicate"
-exec env args (PopEnv value : insts) stack = popEnv value env
-  >>= \(val, env') -> exec env' args insts (val : stack)
 exec env args (LoadArg offset:insts) stack = exec env args insts (args !! offset:stack)
+exec env args (GetEnv value:insts) stack = case Data.Map.lookup value env of
+  Just val -> exec env args insts (val:stack)
+  Nothing  -> Left "No value in env"
 
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)
@@ -83,9 +84,3 @@ applyOp Eq a b = Right $ AtomValue (if a == b then "true" else "false")
 applyOp Less (IntegerValue a) (IntegerValue b)
   = Right $ AtomValue (if a < b then "true" else "false")
 applyOp _ _ _ = Left "Invalid operands for operator"
-
-popEnv :: String -> Env -> Either String (VMValue, Env)
-popEnv value env =
-  case Data.Map.lookup value env of
-    Just val -> Right (val, Data.Map.delete value env)
-    Nothing  -> Left "No value to pop from env"
