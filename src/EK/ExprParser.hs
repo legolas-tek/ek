@@ -20,9 +20,11 @@ import EK.TokenParser
 import Control.Monad (liftM2)
 import Control.Applicative (Alternative(empty))
 import Data.Monoid (Alt(..))
+import Diagnostic
 
 type TotalStmt = EK.Ast.Stmt Expr
 type PartialStmt = EK.Ast.Stmt [Token]
+
 
 type FuncItem = FunctionName
 
@@ -32,10 +34,10 @@ lowestPrec = 0
 primaryPrec :: Prec
 primaryPrec = defaultPrec
 
-parseExprs :: [PartialStmt] -> Either String [TotalStmt]
+parseExprs :: [PartialStmt] -> Either Diagnostic [TotalStmt]
 parseExprs partials = mapM (parseBody partials) partials
 
-parseBody :: [PartialStmt] -> PartialStmt -> Either String TotalStmt
+parseBody :: [PartialStmt] -> PartialStmt -> Either Diagnostic TotalStmt
 parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ funcItems partials) body
   where
     args = funcPatternItems pat >>= argFuncItems
@@ -48,7 +50,7 @@ parseBody _ (AtomDef name) = return $ AtomDef name
 parseBody _ (TypeDef name ty) = return $ TypeDef name ty
 parseBody _ (StructDef name elems) = return $ StructDef name elems
 
-parseExpr :: [FuncItem] -> [Token] -> Either String Expr
+parseExpr :: [FuncItem] -> [Token] -> Either Diagnostic Expr
 parseExpr fi tokens = fst <$> runParser (parsePrec fi lowestPrec <* eof) tokens
 
 funcItems :: [PartialStmt] -> [FuncItem]

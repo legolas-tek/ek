@@ -5,12 +5,14 @@
 -- Diagnostic
 --
 
+{-# LANGUAGE RecordWildCards #-}
+
 module Diagnostic
     ( Diagnostic(..)
     , Severity(..)
     ) where
 
-import Token
+import SourcePos
 
 data Severity = Info
               | Warning
@@ -20,5 +22,9 @@ data Severity = Info
 data Diagnostic = Diagnostic {
     severity :: Severity,
     message  :: String,
-    token    :: [Token]
-} deriving (Show)
+    sourceLocation :: SourcePos
+}
+
+instance Show Diagnostic where
+    show (Diagnostic {..}) =
+        show severity ++ ": " ++ message ++ " at " ++ show sourceLocation

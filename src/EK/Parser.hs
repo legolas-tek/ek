@@ -17,7 +17,9 @@ import EK.TokenParser
 import Data.Maybe (isJust)
 import Control.Monad (liftM2, liftM3)
 
-parseDocument :: [Token] -> Either String [TotalStmt]
+import Diagnostic
+
+parseDocument :: [Token] -> Either Diagnostic [TotalStmt]
 parseDocument tokens = runParser document tokens >>= parseExprs . fst
 
 --- Statements

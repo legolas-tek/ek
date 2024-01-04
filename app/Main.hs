@@ -16,11 +16,13 @@ import Parser
 import Lisp
 import Ast
 import Evaluation
+import Diagnostic
 
 import Control.Monad (when)
+import Data.Bifunctor (first)
 
 parseLine :: String -> Either String ([Ast], String)
-parseLine line = runParser (many parseSExpr) line >>=
+parseLine line = first show (runParser (many parseSExpr) line) >>=
     \(sexprs, rest) -> (, if null rest then "" else rest ++ "\n") <$> mapM sexprToAST sexprs
 
 evalAsts :: Environment -> [Ast] -> EvalResult
