@@ -95,6 +95,9 @@ tests = test
   , "one int and one string in StructLit" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, tk "foo" StringLiter, tkt CurlyClose]
         @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, StringLit "foo"])]
+  , "StructLit trailing comma" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, tk "foo" StringLiter, tkt Comma, tkt CurlyClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, StringLit "foo"])]
   , "function alias" ~: do
       doc [ tkt FnKw, idt "key", tkt Equal, int 42
           , tkt FnKw, idt "alias", tkt Equal, idt "key"
