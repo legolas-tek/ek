@@ -6,6 +6,7 @@
 -}
 
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
+{-# OPTIONS_GHC -Wno-unused-do-bind #-}
 
 module EK.ExprParser
   ( parseExprs
@@ -42,14 +43,16 @@ parseBody :: [PartialStmt] -> PartialStmt -> Either Diagnostic TotalStmt
 parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ concatMap funcItems partials) body
   where
     args = funcPatternItems pat >>= argFuncItems
-    argFuncItems (ArgPattern _ s _) = [FunctionName [Symbol s] primaryPrec]
+    argFuncItems (ArgPattern _ s _) = [argFuncItem s]
     argFuncItems PlaceholderPattern = []
     argFuncItems (SymbolPattern _) = []
-
 parseBody _ (ExternDef pat) = return $ ExternDef pat
 parseBody _ (AtomDef name) = return $ AtomDef name
 parseBody _ (TypeDef name ty) = return $ TypeDef name ty
 parseBody _ (StructDef name elems) = return $ StructDef name elems
+
+argFuncItem :: String -> FuncItem
+argFuncItem s = FunctionName [Symbol s] primaryPrec
 
 parseExpr :: [FuncItem] -> [Token] -> Either Diagnostic Expr
 parseExpr fi tokens = fst <$> runParser (parsePrec fi lowestPrec <* eof) tokens
@@ -96,7 +99,7 @@ primItem :: [FuncItem] -> Parser Token CallItem
 primItem fi = ExprCall <$> prim fi <|> placeholder PlaceholderCall
 
 prim :: [FuncItem] -> Parser Token Expr
-prim funcItems = intExpr <|> stringExpr <|> parenExpr funcItems <|> structExpr funcItems
+prim funcItems = intExpr <|> stringExpr <|> parenExpr funcItems <|> structExpr funcItems <|> lambdaExpr funcItems
 
 intExpr :: Parser Token Expr
 intExpr = IntegerLit <$> intLiteral
@@ -114,6 +117,17 @@ structExprContent funcItems = structExprContent' <|> (pure <$> parsePrec funcIte
 
 structExpr :: [FuncItem] -> Parser Token Expr
 structExpr funcItems = StructLit <$> (identifier <* parseTokenType CurlyOpen) <*> (structExprContent funcItems <* parseTokenType CurlyClose)
+
+lambdaExpr :: [FuncItem] -> Parser Token Expr
+lambdaExpr funcItems = do
+  parseTokenType Backslash
+  args <- some textIdentifier
+  parseTokenType Equal
+  body <- parsePrec (map argFuncItem args ++ funcItems) lowestPrec
+  return $ createLambda args body
+
+createLambda :: [String] -> Expr -> Expr
+createLambda args body = foldr Lambda body args
 
 -- Utility functions
 

@@ -328,4 +328,38 @@ tests = test
                   , FuncDef (pat [SymbolPattern "addition"])
                     (Lambda "$0" (Lambda "$1" (Call "_ plus _" [Call "$0" [], Call "$1" []])))
                   ]
+  , "simple lambda" ~: do
+      doc [ tkt FnKw, idt "id", tkt Equal, tkt Backslash, idt "x", tkt Equal, idt "x"
+          ]
+        @?= Right [ FuncDef (pat [SymbolPattern "id"])
+                    (Lambda "x" (Call "x" []))
+                  ]
+  , "2 args lambda" ~: do
+      doc [ tkt FnKw, idt "const", tkt Equal, tkt Backslash, idt "x", idt "y", tkt Equal, idt "x"
+          ]
+        @?= Right [ FuncDef (pat [SymbolPattern "const"])
+                    (Lambda "x" (Lambda "y" (Call "x" [])))
+                  ]
+  , "nested lambda" ~: do
+      doc [ tkt FnKw, idt "const", tkt Equal, tkt Backslash, idt "x", tkt Equal, tkt Backslash, idt "y", tkt Equal, idt "x"
+          ]
+        @?= Right [ FuncDef (pat [SymbolPattern "const"])
+                    (Lambda "x" (Lambda "y" (Call "x" [])))
+                  ]
+  , "addition lambda" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "+", tkt UnderScore
+          , tkt FnKw, idt "addition", tkt Equal, tkt Backslash, idt "x", idt "y", tkt Equal, idt "x", idt "+", idt "y"
+          ]
+        @?= Right [ ExternDef (pat [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern])
+                  , FuncDef (pat [SymbolPattern "addition"])
+                    (Lambda "x" (Lambda "y" (Call "_ + _" [Call "x" [], Call "y" []])))
+                  ]
+  , "typedef + fn" ~: do
+      doc [ tkt TypeKw, idt "integer", tkt Equal, idt "int"
+          , tkt FnKw, tkt UnderScore, idt "one", tkt Equal, int 1
+          ]
+        @?= Right [ TypeDef "integer" (TypeName "int")
+                  , FuncDef (pat [PlaceholderPattern, SymbolPattern "one"])
+                    (IntegerLit 1)
+                  ]
   ]
