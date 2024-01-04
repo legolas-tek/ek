@@ -14,6 +14,7 @@ import Test.HUnit
 import EK.Ast
 import EK.Compiler
 import VirtualMachine
+import Data.Map (fromList)
 
 tests :: Test
 tests = test
@@ -30,10 +31,9 @@ tests = test
                    Nothing)
                 (IntegerLit 42)
             ]
-      let expected =
-            [ Push (IntegerValue 42)
-            , Ret
-            ]
+      let expected = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
+                                                   , Ret
+                                                   ])]
       compileToVM stmts @?= Right expected
     , "call with expressions" ~: do
         let stmts =
@@ -53,16 +53,15 @@ tests = test
                                ]
                   )
               ]
-        let expected =
-              [ GetEnv "foo"
-              , Push (IntegerValue 1)
-              , VirtualMachine.Call
-              , Push (StringValue "hello")
-              , VirtualMachine.Call
-              , Push (IntegerValue 42)
-              , VirtualMachine.Call
-              , Ret
-              ]
+        let expected = fromList [("foo (a) (b) (c)", [ GetEnv "foo"
+                                                     , Push (IntegerValue 1)
+                                                     , VirtualMachine.Call
+                                                     , Push (StringValue "hello")
+                                                     , VirtualMachine.Call
+                                                     , Push (IntegerValue 42)
+                                                     , VirtualMachine.Call
+                                                     , Ret
+                                                     ])]
         compileToVM stmts @?= Right expected
     , "test a function with args" ~: do
         let stmts =
@@ -75,8 +74,8 @@ tests = test
                      Nothing)
                   (EK.Ast.Call "a" [])
               ]
-        let expected = [ LoadArg 0
-                       , Ret
-                       ]
+        let expected = fromList [("id (a)", [ LoadArg 0
+                                            , Ret
+                                            ])]
         compileToVM stmts @?= Right expected
   ]
