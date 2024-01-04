@@ -38,6 +38,7 @@ data Expr
   | StringLit String
   | Call FunctionName [Expr]
   | Lambda String Expr
+  | StructLit String [Expr]
   deriving (Eq)
 
 data CallItem
@@ -107,6 +108,7 @@ instance Show Expr where
   show (StringLit s) = show s
   show (Call (FunctionName name _) items) = "(" ++ unwords (showCall name items) ++ ")"
   show (Lambda arg expr) = "(\\" ++ arg ++ " = " ++ show expr ++ ")"
+  show (StructLit s elems) = s ++ " { " ++ intercalate ", " (show <$> elems) ++ " }"
 
 showCall :: [Symbol] -> [Expr] -> [String]
 showCall ((Symbol s):xs) i = s : showCall xs i

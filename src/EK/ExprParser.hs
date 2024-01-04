@@ -17,6 +17,7 @@ import EK.Ast
 import Token
 import Parser
 import EK.TokenParser
+import Control.Monad (liftM2)
 import Control.Applicative (Alternative(empty))
 import Data.Monoid (Alt(..))
 import Data.List (findIndex)
@@ -93,7 +94,7 @@ primItem :: [FuncItem] -> Parser Token CallItem
 primItem fi = ExprCall <$> prim fi <|> placeholder PlaceholderCall
 
 prim :: [FuncItem] -> Parser Token Expr
-prim funcItems = intExpr <|> stringExpr <|> parenExpr funcItems
+prim funcItems = intExpr <|> stringExpr <|> parenExpr funcItems <|> structExpr funcItems
 
 intExpr :: Parser Token Expr
 intExpr = IntegerLit <$> intLiteral
@@ -103,6 +104,14 @@ stringExpr = StringLit <$> stringLiteral
 
 parenExpr :: [FuncItem] -> Parser Token Expr
 parenExpr funcItems = parseTokenType ParenOpen *> parsePrec funcItems lowestPrec <* parseTokenType ParenClose
+
+structExprContent :: [FuncItem] -> Parser Token [Expr]
+structExprContent funcItems = structExprContent' <|> (pure <$> parsePrec funcItems lowestPrec) <|> return []
+  where
+    structExprContent' = liftM2 (:) (parsePrec funcItems lowestPrec) (parseTokenType Comma >> structExprContent funcItems)
+
+structExpr :: [FuncItem] -> Parser Token Expr
+structExpr funcItems = StructLit <$> (identifier <* parseTokenType CurlyOpen) <*> (structExprContent funcItems <* parseTokenType CurlyClose)
 
 -- Utility functions
 
