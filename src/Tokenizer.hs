@@ -16,8 +16,9 @@ import Token
 import Parser
 
 import Data.Char (isLetter)
+import Diagnostic
 
-type TokenizerError = String
+type TokenizerError = Diagnostic
 
 tokens :: Parser Char [Token]
 tokens = many token <* useless <* eof

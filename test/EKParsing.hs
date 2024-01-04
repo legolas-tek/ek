@@ -17,9 +17,10 @@ import EK.Parser
 import Token
 import SourcePos
 import EK.Ast
+import Diagnostic
 
 tk :: String -> TokenType -> Token
-tk s = Token s (SourcePos "" 0 0)
+tk s = Token s (SourcePos "" 1 1)
 
 tkt :: TokenType -> Token
 tkt = tk ""
@@ -30,7 +31,7 @@ idt s = tk s TextIdentifier
 int :: Int -> Token
 int i = tk (show i) IntLiter
 
-doc :: [Token] -> Either String [Stmt Expr]
+doc :: [Token] -> Either Diagnostic [Stmt Expr]
 doc = parseDocument
 
 pat :: [FuncPatternItem] -> FuncPattern
@@ -219,15 +220,15 @@ tests = test
   , "error case, invalid placeholder" ~: do
       doc [ tkt FnKw, idt "add", tkt Equal, tkt UnderScore
           ]
-        @?= Left "Invalid placeholder"
+        @?= Left (Diagnostic Error "Invalid placeholder" (SourcePos "" 1 1))
   , "error case, variable does not exist" ~: do
       doc [ tkt FnKw, idt "add", tkt Equal, idt "a"
           ]
-        @?= Left "Could not resolve expression"
+        @?= Left (Diagnostic Error "Could not resolve expression" (SourcePos "" 1 1))
   , "error case, unopened paren" ~: do
       doc [ tkt FnKw, idt "a", tkt Equal, int 3, tkt CurlyClose
           ]
-        @?= Left "Unexpected trailing token"
+        @?= Left (Diagnostic Error "Unexpected trailing token" (SourcePos "" 1 1))
   , "precedence, + and *" ~: do
       doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "*", tkt UnderScore, tkt PrecedenceKw, int 7
           , tkt ExternKw, tkt FnKw, tkt UnderScore, idt "+", tkt UnderScore, tkt PrecedenceKw, int 6
