@@ -16,6 +16,7 @@ import qualified EKParsing
 import qualified EKTyping
 import qualified Compilation
 import qualified Tokenizing
+import qualified Serializing
 
 tests :: Test
 tests = test

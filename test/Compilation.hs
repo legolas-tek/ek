@@ -18,7 +18,6 @@ import VirtualMachine
 tests :: Test
 tests = test
   [ "func def" ~: do
-      "test" @?= "test"
       let stmts =
             [ FuncDef
                 (FuncPattern

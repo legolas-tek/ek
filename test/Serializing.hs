@@ -5,17 +5,21 @@
 -- tests
 -}
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Serializing (tests) where
 
 import Test.HUnit
-import Data.Either (isLeft)
+
 import VirtualMachine
 
-import Parser
+import Serialize
+
+import qualified Data.ByteString as B
 
 tests :: Test
 tests = test
   [ "serialize" ~: do
     --   serialize Push (IntegerValue 3) @?= []
-      serialize Ret @?= [11]
+      serialize Ret @?= "\v"
   ]
