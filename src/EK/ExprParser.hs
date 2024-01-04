@@ -25,7 +25,6 @@ import Diagnostic
 type TotalStmt = EK.Ast.Stmt Expr
 type PartialStmt = EK.Ast.Stmt [Token]
 
-
 type FuncItem = FunctionName
 
 lowestPrec :: Prec
