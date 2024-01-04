@@ -11,6 +11,7 @@ module EK.Compiler
 
 import VirtualMachine hiding (Env)
 import EK.Ast
+import Data.List (elemIndex)
 
 type Env = [String]
 
@@ -28,7 +29,7 @@ compileFuncDefs (stmt:rest) env =
 
 addArgToEnv :: Env -> FuncPatternItem -> Env
 addArgToEnv env (ArgPattern _ name _) = name : env
-addArgToEnv env (SymbolPattern name) = name : env
+addArgToEnv env (SymbolPattern _) = env
 addArgToEnv env PlaceholderPattern = env
 
 addArgsToEnv :: FuncPattern -> Env -> Env
@@ -45,7 +46,9 @@ compileExpr (IntegerLit i) _ = Right [Push (IntegerValue i)]
 compileExpr (StringLit s) _ = Right [Push (StringValue s)]
 compileExpr (EK.Ast.Call name callItems) env = do
   callInsts <- compileCallItems callItems env
-  return (PopEnv (show name) : callInsts)
+  return (case elemIndex (show name) env of
+    Just i -> LoadArg i : callInsts
+    Nothing -> PopEnv (show name) : callInsts)
 
 compileCallItems :: [CallItem] -> Env -> Either String Insts
 compileCallItems items env = concat <$> mapM (`compileCallItem` env) items
