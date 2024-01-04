@@ -23,7 +23,7 @@ data Diagnostic = Diagnostic {
     severity :: Severity,
     message  :: String,
     sourceLocation :: SourcePos
-}
+} deriving (Eq)
 
 instance Show Diagnostic where
     show (Diagnostic {..}) =
