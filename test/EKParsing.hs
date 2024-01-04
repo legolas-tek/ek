@@ -77,6 +77,27 @@ tests = test
         @?= Right [FuncDef (FuncPattern [SymbolPattern "key"] (Just $ TypeName "string") Nothing) (StringLit "foo")]
       doc [tkt FnKw, idt "key", tkt Equal, tkt ParenOpen, int 42, tkt ParenClose]
         @?= Right [FuncDef (pat [SymbolPattern "key"]) (IntegerLit 42)]
+  , "Empty StructLit" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, tkt CurlyClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [])]
+  , "one int in StructLit" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt CurlyClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42])]
+  , "rwo int in StructLit" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, int 43, tkt CurlyClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, IntegerLit 43])]
+  , "one string in StructLit" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, tk "foo" StringLiter, tkt CurlyClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [StringLit "foo"])]
+  , "many elements in StructLit" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, tk "foo" StringLiter, tkt Comma, int 43, tkt CurlyClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, StringLit "foo", IntegerLit 43])]
+  , "one int and one string in StructLit" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, tk "foo" StringLiter, tkt CurlyClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, StringLit "foo"])]
+  , "StructLit trailing comma" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, tk "foo" StringLiter, tkt Comma, tkt CurlyClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, StringLit "foo"])]
   , "function alias" ~: do
       doc [ tkt FnKw, idt "key", tkt Equal, int 42
           , tkt FnKw, idt "alias", tkt Equal, idt "key"
