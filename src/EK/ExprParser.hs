@@ -36,7 +36,7 @@ parseExprs :: [PartialStmt] -> Either String [TotalStmt]
 parseExprs partials = mapM (parseBody partials) partials
 
 parseBody :: [PartialStmt] -> PartialStmt -> Either String TotalStmt
-parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ funcItems partials) body
+parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ concatMap funcItems partials) body
   where
     args = funcPatternItems pat >>= argFuncItems
     argFuncItems (ArgPattern _ s _) = [FunctionName [Symbol s] primaryPrec]
@@ -51,12 +51,11 @@ parseBody _ (StructDef name elems) = return $ StructDef name elems
 parseExpr :: [FuncItem] -> [Token] -> Either String Expr
 parseExpr fi tokens = fst <$> runParser (parsePrec fi lowestPrec <* eof) tokens
 
-funcItems :: [PartialStmt] -> [FuncItem]
-funcItems (FuncDef pat _ : xs) = patternToName pat : funcItems xs
-funcItems (ExternDef pat : xs) = patternToName pat : funcItems xs
-funcItems (AtomDef name : xs) = FunctionName [Symbol name] primaryPrec : funcItems xs
-funcItems (_ : xs) = funcItems xs
-funcItems [] = []
+funcItems :: PartialStmt -> [FuncItem]
+funcItems (FuncDef pat _) = [patternToName pat]
+funcItems (ExternDef pat) = [patternToName pat]
+funcItems (AtomDef name) = [FunctionName [Symbol name] primaryPrec]
+funcItems _ = []
 
 parsePrec :: [FuncItem] -> Prec -> Parser Token Expr
 parsePrec fi prec = primItem fi <|> parsePrefix fi prec >>= parseInfix fi prec
