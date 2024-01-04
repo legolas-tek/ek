@@ -59,10 +59,10 @@ runParserOnFile :: Parser inp out -> String -> [inp] -> Either ParserError out
 runParserOnFile (Parser p) fileName fileContent = p (SourcePos fileName 1 1) fileContent >>= \(x, _, _) -> Right x
 
 parseOneIf' :: (Show inp, Parsable inp) => (inp -> Bool) -> Parser' inp inp
-parseOneIf'  _ sourcePos [] = Left $ Diagnostic Error ("found EOF at: " ++ show sourcePos) sourcePos
+parseOneIf'  _ sourcePos [] = Left $ Diagnostic Error "found EOF" sourcePos
 parseOneIf' predicate sourcePos (x:xs)
   | predicate x = Right (x, xs, advance sourcePos x)
-  | otherwise   = Left $ Diagnostic Error ("found " ++ show x ++ " at: " ++ show sourcePos) sourcePos
+  | otherwise   = Left $ Diagnostic Error ("found " ++ show x) sourcePos
 
 parseOneIf :: (Show inp, Parsable inp) => (inp -> Bool) -> Parser inp inp
 parseOneIf predicate = Parser $ parseOneIf' predicate

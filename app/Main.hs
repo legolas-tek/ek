@@ -16,7 +16,6 @@ import Parser
 import Lisp
 import Ast
 import Evaluation
-import Diagnostic
 
 import Control.Monad (when)
 import Data.Bifunctor (first)
