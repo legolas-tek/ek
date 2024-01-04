@@ -20,20 +20,18 @@ compileToVM stmts = compileFuncDefs stmts []
 
 compileFuncDefs :: [Stmt Expr] -> Env -> Either String Insts
 compileFuncDefs [] _ = Right []
-compileFuncDefs (stmt:rest) env =
-  case compileFuncDef stmt env of
-    Left err -> Left err
-    Right insts -> do
-      restInsts <- compileFuncDefs rest env
-      return (insts ++ restInsts)
+compileFuncDefs (stmt:rest) env = do
+  insts <- compileFuncDef stmt env
+  restInsts <- compileFuncDefs rest env
+  return (insts ++ restInsts)
 
-addArgToEnv :: Env -> FuncPatternItem -> Env
-addArgToEnv env (ArgPattern _ name _) = name : env
-addArgToEnv env (SymbolPattern _) = env
-addArgToEnv env PlaceholderPattern = env
+addArgToEnv :: FuncPatternItem -> Env
+addArgToEnv (ArgPattern _ name _) = [name]
+addArgToEnv (SymbolPattern _) = []
+addArgToEnv PlaceholderPattern = []
 
 addArgsToEnv :: FuncPattern -> Env -> Env
-addArgsToEnv (FuncPattern items _ _) initEnv = foldl addArgToEnv initEnv items
+addArgsToEnv (FuncPattern items _ _) initEnv = concatMap addArgToEnv items ++ initEnv
 
 compileFuncDef :: Stmt Expr -> Env -> Either String Insts
 compileFuncDef (FuncDef pattern expr) env = do
