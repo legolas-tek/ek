@@ -13,8 +13,10 @@ import VirtualMachine
 
 import Data.Map (fromList, empty)
 
+ex :: Insts -> Stack -> Either String VMValue
 ex = exec empty []
 
+absFn :: [Instruction]
 absFn = [ LoadArg 0
         , Push $ IntegerValue 0
         , CallOp Less
@@ -78,8 +80,8 @@ tests = test
          , Call
          , Ret
          ] [] @?= Right (IntegerValue 20)
-    , "PopEnv" ~: do
-        exec (fromList [("a", IntegerValue 42)]) [] [PopEnv "a", Ret] [] @?= Right (IntegerValue 42)
-        ex [PopEnv "failure expected"] [] @?=
-          Left "No value to pop from env"
+    , "GetEnv" ~: do
+        exec (fromList [("a", IntegerValue 42)]) [] [GetEnv "a", Ret] [] @?= Right (IntegerValue 42)
+        ex [GetEnv "failure expected"] [] @?=
+          Left "No value in env"
   ]
