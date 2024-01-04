@@ -20,7 +20,7 @@ import EK.Ast
 import Diagnostic
 
 tk :: String -> TokenType -> Token
-tk s = Token s (SourcePos "" 0 0)
+tk s = Token s (SourcePos "" 1 1)
 
 tkt :: TokenType -> Token
 tkt = tk ""
@@ -220,7 +220,7 @@ tests = test
   , "error case, invalid placeholder" ~: do
       doc [ tkt FnKw, idt "add", tkt Equal, tkt UnderScore
           ]
-        @?= Left (Diagnostic Error "Invalid placeholder" (SourcePos "" 0 0))
+        @?= Left (Diagnostic Error "Invalid placeholder" (SourcePos "" 1 1))
   , "error case, variable does not exist" ~: do
       doc [ tkt FnKw, idt "add", tkt Equal, idt "a"
           ]
@@ -228,7 +228,7 @@ tests = test
   , "error case, unopened paren" ~: do
       doc [ tkt FnKw, idt "a", tkt Equal, int 3, tkt CurlyClose
           ]
-        @?= Left (Diagnostic Error "Unexpected trailing token" (SourcePos "" 0 0))
+        @?= Left (Diagnostic Error "Unexpected trailing token" (SourcePos "" 1 1))
   , "precedence, + and *" ~: do
       doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "*", tkt UnderScore, tkt PrecedenceKw, int 7
           , tkt ExternKw, tkt FnKw, tkt UnderScore, idt "+", tkt UnderScore, tkt PrecedenceKw, int 6
