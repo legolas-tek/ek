@@ -22,13 +22,15 @@ readFileOrStdIn :: Maybe String -> IO String
 readFileOrStdIn Nothing = getContents
 readFileOrStdIn (Just file) = readFile file
 
-output :: String -> IO ()
-output o = putStrLn o >> exitSuccess
+writeFileOrStdOut :: Maybe String -> String -> IO ()
+writeFileOrStdOut Nothing content = putStrLn content
+writeFileOrStdOut (Just file) content = writeFile file content
 
 main :: IO ()
 main = do
   args' <- getArgs
   arg <- either (fail . show) return $ parseArguments args'
+  let output o = writeFileOrStdOut (argOutput arg) o >> exitSuccess
   content <- readFileOrStdIn $ argInput arg
   tokens <- either (fail . show) return $ tokenizer ("stdin" `fromMaybe` argInput arg) content
   when (argOutputType arg == Just OutputTokens) $ output $ show tokens
