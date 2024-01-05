@@ -36,7 +36,9 @@ data FunctionName = FunctionName [Symbol] Prec
 data Expr
   = IntegerLit Integer
   | StringLit String
-  | Call FunctionName [CallItem]
+  | Call FunctionName [Expr]
+  | Lambda String Expr
+  | StructLit String [Expr]
   deriving (Eq)
 
 data CallItem
@@ -71,7 +73,7 @@ data FuncPattern = FuncPattern
   } deriving (Eq)
 
 data FuncPatternItem
-  = ArgPattern String (Maybe Type)
+  = ArgPattern Bool String (Maybe Type)
   | SymbolPattern String
   | PlaceholderPattern
   deriving (Eq)
@@ -79,7 +81,7 @@ data FuncPatternItem
 patternToName :: FuncPattern -> FunctionName
 patternToName (FuncPattern items _ prec) = FunctionName (map patternToName' items) (defaultPrec `fromMaybe` prec)
   where
-    patternToName' (ArgPattern _ _) = Placeholder
+    patternToName' (ArgPattern {}) = Placeholder
     patternToName' (SymbolPattern s) = Symbol s
     patternToName' PlaceholderPattern = Placeholder
 
@@ -105,12 +107,13 @@ instance Show Symbol where
 instance Show Expr where
   show (IntegerLit i) = show i
   show (StringLit s) = show s
-  show (Call (FunctionName name _) items) = unwords $ showCall name items
+  show (Call (FunctionName name _) items) = "(" ++ unwords (showCall name items) ++ ")"
+  show (Lambda arg expr) = "(\\" ++ arg ++ " = " ++ show expr ++ ")"
+  show (StructLit s elems) = s ++ " { " ++ intercalate ", " (show <$> elems) ++ " }"
 
-showCall :: [Symbol] -> [CallItem] -> [String]
+showCall :: [Symbol] -> [Expr] -> [String]
 showCall ((Symbol s):xs) i = s : showCall xs i
-showCall (Placeholder:xs) ((ExprCall e):is) = ("(" ++ show e ++ ")") : showCall xs is
-showCall (Placeholder:xs) (PlaceholderCall:is) = "_" : showCall xs is
+showCall (Placeholder:xs) (e:is) = show e : showCall xs is
 showCall [] _ = []
 showCall _ [] = ["#error#"]
 
@@ -142,8 +145,8 @@ instance Show FuncPattern where
           showType Nothing = ""
 
 instance Show FuncPatternItem where
-  show (ArgPattern s (Just t)) = "(" ++ s ++ " : " ++ show t ++ ")"
-  show (ArgPattern s Nothing) = "(" ++ s ++ ")"
+  show (ArgPattern lazy s (Just t)) = "(" ++ (if lazy then "lazy " else "") ++ s ++ " : " ++ show t ++ ")"
+  show (ArgPattern lazy s Nothing) = "(" ++ (if lazy then "lazy " else "") ++ s ++ ")"
   show (SymbolPattern s) = s
   show PlaceholderPattern = "_"
 

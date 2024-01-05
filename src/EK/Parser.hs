@@ -15,15 +15,17 @@ import Parser
 import Token
 import Tokenizer
 import EK.TokenParser
+import Data.Maybe (isJust)
 import Control.Monad (liftM2, liftM3)
 import Data.Functor ((<&>))
+import Diagnostic
 
 parseDocument :: [Token] -> IO [TotalStmt]
 parseDocument tokens = parse >>= getImportedTokens . fst >>= exprParse
     where
-        parse = either fail return $ runParser document tokens
+        parse = either (fail . show) return $ runParser document tokens
 
-        exprParse = either fail return . parseExprs
+        exprParse = either (fail . show) return . parseExprs
 
 --- Statements
 
@@ -88,10 +90,11 @@ funcPatternItem = placeholder PlaceholderPattern <|> (SymbolPattern <$> identifi
 argumentPatternItem :: Parser Token FuncPatternItem
 argumentPatternItem = do
   parseTokenType ParenOpen
+  lazy <- optional (parseTokenType LazyKw)
   name <- identifier
   t <- optional typed
   parseTokenType ParenClose
-  return $ ArgPattern name t
+  return $ ArgPattern (isJust lazy) name t
 
 precedenceClause :: Parser Token Prec
 precedenceClause = parseTokenType PrecedenceKw >> fromInteger <$> intLiteral
@@ -131,11 +134,11 @@ intRange = do
 -- Import Handling
 
 getImportedTokens :: [PartialStmt] -> IO [PartialStmt]
-getImportedTokens (ImportDef x: xs) = readFile x >>= either fail return . parseImportedTokens x >>= getImportedTokens'
+getImportedTokens (ImportDef x: xs) = readFile x >>= either (fail . show) return . parseImportedTokens x >>= getImportedTokens'
     where
         getImportedTokens' stmts = getImportedTokens (stmts ++ xs) >>= \rest -> return $ stmts ++ rest
 getImportedTokens (_: rest) = getImportedTokens rest
 getImportedTokens [] = return []
 
-parseImportedTokens :: String -> String -> Either String [PartialStmt]
+parseImportedTokens :: String -> String -> Either Diagnostic [PartialStmt]
 parseImportedTokens fileName content = (tokenizer fileName content >>= runParser document) <&> fst

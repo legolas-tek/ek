@@ -179,6 +179,14 @@ tests = test
                 , Token "2" (SourcePos "operators.hs" 1 20) IntLiter
                 ]
 
+        tokenizer "operators.hs" "\\a b = a"
+            @?= Right [Token "\\" (SourcePos "operators.hs" 1 1) Backslash
+                , Token "a" (SourcePos "operators.hs" 1 2) TextIdentifier
+                , Token "b" (SourcePos "operators.hs" 1 4) TextIdentifier
+                , Token "=" (SourcePos "operators.hs" 1 6) Equal
+                , Token "a" (SourcePos "operators.hs" 1 8) TextIdentifier
+                ]
+
     , "keywordTokenizer" ~: do
         tokenizer "kw.hs" "struct object {\n\tname: string\n}"
             @?= Right [Token "struct" (SourcePos "kw.hs" 1 1) StructKw

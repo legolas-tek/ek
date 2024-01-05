@@ -17,6 +17,7 @@ data TokenType = AtomKw
                | TypeKw
                | FnKw
                | ExternKw
+               | LazyKw
                | PrecedenceKw
                | ImportKw
                | Equal
@@ -37,6 +38,7 @@ data TokenType = AtomKw
                | TextIdentifier
                | OperatorIdentifier
                | Arrow
+               | Backslash
                deriving (Show, Eq)
 
 data Token = Token { lexeme  :: String
