@@ -12,16 +12,16 @@ module EK.Compiler
 
 import VirtualMachine hiding (Env)
 import EK.Ast
-import Data.Map (Map, fromList, empty, union)
+import Data.Map (Map, fromList, empty, union, toList)
 import Data.List (elemIndex)
 import Data.Functor ((<&>))
 
 type Env = [String]
 type Result = Map String Insts
 
-instance Show Result where
-    show result = concatMap showEntry (Map.toList result)
-        where showEntry (key, value) = key ++ ": " ++ show value ++ "\n"
+showBytecode :: Result -> String
+showBytecode result = concatMap showEntry (toList result)
+    where showEntry (key, value) = key ++ ": " ++ show value ++ "\n"
 
 compileToVM :: [Stmt Expr] -> Either String Result
 compileToVM stmts = compileStmts stmts []
