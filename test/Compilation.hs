@@ -35,6 +35,11 @@ tests = test
                                                    , Ret
                                                    ])]
       compileToVM stmts @?= Right expected
+    , "test" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
+                                                   , Ret
+                                                   ])]
+        showBytecode insts @?= "foo (a) (b) (c): [push 42,ret]\n"
     , "call with expressions" ~: do
         let stmts =
               [ FuncDef

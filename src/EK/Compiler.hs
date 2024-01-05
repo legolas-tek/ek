@@ -8,6 +8,7 @@
 module EK.Compiler
   ( compileToVM
   , Result
+  , showBytecode
   ) where
 
 import VirtualMachine hiding (Env)
