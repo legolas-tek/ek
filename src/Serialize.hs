@@ -11,6 +11,9 @@ import VirtualMachine
 import qualified Data.ByteString as B
 import Data.String(IsString(..))
 
+saveInsts :: Insts -> String -> IO ()
+saveInsts insts path = B.writeFile (path ++ ".eko") (B.concat (fmap serialize insts))
+
 serialize :: Instruction -> B.ByteString
 serialize (Push value) = B.singleton 1 <> serializeVMValue value
 serialize Call = B.singleton 2
