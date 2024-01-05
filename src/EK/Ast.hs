@@ -36,7 +36,9 @@ data FunctionName = FunctionName [Symbol] Prec
 data Expr
   = IntegerLit Integer
   | StringLit String
-  | Call FunctionName [CallItem]
+  | Call FunctionName [Expr]
+  | Lambda String Expr
+  | StructLit String [Expr]
   deriving (Eq)
 
 data CallItem
@@ -78,7 +80,7 @@ data FuncPatternItem
 patternToName :: FuncPattern -> FunctionName
 patternToName (FuncPattern items _ prec) = FunctionName (map patternToName' items) (defaultPrec `fromMaybe` prec)
   where
-    patternToName' (ArgPattern _ _ _) = Placeholder
+    patternToName' (ArgPattern {}) = Placeholder
     patternToName' (SymbolPattern s) = Symbol s
     patternToName' PlaceholderPattern = Placeholder
 
@@ -95,7 +97,7 @@ instance Show FunctionName where
     ++ (if prec /= defaultPrec then " precedence " ++ show prec else "")
 
 precedence :: FunctionName -> Prec -> FunctionName
-precedence (FunctionName symbols _) prec = FunctionName symbols prec
+precedence (FunctionName symbols _) = FunctionName symbols
 
 instance Show Symbol where
   show (Symbol s) = s
@@ -104,12 +106,13 @@ instance Show Symbol where
 instance Show Expr where
   show (IntegerLit i) = show i
   show (StringLit s) = show s
-  show (Call (FunctionName name _) items) = unwords $ showCall name items
+  show (Call (FunctionName name _) items) = "(" ++ unwords (showCall name items) ++ ")"
+  show (Lambda arg expr) = "(\\" ++ arg ++ " = " ++ show expr ++ ")"
+  show (StructLit s elems) = s ++ " { " ++ intercalate ", " (show <$> elems) ++ " }"
 
-showCall :: [Symbol] -> [CallItem] -> [String]
+showCall :: [Symbol] -> [Expr] -> [String]
 showCall ((Symbol s):xs) i = s : showCall xs i
-showCall (Placeholder:xs) ((ExprCall e):is) = ("(" ++ show e ++ ")") : showCall xs is
-showCall (Placeholder:xs) (PlaceholderCall:is) = "_" : showCall xs is
+showCall (Placeholder:xs) (e:is) = show e : showCall xs is
 showCall [] _ = []
 showCall _ [] = ["#error#"]
 

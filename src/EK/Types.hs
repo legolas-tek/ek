@@ -99,7 +99,7 @@ instance Eq Field where
 
 instance Ord Field where
     compare (Field name1 _) (Field name2 _) = compare name1 name2
-    
+
 -- | Merge two sorted lists, removing duplicates
 merge :: Ord a => [a] -> [a] -> [a]
 merge [] ys = ys
