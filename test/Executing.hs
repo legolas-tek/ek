@@ -28,7 +28,7 @@ absFn :: [Instruction]
 absFn = [ LoadArg 0
         , Push $ IntegerValue 0
         , CallOp Less
-        , JmpFalse 2 
+        , JmpFalse 2
         , LoadArg 0
         , Ret
         , LoadArg 0
