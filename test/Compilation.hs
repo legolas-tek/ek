@@ -43,7 +43,7 @@ tests = test
         showBytecode insts @?= "foo (a) (b) (c):\n\tcall\n"
     , "show Bytecode CallOp" ~: do
         let insts = fromList [("foo (a) (b) (c)", [ CallOp Add ])]
-        showBytecode insts @?= "foo (a) (b) (c):\n\tcall_op Add\n"
+        showBytecode insts @?= "foo (a) (b) (c):\n\tcall_op add\n"
     , "show Bytecode JmpFalse" ~: do
         let insts = fromList [("foo (a) (b) (c)", [ JmpFalse 42 ])]
         showBytecode insts @?= "foo (a) (b) (c):\n\tjmp_false 42\n"
@@ -91,7 +91,7 @@ tests = test
                                                    , LoadArg 42
                                                    , CallOp Add
                                                    ])]
-        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n\tgetenv foo\n\tload_arg 42\n\tcall_op Add\n"
+        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n\tgetenv foo\n\tload_arg 42\n\tcall_op add\n"
     , "call with expressions" ~: do
         let stmts =
               [ FuncDef

@@ -29,7 +29,15 @@ data Operator = Add
               | Div
               | Eq
               | Less
-              deriving (Show, Eq)
+              deriving (Eq)
+
+instance Show Operator where
+  show Add = "add"
+  show Sub = "sub"
+  show Mul = "mul"
+  show Div = "div"
+  show Eq = "eq"
+  show Less = "less"
 
 data Instruction = Push VMValue
                  | Call
