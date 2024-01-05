@@ -40,6 +40,35 @@ tests = test
                                                    , Ret
                                                    ])]
         showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n"
+    , "test show Bytecode 1" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
+                                                   , Ret
+                                                   ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n"
+    , "test show Bytecode Push" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42) ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n"
+    , "test show Bytecode Call" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [VirtualMachine.Call ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tcall\n"
+    , "test show Bytecode CallOp" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ CallOp Add ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tcall_op Add\n"
+    , "test show Bytecode JmpFalse" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ JmpFalse 42 ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tjmp_false 42\n"
+    , "test show Bytecode Dup" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Dup ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tdup\n"
+    , "test show Bytecode Ret" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Ret ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tret\n"
+    , "test show Bytecode LoadArg" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ LoadArg 42 ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tload_arg 42\n"
+    , "test show Bytecode GetEnv" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ GetEnv "foo" ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tgetenv foo\n"
     , "call with expressions" ~: do
         let stmts =
               [ FuncDef
