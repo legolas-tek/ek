@@ -14,7 +14,7 @@ STACK	=	stack
 
 all:
 	$(STACK) build
-	cp "`$(STACK) path --local-install-root`/bin/glados" $(NAME)
+	cp "`$(STACK) path --local-install-root`/bin/"* .
 
 clean:
 	$(RM) $(SRC:.hs=.hi)
