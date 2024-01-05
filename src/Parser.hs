@@ -38,10 +38,10 @@ import Control.Applicative
 import Control.Monad (MonadPlus)
 import Data.Functor (($>))
 import Text.Printf (printf)
-
+import Diagnostic
 import SourcePos
 
-type ParserError = String
+type ParserError = Diagnostic
 
 type Parser' inp out = SourcePos -> [inp] -> Either ParserError (out, [inp], SourcePos)
 newtype Parser inp out  = Parser {runParser' :: Parser' inp out}
@@ -59,10 +59,10 @@ runParserOnFile :: Parser inp out -> String -> [inp] -> Either ParserError out
 runParserOnFile (Parser p) fileName fileContent = p (SourcePos fileName 1 1) fileContent >>= \(x, _, _) -> Right x
 
 parseOneIf' :: (Show inp, Parsable inp) => (inp -> Bool) -> Parser' inp inp
-parseOneIf'  _ sourcePos [] = Left ("found EOF at: " ++ show sourcePos)
+parseOneIf'  _ sourcePos [] = Left $ Diagnostic Error "found EOF" sourcePos
 parseOneIf' predicate sourcePos (x:xs)
   | predicate x = Right (x, xs, advance sourcePos x)
-  | otherwise   = Left $ "found " ++ show x ++ " at: " ++ show sourcePos
+  | otherwise   = Left $ Diagnostic Error ("found " ++ show x) sourcePos
 
 parseOneIf :: (Show inp, Parsable inp) => (inp -> Bool) -> Parser inp inp
 parseOneIf predicate = Parser $ parseOneIf' predicate
@@ -118,7 +118,7 @@ parseStringLit = parseChar '"' *> many (parseEscapedChar <|> parseAnyButChar '"'
 parseNot :: Parser inp out -> Parser inp ()
 parseNot p = Parser $ \sourcePos input -> parseNot' sourcePos input (runParser' p sourcePos input)
   where parseNot' sourcePos input (Left _) = Right ((), input, sourcePos)
-        parseNot' _ _ _            = Left "Unexpected token"
+        parseNot' sourcePos _ _            = Left $ Diagnostic Error "Unexpected token" sourcePos
 
 instance Functor (Parser inp) where
   fmap fct p = Parser $ \sourcePos input -> fmap' (runParser' p sourcePos input)
@@ -130,19 +130,19 @@ instance Applicative (Parser inp) where
   liftA2 fct p1 p2 = p1 >>= \x -> fct x <$> p2
 
 instance Alternative (Parser inp) where
-  empty = Parser $ \_ _ -> Left "Empty parser"
+  empty = Parser $ \sourcePos _ -> Left $ Diagnostic Error "Empty parser" sourcePos
   p1 <|> p2 = Parser $ \sourcePos input -> runParser' p1 sourcePos input <> runParser' p2 sourcePos input
 
 instance Monad (Parser inp) where
   p >>= fct = Parser $ \sourcePos input -> runParser' p sourcePos input >>= \(x, rest, sourcePos') -> runParser' (fct x) sourcePos' rest
 
 instance MonadFail (Parser inp) where
-  fail err = Parser $ \_ _ -> Left err
+  fail err = Parser $ \sourcePos _ -> Left $ Diagnostic Error err sourcePos
 
 instance MonadPlus (Parser inp) where
   -- default
 
-mapError :: (ParserError -> ParserError) -> Parser inp out  -> Parser inp out
+mapError :: (String -> String) -> Parser inp out -> Parser inp out
 mapError fct p = Parser $ \sourcePos input -> mapError' (runParser' p sourcePos input)
-  where mapError' (Left err) = Left $ fct err
-        mapError' ok         = ok
+  where mapError' (Left diag) = Left $ diag { message = fct (message diag) }
+        mapError' ok           = ok
