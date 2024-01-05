@@ -136,7 +136,3 @@ tests = test
                                             ])]
         compileToVM stmts @?= Right expected
   ]
-
-
--- foo (a) (b) (c):\n\tpush 42\n\tret\n\tgetEnv foo\n
--- foo (a) (b) (c):\n\tpush 42\n\tret\n\tgetenv foo\n
