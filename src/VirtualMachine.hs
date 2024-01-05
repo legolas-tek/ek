@@ -83,15 +83,10 @@ exec _ _ (Ret:_) [] = fail "No value on stack"
 exec env args (Push v:insts) stack = exec env args insts (v:stack)
 exec env args (CallOp Print:insts) (v:stack) = putStrLn (show v) >> exec env args insts stack
 exec env args (CallOp op:insts) (v1:v2:stack) =
-  case applyOp op v1 v2 of
-    Right val -> exec env args insts (val:stack)
-    Left err -> fail err
+  either fail (\val -> exec env args insts (val:stack)) (applyOp op v1 v2)
 exec _ _ (CallOp _:_) _ = fail "Not enough arguments for operator"
-exec env args (Call:insts) (arg:FunctionValue fn:stack) = do
-  result <- exec env [arg] fn []
-  case result of
-    FunctionValue _ -> fail "Cannot return function"
-    _ -> exec env args insts (result:stack)
+exec env args (Call:insts) (arg:FunctionValue fn:stack) = exec env [arg] fn []
+  >>= \result -> exec env args insts (result:stack)
 exec _ _ (Call:_) _ = fail "Cannot call value of non-function type"
 exec env args (JmpFalse offset:insts) (AtomValue "false":stack)
   = exec env args (drop offset insts) stack
