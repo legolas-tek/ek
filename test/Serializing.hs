@@ -32,8 +32,9 @@ tests = test
       serialize (CallOp Eq)  @?= "\BEL"
       serialize (CallOp Less)  @?= "\BS"
       serialize (JmpFalse 49)  @?= "\t1"
+      serialize (CallOp Print) @?= "\SO"
       serialize Dup @?= "\n"
       serialize Ret @?= "\v"
       serialize (LoadArg 49) @?= "\f1"
-      serialize (PopEnv "test") @?= "\rtest\0"
+      serialize (GetEnv "test") @?= "\rtest\0"
   ]

@@ -27,7 +27,8 @@ serialize (JmpFalse jmpValue) = B.singleton 9 <> B.singleton (fromIntegral jmpVa
 serialize Dup = B.singleton 10
 serialize Ret = B.singleton 11
 serialize (LoadArg value) = B.singleton 12 <> B.singleton (fromIntegral value)
-serialize (PopEnv value) = B.singleton 13 <> fromString value <> B.singleton 0
+serialize (GetEnv value) = B.singleton 13 <> fromString value <> B.singleton 0
+serialize (CallOp Print) = B.singleton 14
 
 serializeVMValue :: VMValue -> B.ByteString
 serializeVMValue (IntegerValue value) = B.singleton 1 <> fromString (show value) <> B.singleton 0
