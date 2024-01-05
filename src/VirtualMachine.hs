@@ -39,12 +39,25 @@ data Instruction = Push VMValue
                  | Ret
                  | LoadArg Int
                  | GetEnv String
-                 deriving (Show, Eq)
+                 deriving (Eq)
 
 type Args = [VMValue]
 type Insts = [Instruction]
 type Stack = [VMValue]
 type Env = Map String VMValue
+
+instance Show Instruction where
+  show (Push (IntegerValue v)) = "push " ++ show v
+  show (Push (AtomValue v)) = "push " ++ v
+  show (Push (FunctionValue _)) = "push function"
+  show (Push (StringValue v)) = "push " ++ show v
+  show Call = "call"
+  show (CallOp op) = "call_op " ++ show op
+  show (JmpFalse offset) = "jmp_false " ++ show offset
+  show Dup = "dup"
+  show Ret = "ret"
+  show (LoadArg offset) = "load_arg " ++ show offset
+  show (GetEnv value) = "getenv " ++ value
 
 exec :: Env -> Args -> Insts -> Stack -> Either String VMValue
 exec _ _ [] (s:_) = Right s
