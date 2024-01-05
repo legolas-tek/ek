@@ -98,14 +98,19 @@ typed = parseTokenType Colon >> typeId
 
 typeId :: Parser Token Type
 typeId = do
-  t <- primType
-  next <- optional (parseTokenType Pipe >> typeId)
+  t <- typeIdButNotArrow
   nextnext <- optional (parseTokenType Arrow >> typeId)
-  return $ createFunction (combine t next) nextnext
+  return $ createFunction t nextnext
+    where createFunction t Nothing = t
+          createFunction t (Just t') = FunctionType t t'
+
+typeIdButNotArrow :: Parser Token Type
+typeIdButNotArrow = do
+  t <- primType
+  next <- optional (parseTokenType Pipe >> typeIdButNotArrow)
+  return $ combine t next
     where combine t Nothing = t
           combine t (Just t') = UnionType t t'
-          createFunction t Nothing = t
-          createFunction t (Just t') = FunctionType t t'
 
 primType :: Parser Token Type
 primType = typeName <|> intType <|> intRange

@@ -134,8 +134,8 @@ instance Show Type where
   show (IntRange (Just a) Nothing) = "[" ++ show a ++ "..]"
   show (IntRange Nothing (Just b)) = "[.." ++ show b ++ "]"
   show (IntRange Nothing Nothing) = "[..]"
-  show (UnionType a b) = show a ++ " | " ++ show b
-  show (FunctionType a b) = show a ++ " -> " ++ show b
+  show (UnionType a b) = "(" ++ show a ++ " | " ++ show b ++ ")"
+  show (FunctionType a b) = "(" ++ show a ++ " -> " ++ show b ++ ")"
 
 instance Show FuncPattern where
   show (FuncPattern items typ prec) = unwords (show <$> items) ++ showType typ ++ showPrec prec
