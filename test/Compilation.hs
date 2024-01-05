@@ -47,9 +47,9 @@ tests = test
                      Nothing
                      Nothing)
                   (EK.Ast.Call (FunctionName [Symbol "foo"] defaultPrec)
-                               [ExprCall (IntegerLit 1)
-                               , ExprCall (StringLit "hello")
-                               , ExprCall (IntegerLit 42)
+                               [IntegerLit 1
+                               , StringLit "hello"
+                               , IntegerLit 42
                                ]
                   )
               ]

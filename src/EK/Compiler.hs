@@ -48,9 +48,8 @@ compileExpr (EK.Ast.Call name callItems) env =
       Just i -> LoadArg i : insts
       Nothing -> GetEnv (show name) : insts)
 
-compileCallItems :: [CallItem] -> Env -> Either String Insts
+compileCallItems :: [Expr] -> Env -> Either String Insts
 compileCallItems items env = concat <$> mapM (`compileCallItem` env) items
 
-compileCallItem :: CallItem -> Env -> Either String Insts
-compileCallItem (ExprCall expr) env = compileExpr expr env >>= \insts -> return (insts ++ [VirtualMachine.Call])
-compileCallItem PlaceholderCall _ = Right []
+compileCallItem :: Expr -> Env -> Either String Insts
+compileCallItem expr env = compileExpr expr env <&> (++ [VirtualMachine.Call])

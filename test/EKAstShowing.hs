@@ -21,11 +21,10 @@ tests = test
   [ "expr" ~: do
       show (IntegerLit 42) @?= "42"
       show (StringLit "foo") @?= "\"foo\""
-      show (Call (FunctionName [Symbol "foo"] defaultPrec) []) @?= "foo"
-      show (Call (FunctionName [Symbol "foo", Placeholder] defaultPrec) [ExprCall (IntegerLit 42)]) @?= "foo (42)"
-      show (Call (FunctionName [Symbol "foo", Placeholder] defaultPrec) [PlaceholderCall]) @?= "foo _"
-      show (Call (FunctionName [Symbol "foo", Placeholder, Symbol "bar"] defaultPrec) [ExprCall (IntegerLit 42)]) @?= "foo (42) bar"
-      show (Call (FunctionName [Placeholder, Symbol "+", Placeholder] defaultPrec) [PlaceholderCall, ExprCall (IntegerLit 1)]) @?= "_ + (1)"
+      show (Call (FunctionName [Symbol "foo"] defaultPrec) []) @?= "(foo)"
+      show (Call (FunctionName [Symbol "foo", Placeholder] defaultPrec) [IntegerLit 42]) @?= "(foo 42)"
+      show (Call (FunctionName [Symbol "foo", Placeholder, Symbol "bar"] defaultPrec) [IntegerLit 42]) @?= "(foo 42 bar)"
+      show (Call (FunctionName [Placeholder, Symbol "+", Placeholder] defaultPrec) [Call (FunctionName [Symbol "a"] defaultPrec) [], IntegerLit 1]) @?= "((a) + 1)"
   , "type def" ~: do
       show' (AtomDef "foo") @?= "atom foo"
       show' (TypeDef "foo" (TypeName "bar")) @?= "type foo = bar"

@@ -17,10 +17,12 @@ import EK.Ast
 import Token
 import Parser
 import EK.TokenParser
+import Diagnostic
+
 import Control.Monad (liftM2)
 import Control.Applicative (Alternative(empty))
 import Data.Monoid (Alt(..))
-import Diagnostic
+import Data.List (findIndex)
 
 type TotalStmt = EK.Ast.Stmt Expr
 type PartialStmt = EK.Ast.Stmt [Token]
@@ -37,7 +39,7 @@ parseExprs :: [PartialStmt] -> Either Diagnostic [TotalStmt]
 parseExprs partials = mapM (parseBody partials) partials
 
 parseBody :: [PartialStmt] -> PartialStmt -> Either Diagnostic TotalStmt
-parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ funcItems partials) body
+parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ concatMap funcItems partials) body
   where
     args = funcPatternItems pat >>= argFuncItems
     argFuncItems (ArgPattern _ s _) = [FunctionName [Symbol s] primaryPrec]
@@ -52,12 +54,11 @@ parseBody _ (StructDef name elems) = return $ StructDef name elems
 parseExpr :: [FuncItem] -> [Token] -> Either Diagnostic Expr
 parseExpr fi tokens = fst <$> runParser (parsePrec fi lowestPrec <* eof) tokens
 
-funcItems :: [PartialStmt] -> [FuncItem]
-funcItems (FuncDef pat _ : xs) = patternToName pat : funcItems xs
-funcItems (ExternDef pat : xs) = patternToName pat : funcItems xs
-funcItems (AtomDef name : xs) = FunctionName [Symbol name] primaryPrec : funcItems xs
-funcItems (_ : xs) = funcItems xs
-funcItems [] = []
+funcItems :: PartialStmt -> [FuncItem]
+funcItems (FuncDef pat _) = [patternToName pat]
+funcItems (ExternDef pat) = [patternToName pat]
+funcItems (AtomDef name) = [FunctionName [Symbol name] primaryPrec]
+funcItems _ = []
 
 parsePrec :: [FuncItem] -> Prec -> Parser Token Expr
 parsePrec fi prec = primItem fi <|> parsePrefix fi prec >>= parseInfix fi prec
@@ -67,7 +68,7 @@ parsePrefix fi prec = getAlt (foldMap (Alt . parsePrefix' fi prec) fi) <|> fail 
 
 parsePrefix' :: [FuncItem] -> Prec -> FuncItem -> Parser Token CallItem
 parsePrefix' fi prec fname@(FunctionName (Symbol s:ss) fnprec)
-  = ExprCall <$> (identifierExact s >> Call fname <$> parseFollowUp fi ss (max prec fnprec))
+  = ExprCall <$> (identifierExact s >> createCall fname <$> parseFollowUp fi ss (max prec fnprec))
 parsePrefix' _ _ _ = empty
 
 parseInfix :: [FuncItem] -> Prec -> CallItem -> Parser Token Expr
@@ -78,7 +79,7 @@ parseInfix fi prec initial = getAlt (foldMap (Alt . parseInfix' fi prec initial)
 parseInfix' :: [FuncItem] -> Prec -> CallItem -> FuncItem -> Parser Token Expr
 parseInfix' fi prec initial fname@(FunctionName (Placeholder:ss) fnprec)
   | prec <= fnprec
-  = parseFollowUp fi ss (succ fnprec) >>= (parseInfix fi prec . ExprCall) . Call fname . (initial:)
+  = parseFollowUp fi ss (succ fnprec) >>= (parseInfix fi prec . ExprCall) . createCall fname . (initial:)
   | otherwise
   = empty
 parseInfix' _ _ _ _ = empty
@@ -87,8 +88,8 @@ parseFollowUp :: [FuncItem] -> [Symbol] -> Prec -> Parser Token [CallItem]
 parseFollowUp fi (Symbol s:ss) prec
   = identifierExact s *> parseFollowUp fi ss prec
 parseFollowUp fi (Placeholder:ss) prec = do
-  e <- parsePrec fi prec -- TODO: use prec from fn
-  (ExprCall e :) <$> parseFollowUp fi ss prec
+  e <- placeholder PlaceholderCall <|> (ExprCall <$> parsePrec fi prec)
+  (e:) <$> parseFollowUp fi ss prec
 parseFollowUp _ [] _ = return []
 
 primItem :: [FuncItem] -> Parser Token CallItem
@@ -113,3 +114,19 @@ structExprContent funcItems = structExprContent' <|> (pure <$> parsePrec funcIte
 
 structExpr :: [FuncItem] -> Parser Token Expr
 structExpr funcItems = StructLit <$> (identifier <* parseTokenType CurlyOpen) <*> (structExprContent funcItems <* parseTokenType CurlyClose)
+
+-- Utility functions
+
+createCall :: FuncItem -> [CallItem] -> Expr
+createCall = createCallN 0
+
+createCallN :: Int -> FuncItem -> [CallItem] -> Expr
+createCallN n fn items = createCall' (findIndex isPlaceholder items)
+  where createCall' Nothing = Call fn $ [e | (ExprCall e) <- items]
+        createCall' (Just i) = Lambda argname $ createCallN (succ n) fn $ replaceAt i (ExprCall $ Call (FunctionName [Symbol argname] defaultPrec) []) items
+        argname = "$" ++ show n
+        isPlaceholder PlaceholderCall = True
+        isPlaceholder _ = False
+
+replaceAt :: Int -> a -> [a] -> [a]
+replaceAt n element xs = take n xs ++ [element] ++ drop (n + 1) xs
