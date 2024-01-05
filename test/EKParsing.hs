@@ -32,7 +32,7 @@ int :: Int -> Token
 int i = tk (show i) IntLiter
 
 doc :: [Token] -> Either Diagnostic [Stmt Expr]
-doc = parseDocument
+doc = parseSimpleDocument
 
 pat :: [FuncPatternItem] -> FuncPattern
 pat a = FuncPattern a Nothing Nothing

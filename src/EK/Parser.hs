@@ -7,7 +7,10 @@
 
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
 
-module EK.Parser (parseDocument) where
+module EK.Parser (
+    parseDocument,
+    parseSimpleDocument
+    ) where
 
 import EK.Ast
 import EK.ExprParser
@@ -26,6 +29,9 @@ parseDocument tokens = parse >>= getImportedTokens . fst >>= exprParse
         parse = either (fail . show) return $ runParser document tokens
 
         exprParse = either (fail . show) return . parseExprs
+
+parseSimpleDocument :: [Token] -> Either Diagnostic [TotalStmt]
+parseSimpleDocument tokens = runParser document tokens >>= parseExprs . fst
 
 --- Statements
 
