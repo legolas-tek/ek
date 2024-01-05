@@ -8,16 +8,22 @@
 module EK.Compiler
   ( compileToVM
   , Result
+  , showBytecode
   ) where
 
 import VirtualMachine hiding (Env)
 import EK.Ast
-import Data.Map (Map, fromList, empty, union)
+import Data.Map (Map, fromList, empty, union, toList)
 import Data.List (elemIndex)
 import Data.Functor ((<&>))
 
 type Env = [String]
 type Result = Map String Insts
+
+showBytecode :: Result -> String
+showBytecode result = concatMap showEntry (toList result)
+    where showEntry (key, value) = key ++ ":\n" ++ unlines (map (("\t" ++) . show) value)
+
 
 compileToVM :: [Stmt Expr] -> Either String Result
 compileToVM stmts = compileStmts stmts []
