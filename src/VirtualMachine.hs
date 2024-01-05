@@ -26,7 +26,7 @@ data VMValue = IntegerValue Integer
 instance Show VMValue where
   show (IntegerValue v) = show v
   show (AtomValue v) = v
-  show (FunctionValue insts) = concatMap show insts
+  show (FunctionValue _) = "(function)"
   show (StringValue v) = v
 
 data Operator = Add
@@ -82,9 +82,8 @@ exec _ _ (Ret:_) (s:_) = return $ Right s
 exec _ _ (Ret:_) [] = return $ Left "No value on stack"
 exec env args (Push v:insts) stack = exec env args insts (v:stack)
 exec env args (CallOp Print:insts) (v:stack) = putStrLn (show v) >> exec env args insts stack
-exec env args (CallOp op:insts) (v1:v2:stack) = do
-  result <- applyOp op v1 v2
-  case result of
+exec env args (CallOp op:insts) (v1:v2:stack) =
+  case applyOp op v1 v2 of
     Right val -> exec env args insts (val:stack)
     Left err -> return $ Left err
 exec _ _ (CallOp _:_) _ = return $ Left "Not enough arguments for operator"
@@ -105,18 +104,18 @@ exec env args (GetEnv value:insts) stack = case Data.Map.lookup value env of
   Just val -> exec env args insts (val:stack)
   Nothing  -> return $ Left "No value in env"
 
-applyOp :: Operator -> VMValue -> VMValue -> IO (Either String VMValue)
+applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)
-  = return $ Right $ IntegerValue $ a + b
+  = Right $ IntegerValue $ a + b
 applyOp Sub (IntegerValue a) (IntegerValue b)
-  = return $ Right $ IntegerValue $ a - b
+  = Right $ IntegerValue $ a - b
 applyOp Mul (IntegerValue a) (IntegerValue b)
-  = return $ Right $ IntegerValue $ a * b
+  = Right $ IntegerValue $ a * b
 applyOp Div (IntegerValue _) (IntegerValue 0)
-  = return $ Left "Division by zero"
+  = Left "Division by zero"
 applyOp Div (IntegerValue a) (IntegerValue b)
-  = return $ Right $ IntegerValue $ a `div` b
-applyOp Eq a b = return $ Right $ AtomValue (if a == b then "true" else "false")
+  = Right $ IntegerValue $ a `div` b
+applyOp Eq a b = Right $ AtomValue (if a == b then "true" else "false")
 applyOp Less (IntegerValue a) (IntegerValue b)
-  = return $ Right $ AtomValue (if a < b then "true" else "false")
-applyOp _ _ _ = return $ Left "Invalid operands for operator"
+  = Right $ AtomValue (if a < b then "true" else "false")
+applyOp _ _ _ = Left "Invalid operands for operator"
