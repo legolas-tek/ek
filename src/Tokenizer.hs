@@ -40,6 +40,9 @@ parseCurlyClose = extractTokenType "}" CurlyClose
 parseComma :: Parser Char (String, TokenType)
 parseComma = extractTokenType "," Comma
 
+parseBackslash :: Parser Char (String, TokenType)
+parseBackslash = extractTokenType "\\" Backslash
+
 parseUnderscore :: Parser Char (String, TokenType)
 parseUnderscore = extractTokenType "_" UnderScore
 
@@ -94,7 +97,7 @@ identifyOp _ = OperatorIdentifier
 -- Tokenizer
 
 findTokenType :: Parser Char (String, TokenType)
-findTokenType = parseCurlyOpen <|> parseCurlyClose <|> parseComma <|> parseUnderscore <|> parseParenOpen
+findTokenType = parseCurlyOpen <|> parseCurlyClose <|> parseComma <|> parseBackslash <|> parseUnderscore <|> parseParenOpen
     <|> parseParenClose <|> parseColonColon <|> parseColon <|> parseBracketOpen
     <|> parseBracketClose <|> parseIntLiter <|> parseStringLiter <|> parseTextIdentifer <|> parseOperatorId
 
