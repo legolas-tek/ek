@@ -19,6 +19,10 @@ import Data.Functor ((<&>))
 type Env = [String]
 type Result = Map String Insts
 
+instance Show Result where
+    show result = concatMap showEntry (Map.toList result)
+        where showEntry (key, value) = key ++ ": " ++ show value ++ "\n"
+
 compileToVM :: [Stmt Expr] -> Either String Result
 compileToVM stmts = compileStmts stmts []
 
