@@ -75,34 +75,34 @@ instance Show Instruction where
   show (LoadArg offset) = "load_arg " ++ show offset
   show (GetEnv value) = "getenv " ++ value
 
-exec :: Env -> Args -> Insts -> Stack -> IO (Either String VMValue)
-exec _ _ [] (s:_) = return $ Right s
-exec _ _ [] [] = return $ Left "No value on stack"
-exec _ _ (Ret:_) (s:_) = return $ Right s
-exec _ _ (Ret:_) [] = return $ Left "No value on stack"
+exec :: Env -> Args -> Insts -> Stack -> IO VMValue
+exec _ _ [] (s:_) = return s
+exec _ _ [] [] = fail "No value on stack"
+exec _ _ (Ret:_) (s:_) = return s
+exec _ _ (Ret:_) [] = fail "No value on stack"
 exec env args (Push v:insts) stack = exec env args insts (v:stack)
 exec env args (CallOp Print:insts) (v:stack) = putStrLn (show v) >> exec env args insts stack
 exec env args (CallOp op:insts) (v1:v2:stack) =
   case applyOp op v1 v2 of
     Right val -> exec env args insts (val:stack)
-    Left err -> return $ Left err
-exec _ _ (CallOp _:_) _ = return $ Left "Not enough arguments for operator"
+    Left err -> fail err
+exec _ _ (CallOp _:_) _ = fail "Not enough arguments for operator"
 exec env args (Call:insts) (arg:FunctionValue fn:stack) = do
   result <- exec env [arg] fn []
   case result of
-    Right val -> exec env args insts (val:stack)
-    Left err -> return $ Left err
-exec _ _ (Call:_) _ = return $ Left "Cannot call value of non-function type"
+    FunctionValue _ -> fail "Cannot return function"
+    _ -> exec env args insts (result:stack)
+exec _ _ (Call:_) _ = fail "Cannot call value of non-function type"
 exec env args (JmpFalse offset:insts) (AtomValue "false":stack)
   = exec env args (drop offset insts) stack
 exec env args (JmpFalse _:insts) (AtomValue "true":stack) = exec env args insts stack
-exec _ _ (JmpFalse _:_) _ = return $ Left "Invalid condition"
+exec _ _ (JmpFalse _:_) _ = fail "Invalid condition"
 exec env args (Dup:insts) (v:stack) = exec env args insts (v:v:stack)
-exec _ _ (Dup:_) [] = return $ Left "No value to duplicate"
+exec _ _ (Dup:_) [] = fail "No value to duplicate"
 exec env args (LoadArg offset:insts) stack = exec env args insts (args !! offset:stack)
 exec env args (GetEnv value:insts) stack = case Data.Map.lookup value env of
   Just val -> exec env args insts (val:stack)
-  Nothing  -> return $ Left "No value in env"
+  Nothing  -> fail "No value in env"
 
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)

@@ -13,7 +13,12 @@ import VirtualMachine
 
 import Data.Map (fromList, empty)
 
-ex :: Insts -> Stack -> IO (Either String VMValue)
+import Control.Exception
+
+handler :: IOError -> IO VMValue
+handler e = return $ StringValue (show e)
+
+ex :: Insts -> Stack -> IO VMValue
 ex = exec empty []
 
 absFn :: [Instruction]
@@ -33,41 +38,41 @@ tests :: Test
 tests = test
   [ "const" ~: do
       simpleIntRet <- ex [Push $ IntegerValue 42, Ret] []
-      simpleIntRet @?= Right (IntegerValue 42)
+      simpleIntRet @?= (IntegerValue 42)
       subOp <- ex [Push $ IntegerValue 10, Push $ IntegerValue 52, CallOp Sub, Ret] []
-      subOp @?= Right (IntegerValue 42)
+      subOp @?= (IntegerValue 42)
       simpleStrRet <- ex [Push $ StringValue "Hello", Ret] []
-      simpleStrRet @?= Right (StringValue "Hello")
+      simpleStrRet @?= (StringValue "Hello")
   , "errorHandling" ~: do
-      errorAddOp <- ex [Push $ IntegerValue 10, CallOp Add, Call, Ret] []
-      errorAddOp @?= Left "Not enough arguments for operator"
-      invalidArgs <- ex [Push $ IntegerValue 10, Push $ AtomValue "true", CallOp Add, Call, Ret] []
-      invalidArgs @?= Left "Invalid operands for operator"
-      divZero <- ex [Push $ IntegerValue 0, Push $ IntegerValue 10, CallOp Div, Call, Ret] []
-      divZero @?= Left "Division by zero"
+      errorAddOp <- catch (ex [Push $ IntegerValue 10, CallOp Add, Call, Ret] []) handler
+      errorAddOp @?= StringValue "user error (Not enough arguments for operator)"
+      invalidArgs <- catch (ex [Push $ IntegerValue 10, Push $ AtomValue "true", CallOp Add, Call, Ret] []) handler
+      invalidArgs @?= StringValue "user error (Invalid operands for operator)"
+      divZero <- catch (ex [Push $ IntegerValue 0, Push $ IntegerValue 10, CallOp Div, Call, Ret] []) handler
+      divZero @?= StringValue "user error (Division by zero)"
   , "comparison" ~: do
       eqTrue <- ex [ Push $ IntegerValue 10
                 , Push $ IntegerValue 10
                 , CallOp Eq
                 , Ret
                 ] []
-      eqTrue @?= Right (AtomValue "true")
+      eqTrue @?= AtomValue "true"
       eqFalse <- ex [ Push $ IntegerValue 10
                     , Push $ IntegerValue 11
                     , CallOp Eq
                     , Ret
                     ] []
-      eqFalse @?= Right (AtomValue "false")
+      eqFalse @?= AtomValue "false"
       lessFalse <- ex [Push $ IntegerValue 2
                       , Push $ IntegerValue 5
                       , CallOp Less
                       , Ret] []
-      lessFalse @?= Right (AtomValue "false")
+      lessFalse @?= AtomValue "false"
       lessTrue <- ex [Push $ IntegerValue 5
                      , Push $ IntegerValue 2
                      , CallOp Less
                      , Ret] []
-      lessTrue @?= Right (AtomValue "true")
+      lessTrue @?= AtomValue "true"
   , "conditionalJump" ~: do
       let conditionalJump v =
             [ Push $ AtomValue v
@@ -79,35 +84,35 @@ tests = test
             ]
       true <- ex (conditionalJump "true") []
       false <- ex (conditionalJump "false") []
-      true @?= Right (IntegerValue 1)
-      false @?= Right (IntegerValue 2)
+      true @?= IntegerValue 1
+      false @?= IntegerValue 2
   , "function" ~: do
       negativeAbsFn <- ex [ Push $ FunctionValue absFn
                           , Push $ IntegerValue (-42)
                           , Call
                           , Ret
                           ] []
-      negativeAbsFn @?= Right (IntegerValue 42)
+      negativeAbsFn @?= IntegerValue 42
       positiveAbsFn <- ex [ Push $ FunctionValue absFn
                           , Push $ IntegerValue 42
                           , Call
                           , Ret
                           ] []
-      positiveAbsFn @?= Right (IntegerValue 42)
+      positiveAbsFn @?= IntegerValue 42
     , "GetEnv" ~: do
         result <- exec (fromList [("a", IntegerValue 42)]) [] [GetEnv "a", Ret] []
-        result @?= Right (IntegerValue 42)
-        result2 <- ex [GetEnv "failure expected"] [] 
-        result2 @?= Left "No value in env"
+        result @?= IntegerValue 42
+        result2 <- catch (ex [GetEnv "failure expected"] []) handler 
+        result2 @?= StringValue "user error (No value in env)"
     , "operators" ~: do
         add <- ex [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Add, Ret] []
-        add @?= Right (IntegerValue 15)
+        add @?= (IntegerValue 15)
         sub <- ex [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Sub, Ret] []
-        sub @?= Right (IntegerValue (-5))
+        sub @?= (IntegerValue (-5))
         mul <- ex [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Mul, Ret] []
-        mul @?= Right (IntegerValue 50)
+        mul @?= (IntegerValue 50)
         division <- ex [Push $ IntegerValue 5, Push $ IntegerValue 10, CallOp Div, Ret] []
-        division @?= Right (IntegerValue 2)
-        printOp <- ex [Push $ IntegerValue 42, CallOp Print, Ret] []
-        printOp @?= Left "No value on stack"
+        division @?= (IntegerValue 2)
+        printOp <- catch (ex [Push $ IntegerValue 42, CallOp Print, Ret] []) handler
+        printOp @?= StringValue "user error (No value on stack)"
   ]
