@@ -35,35 +35,63 @@ tests = test
                                                    , Ret
                                                    ])]
       compileToVM stmts @?= Right expected
-    , "test show Bytecode 1" ~: do
+    , "show Bytecode Push" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42) ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n"
+    , "show Bytecode Call" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [VirtualMachine.Call ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tcall\n"
+    , "show Bytecode CallOp" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ CallOp Add ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tcall_op Add\n"
+    , "show Bytecode JmpFalse" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ JmpFalse 42 ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tjmp_false 42\n"
+    , "show Bytecode Dup" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Dup ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tdup\n"
+    , "show Bytecode Ret" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Ret ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tret\n"
+    , "show Bytecode LoadArg" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ LoadArg 42 ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tload_arg 42\n"
+    , "show Bytecode GetEnv" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ GetEnv "foo" ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tgetenv foo\n"
+    , "show Bytecode 2" ~: do
         let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
                                                    , Ret
                                                    ])]
         showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n"
-    , "test show Bytecode Push" ~: do
-        let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42) ])]
-        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n"
-    , "test show Bytecode Call" ~: do
-        let insts = fromList [("foo (a) (b) (c)", [VirtualMachine.Call ])]
-        showBytecode insts @?= "foo (a) (b) (c):\n\tcall\n"
-    , "test show Bytecode CallOp" ~: do
-        let insts = fromList [("foo (a) (b) (c)", [ CallOp Add ])]
-        showBytecode insts @?= "foo (a) (b) (c):\n\tcall_op Add\n"
-    , "test show Bytecode JmpFalse" ~: do
-        let insts = fromList [("foo (a) (b) (c)", [ JmpFalse 42 ])]
-        showBytecode insts @?= "foo (a) (b) (c):\n\tjmp_false 42\n"
-    , "test show Bytecode Dup" ~: do
-        let insts = fromList [("foo (a) (b) (c)", [ Dup ])]
-        showBytecode insts @?= "foo (a) (b) (c):\n\tdup\n"
-    , "test show Bytecode Ret" ~: do
-        let insts = fromList [("foo (a) (b) (c)", [ Ret ])]
-        showBytecode insts @?= "foo (a) (b) (c):\n\tret\n"
-    , "test show Bytecode LoadArg" ~: do
-        let insts = fromList [("foo (a) (b) (c)", [ LoadArg 42 ])]
-        showBytecode insts @?= "foo (a) (b) (c):\n\tload_arg 42\n"
-    , "test show Bytecode GetEnv" ~: do
-        let insts = fromList [("foo (a) (b) (c)", [ GetEnv "foo" ])]
-        showBytecode insts @?= "foo (a) (b) (c):\n\tgetenv foo\n"
+    , "show Bytecode 3" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
+                                                   , Ret
+                                                   , GetEnv "foo"
+                                                   ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n\tgetenv foo\n"
+    , "show Bytecode 4 overlapping" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
+                                                   , Ret
+                                                   , GetEnv "foo"
+                                                   , Push (IntegerValue 42)
+                                                   ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n\tgetenv foo\n\tpush 42\n"
+    , "show Bytecode 4 no overlapping" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
+                                                   , Ret
+                                                   , GetEnv "foo"
+                                                   , LoadArg 42
+                                                   ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n\tgetenv foo\n\tload_arg 42\n"
+    , "show Bytecode 5" ~: do
+        let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
+                                                   , Ret
+                                                   , GetEnv "foo"
+                                                   , LoadArg 42
+                                                   , CallOp Add
+                                                   ])]
+        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n\tgetenv foo\n\tload_arg 42\n\tcall_op Add\n"
     , "call with expressions" ~: do
         let stmts =
               [ FuncDef
@@ -92,7 +120,7 @@ tests = test
                                                      , Ret
                                                      ])]
         compileToVM stmts @?= Right expected
-    , "test a function with args" ~: do
+    , "a function with args" ~: do
         let stmts =
               [ FuncDef
                   (FuncPattern
@@ -108,3 +136,7 @@ tests = test
                                             ])]
         compileToVM stmts @?= Right expected
   ]
+
+
+-- foo (a) (b) (c):\n\tpush 42\n\tret\n\tgetEnv foo\n
+-- foo (a) (b) (c):\n\tpush 42\n\tret\n\tgetenv foo\n
