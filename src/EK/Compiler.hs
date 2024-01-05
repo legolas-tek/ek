@@ -20,9 +20,11 @@ import Data.Functor ((<&>))
 type Env = [String]
 type Result = Map String Insts
 
+-- tdd tua
 showBytecode :: Result -> String
 showBytecode result = concatMap showEntry (toList result)
-    where showEntry (key, value) = key ++ ": " ++ show value ++ "\n"
+    where showEntry (key, value) = key ++ ":\n" ++ unlines (map ("\t" ++) (map show value))
+
 
 compileToVM :: [Stmt Expr] -> Either String Result
 compileToVM stmts = compileStmts stmts []

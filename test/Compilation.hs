@@ -39,7 +39,7 @@ tests = test
         let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
                                                    , Ret
                                                    ])]
-        showBytecode insts @?= "foo (a) (b) (c): [push 42,ret]\n"
+        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n"
     , "call with expressions" ~: do
         let stmts =
               [ FuncDef
