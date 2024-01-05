@@ -61,6 +61,7 @@ data Type
   = TypeName String
   | IntRange (Maybe Integer) (Maybe Integer)
   | UnionType Type Type
+  | FunctionType Type Type
   deriving (Eq)
 
 type Prec = Int
@@ -134,6 +135,7 @@ instance Show Type where
   show (IntRange Nothing (Just b)) = "[.." ++ show b ++ "]"
   show (IntRange Nothing Nothing) = "[..]"
   show (UnionType a b) = show a ++ " | " ++ show b
+  show (FunctionType a b) = show a ++ " -> " ++ show b
 
 instance Show FuncPattern where
   show (FuncPattern items typ prec) = unwords (show <$> items) ++ showType typ ++ showPrec prec

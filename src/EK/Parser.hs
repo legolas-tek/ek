@@ -100,9 +100,12 @@ typeId :: Parser Token Type
 typeId = do
   t <- primType
   next <- optional (parseTokenType Pipe >> typeId)
-  return $ combine t next
+  nextnext <- optional (parseTokenType Arrow >> typeId)
+  return $ createFunction (combine t next) nextnext
     where combine t Nothing = t
           combine t (Just t') = UnionType t t'
+          createFunction t Nothing = t
+          createFunction t (Just t') = FunctionType t t'
 
 primType :: Parser Token Type
 primType = typeName <|> intType <|> intRange
