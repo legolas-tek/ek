@@ -35,11 +35,6 @@ tests = test
                                                    , Ret
                                                    ])]
       compileToVM stmts @?= Right expected
-    , "test" ~: do
-        let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
-                                                   , Ret
-                                                   ])]
-        showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n"
     , "test show Bytecode 1" ~: do
         let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
                                                    , Ret
