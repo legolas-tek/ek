@@ -13,11 +13,17 @@ import EK.Ast
 import EK.ExprParser
 import Parser
 import Token
+import Tokenizer
 import EK.TokenParser
 import Control.Monad (liftM2, liftM3)
+import Data.Functor ((<&>))
 
-parseDocument :: [Token] -> Either String [TotalStmt]
-parseDocument tokens = runParser document tokens >>= parseExprs . fst
+parseDocument :: [Token] -> IO [TotalStmt]
+parseDocument tokens = parse >>= getImportedTokens . fst >>= exprParse
+    where
+        parse = either fail return $ runParser document tokens
+
+        exprParse = either fail return . parseExprs
 
 --- Statements
 
@@ -121,3 +127,15 @@ intRange = do
   u <- optional intLiteral
   parseTokenType BracketClose
   return $ IntRange l u
+
+-- Import Handling
+
+getImportedTokens :: [PartialStmt] -> IO [PartialStmt]
+getImportedTokens (ImportDef x: xs) = readFile x >>= either fail return . parseImportedTokens x >>= getImportedTokens'
+    where
+        getImportedTokens' stmts = getImportedTokens (stmts ++ xs) >>= \rest -> return $ stmts ++ rest
+getImportedTokens (_: rest) = getImportedTokens rest
+getImportedTokens [] = return []
+
+parseImportedTokens :: String -> String -> Either String [PartialStmt]
+parseImportedTokens fileName content = (tokenizer fileName content >>= runParser document) <&> fst
