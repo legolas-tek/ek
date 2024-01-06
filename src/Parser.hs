@@ -43,7 +43,7 @@ import SourcePos
 
 type ParserError = Diagnostic
 
-type Parser' inp out = SourcePos -> [inp] -> Either ParserError (out, [inp], SourcePos)
+type Parser' inp out = SourcePos -> [Diagnostic] -> [inp] -> Either ParserError (out, [inp], [Diagnostic], SourcePos)
 newtype Parser inp out  = Parser {runParser' :: Parser' inp out}
 
 getPos :: Parser inp SourcePos
