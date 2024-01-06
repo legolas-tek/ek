@@ -47,14 +47,14 @@ patternArguments :: FuncPattern -> [String]
 patternArguments (FuncPattern items _ _) = concatMap patternToArgument items
 
 compileStmt :: Stmt Expr -> Result
-compileStmt (FuncDef pattern expr) = evalState (compileFn pattern expr) (Env (patternArguments pattern) [] [] empty (show pattern))
+compileStmt (FuncDef pattern expr) = evalState (compileFn expr) (Env (patternArguments pattern) [] [] empty (show $ patternToName pattern))
 compileStmt _ = empty
 
-compileFn :: FuncPattern -> Expr -> State Env Result
-compileFn pattern expr = do
+compileFn :: Expr -> State Env Result
+compileFn expr = do
   exprInsts <- compileExpr expr
   env <- get
-  return $ result env <> fromList [(show pattern, exprInsts ++ [Ret])]
+  return $ result env <> fromList [(fnName env, exprInsts ++ [Ret])]
 
 compileExpr :: Expr -> State Env Insts
 compileExpr (IntegerLit i) = return [Push (IntegerValue i)]
