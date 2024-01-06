@@ -5,6 +5,9 @@
 -- SourcePos
 -}
 
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module SourcePos
     ( SourcePos(..),
       Parsable(..)
@@ -16,6 +19,9 @@ data SourcePos = SourcePos { sourceName :: String
                            } deriving (Eq)
 class Parsable a where
     advance :: SourcePos -> a -> SourcePos
+
+instance Parsable String where
+  advance pos@SourcePos { .. } _ = pos { sourceColumn = sourceColumn + 1 }
 
 instance Parsable Char where
     advance (SourcePos name line _) '\n' = SourcePos name (line + 1) 1
