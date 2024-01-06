@@ -99,8 +99,8 @@ typed = parseTokenType Colon >> typeId
 typeId :: Parser Token Type
 typeId = do
   t <- typeIdButNotArrow
-  nextnext <- optional (parseTokenType Arrow >> typeId)
-  return $ createFunction t nextnext
+  functionReturn <- optional (parseTokenType Arrow >> typeId)
+  return $ createFunction t functionReturn
     where createFunction t Nothing = t
           createFunction t (Just t') = FunctionType t t'
 
