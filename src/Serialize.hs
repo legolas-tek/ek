@@ -68,3 +68,8 @@ instance Serializable VMValue where
   serialize (AtomValue atom) = B.singleton 2 <> serialize atom
   serialize (StringValue str) = B.singleton 3 <> serialize str
   serialize (FunctionValue _) = B.singleton 0
+
+  deserialize bytes | B.head bytes == 1 = IntegerValue $ deserialize (B.takeWhile (/= 0) (B.tail bytes) <> B.singleton 0)
+                    | B.head bytes == 2 = AtomValue $ deserialize (B.takeWhile (/= 0) (B.tail bytes) <> B.singleton 0)
+                    | B.head bytes == 3 = StringValue $ deserialize (B.takeWhile (/= 0) (B.tail bytes) <> B.singleton 0)
+                    | otherwise = FunctionValue $ []

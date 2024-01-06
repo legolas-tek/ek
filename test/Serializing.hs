@@ -44,4 +44,7 @@ tests = test
       (deserialize (serialize ("test" :: String)) :: String) @?= "test"
       (deserialize (serialize (42 :: Integer)) :: Integer) @?= 42
       (deserialize (serialize (42 :: Int)) :: Int) @?= 42
+      (deserialize (serialize (IntegerValue $ 42)) :: VMValue) @?= IntegerValue 42
+      (deserialize (serialize (AtomValue $ "test")) :: VMValue) @?= AtomValue "test"
+      (deserialize (serialize (StringValue $ "test str")) :: VMValue) @?= StringValue "test str"
   ]
