@@ -20,6 +20,7 @@ import Data.Map (Map, lookup)
 data VMValue = IntegerValue Integer
              | AtomValue String
              | FunctionValue Insts
+             | ClosureValue Insts [VMValue]
              | StringValue String
              deriving (Eq)
 
@@ -27,6 +28,7 @@ instance Show VMValue where
   show (IntegerValue v) = show v
   show (AtomValue v) = v
   show (FunctionValue _) = "(function)"
+  show (ClosureValue _ _) = "(function)"
   show (StringValue v) = v
 
 data Operator = Add
@@ -55,6 +57,7 @@ data Instruction = Push VMValue
                  | Ret
                  | LoadArg Int
                  | GetEnv String
+                 | Closure Int
                  deriving (Eq)
 
 type Args = [VMValue]
@@ -65,7 +68,8 @@ type Env = Map String VMValue
 instance Show Instruction where
   show (Push (IntegerValue v)) = "push " ++ show v
   show (Push (AtomValue v)) = "push " ++ v
-  show (Push (FunctionValue _)) = "push function"
+  show (Push (FunctionValue _)) = "push function" -- impossible
+  show (Push (ClosureValue _ _)) = "push function" -- impossible
   show (Push (StringValue v)) = "push " ++ show v
   show Call = "call"
   show (CallOp op) = "call_op " ++ show op
@@ -74,6 +78,7 @@ instance Show Instruction where
   show Ret = "ret"
   show (LoadArg offset) = "load_arg " ++ show offset
   show (GetEnv value) = "getenv " ++ value
+  show (Closure count) = "closure " ++ show count
 
 exec :: Env -> Args -> Insts -> Stack -> IO VMValue
 exec _ _ [] (s:_) = return s
@@ -81,7 +86,7 @@ exec _ _ [] [] = fail "No value on stack"
 exec _ _ (Ret:_) (s:_) = return s
 exec _ _ (Ret:_) [] = fail "No value on stack"
 exec env args (Push v:insts) stack = exec env args insts (v:stack)
-exec env args (CallOp Print:insts) (v:stack) = putStrLn (show v) >> exec env args insts stack
+exec env args (CallOp Print:insts) (v:stack) = print v >> exec env args insts stack
 exec env args (CallOp op:insts) (v1:v2:stack) =
   either fail (\val -> exec env args insts (val:stack)) (applyOp op v1 v2)
 exec _ _ (CallOp _:_) _ = fail "Not enough arguments for operator"
@@ -98,6 +103,8 @@ exec env args (LoadArg offset:insts) stack = exec env args insts (args !! offset
 exec env args (GetEnv value:insts) stack = case Data.Map.lookup value env of
   Just val -> exec env args insts (val:stack)
   Nothing  -> fail "No value in env"
+exec env args (Closure count:insts) (FunctionValue fn:stack) = exec env args insts (ClosureValue fn (take count stack):drop count stack)
+exec _ _ (Closure _:_) _ = fail "Cannot create closure of non-function type"
 
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)
