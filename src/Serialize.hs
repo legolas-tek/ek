@@ -5,7 +5,7 @@
 --
 --}
 
-module Serialize (serialize) where
+module Serialize (serialize, saveResult, writeFunc) where
 
 import qualified Data.Map as Map
 import qualified Data.ByteString as B
@@ -16,10 +16,10 @@ import EK.Compiler(Result)
 writeFunc :: (String, Insts) -> String -> IO ()
 writeFunc (key, insts) path =
     B.writeFile (path ++ ".eko") (fromString key <> B.singleton 0 <>
-    (B.concat (fmap serialize insts)) <> B.singleton 0)
+    B.concat (fmap serialize insts) <> B.singleton 0)
 
-saveInsts :: Result -> String -> ()
-saveInsts result path = mapM_ writeFunc (Map.toList result) path
+saveResult :: Result -> String -> IO ()
+saveResult result path = sequence_ $ map (\pair -> writeFunc pair path) (Map.toList result)
 
 serialize :: Instruction -> B.ByteString
 serialize (Push value) = B.singleton 1 <> serializeVMValue value
