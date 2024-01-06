@@ -5,6 +5,8 @@
 -- Compiler
 --}
 
+{-# LANGUAGE TupleSections #-}
+
 module EK.Compiler
   ( compileToVM
   , Result
@@ -16,46 +18,99 @@ import EK.Ast
 import Data.Map (Map, fromList, empty, union, toList)
 import Data.List (elemIndex)
 import Data.Functor ((<&>))
+import Control.Applicative (liftA2)
 
-type Env = [String]
+data Env = Env
+  { args :: [String]
+  , capturable :: [String]
+  , captured :: [String]
+  , result :: Result
+  }
+
 type Result = Map String Insts
 
+newtype State s a = State { runState :: s -> (a, s) }
+
+instance Functor (State s) where
+  fmap f (State g) = State $ \s -> let (a, s') = g s in (f a, s')
+
+instance Applicative (State s) where
+  pure x = State (x,)
+  liftA2 f (State g) (State h) = State $ \s -> let (a, s') = g s
+                                                   (b, s'') = h s'
+                                               in (f a b, s'')
+
+instance Monad (State s) where
+  return = pure
+  State g >>= f = State $ \s -> let (a, s') = g s in runState (f a) s'
+
+evalState :: State s a -> s -> a
+evalState (State f) = fst . f
+
+getState :: State s s
+getState = State $ \s -> (s, s)
+
+putState :: s -> State s ()
+putState s = State $ const ((), s)
+
 showBytecode :: Result -> String
-showBytecode result = concatMap showEntry (toList result)
+showBytecode = concatMap showEntry . toList
     where showEntry (key, value) = key ++ ":\n" ++ unlines (map (("\t" ++) . show) value)
 
-
 compileToVM :: [Stmt Expr] -> Either String Result
-compileToVM stmts = compileStmts stmts []
+compileToVM stmts = Right $ compileStmts stmts
 
-compileStmts :: [Stmt Expr] -> Env -> Either String Result
-compileStmts arr env = mapM (compileStmt env) arr <&> foldr union empty
+compileStmts :: [Stmt Expr] -> Result
+compileStmts = foldr (union . compileStmt) empty
 
-addArgToEnv :: FuncPatternItem -> Env
-addArgToEnv (ArgPattern _ name _) = [name]
-addArgToEnv (SymbolPattern _) = []
-addArgToEnv PlaceholderPattern = []
+patternToArgument :: FuncPatternItem -> [String]
+patternToArgument (ArgPattern _ name _) = [name]
+patternToArgument (SymbolPattern _) = []
+patternToArgument PlaceholderPattern = []
 
-addArgsToEnv :: FuncPattern -> Env -> Env
-addArgsToEnv (FuncPattern items _ _) initEnv = concatMap addArgToEnv items ++ initEnv
+patternArguments :: FuncPattern -> [String]
+patternArguments (FuncPattern items _ _) = concatMap patternToArgument items
 
-compileStmt :: Env -> Stmt Expr -> Either String Result
-compileStmt env (FuncDef pattern expr) = do
-  exprInsts <- compileExpr expr (addArgsToEnv pattern env)
-  return (fromList [(show pattern, exprInsts ++ [Ret])])
-compileStmt _ _ = Right empty
+compileStmt :: Stmt Expr -> Result
+compileStmt (FuncDef pattern expr) = evalState (compileFn pattern expr) (Env (patternArguments pattern) [] [] empty)
+compileStmt _ = empty
 
-compileExpr :: Expr -> Env -> Either String Insts
-compileExpr (IntegerLit i) _ = Right [Push (IntegerValue i)]
-compileExpr (StringLit s) _ = Right [Push (StringValue s)]
-compileExpr (EK.Ast.Call name callItems) env =
-  compileCallItems callItems env >>= \insts ->
-    return (case elemIndex (show name) env of
-      Just i -> LoadArg i : insts
-      Nothing -> GetEnv (show name) : insts)
+compileFn :: FuncPattern -> Expr -> State Env Result
+compileFn pattern expr = do
+  exprInsts <- compileExpr expr
+  env <- getState
+  return $ result env <> fromList [(show pattern, exprInsts ++ [Ret])]
 
-compileCallItems :: [Expr] -> Env -> Either String Insts
-compileCallItems items env = concat <$> mapM (`compileCallItem` env) items
+compileExpr :: Expr -> State Env Insts
+compileExpr (IntegerLit i) = return [Push (IntegerValue i)]
+compileExpr (StringLit s) = return [Push (StringValue s)]
+compileExpr (EK.Ast.Call name callItems) = do
+  call <- compileCall (show name)
+  items <- compileCallItems callItems
+  let needsCallVoid = isFn call && null items
+  return $ (call:items) ++ (if needsCallVoid then [Push $ AtomValue "void", VirtualMachine.Call] else [])
+  where isFn (GetEnv _) = True
+        isFn _ = False
+compileExpr _ = error "Not implemented"
 
-compileCallItem :: Expr -> Env -> Either String Insts
-compileCallItem expr env = compileExpr expr env <&> (++ [VirtualMachine.Call])
+compileCall :: String -> State Env Instruction
+compileCall name = do
+  env <- getState
+  case elemIndex name (args env) of
+    Just i -> return $ LoadArg i
+    Nothing -> (if name `elem` capturable env then (do
+      i <- capture name
+      return $ LoadArg i) else return $ GetEnv name)
+
+capture :: String -> State Env Int
+capture name = do
+  env <- getState
+  let ret = length $ args env
+  putState env { args = args env ++ [name], captured = captured env ++ [name] }
+  return ret
+
+compileCallItems :: [Expr] -> State Env Insts
+compileCallItems items = concat <$> mapM compileCallItem items
+
+compileCallItem :: Expr -> State Env Insts
+compileCallItem expr = compileExpr expr <&> (++ [VirtualMachine.Call])
