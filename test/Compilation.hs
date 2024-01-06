@@ -31,9 +31,10 @@ tests = test
                    Nothing)
                 (IntegerLit 42)
             ]
-      let expected = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
-                                                   , Ret
-                                                   ])]
+      let expected = fromList [("foo _ _ _",
+                                [ Push (IntegerValue 42)
+                                , Ret
+                                ])]
       compileToVM stmts @?= Right expected
     , "show Bytecode Push" ~: do
         let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42) ])]
@@ -110,15 +111,16 @@ tests = test
                                ]
                   )
               ]
-        let expected = fromList [("foo (a) (b) (c)", [ GetEnv "foo"
-                                                     , Push (IntegerValue 1)
-                                                     , VirtualMachine.Call
-                                                     , Push (StringValue "hello")
-                                                     , VirtualMachine.Call
-                                                     , Push (IntegerValue 42)
-                                                     , VirtualMachine.Call
-                                                     , Ret
-                                                     ])]
+        let expected = fromList [("foo _ _ _",
+                                  [ GetEnv "foo"
+                                  , Push (IntegerValue 1)
+                                  , VirtualMachine.Call
+                                  , Push (StringValue "hello")
+                                  , VirtualMachine.Call
+                                  , Push (IntegerValue 42)
+                                  , VirtualMachine.Call
+                                  , Ret
+                                  ])]
         compileToVM stmts @?= Right expected
     , "a function with args" ~: do
         let stmts =
@@ -131,8 +133,9 @@ tests = test
                      Nothing)
                   (EK.Ast.Call "a" [])
               ]
-        let expected = fromList [("id (a)", [ LoadArg 0
-                                            , Ret
-                                            ])]
+        let expected = fromList [("id _",
+                                  [ LoadArg 0
+                                  , Ret
+                                  ])]
         compileToVM stmts @?= Right expected
   ]

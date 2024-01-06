@@ -51,10 +51,7 @@ compileStmt (FuncDef pattern expr) = evalState (compileFn expr) (Env (patternArg
 compileStmt _ = empty
 
 compileFn :: Expr -> State Env Result
-compileFn expr = do
-  exprInsts <- compileExpr expr
-  env <- get
-  return $ result env <> fromList [(fnName env, exprInsts ++ [Ret])]
+compileFn expr = createFn expr >> result <$> get
 
 compileExpr :: Expr -> State Env Insts
 compileExpr (IntegerLit i) = return [Push (IntegerValue i)]
@@ -75,19 +72,18 @@ compileExpr (Lambda name expr) = do
           , result = result outsideEnv
           , fnName = lambdaName
           }
-  content <- compileExpr expr
-  createLambdaFn content
+  createFn expr
   insideEnv <- get
   put outsideEnv { result = result insideEnv }
   captures <- mapM compileCall $ captured insideEnv
   return $ captures ++ [GetEnv lambdaName, Closure (length captures)]
 compileExpr _ = error "Not implemented"
 
-createLambdaFn :: Insts -> State Env ()
-createLambdaFn content = do
+createFn :: Expr -> State Env ()
+createFn expr = do
+  content <- compileExpr expr
   env <- get
   put env { result = result env <> fromList [(fnName env, content ++ [Ret])] }
-  return ()
 
 compileCall :: String -> State Env Instruction
 compileCall name = do
