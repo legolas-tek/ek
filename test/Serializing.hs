@@ -37,4 +37,11 @@ tests = test
       serialize Ret @?= "\v"
       serialize (LoadArg 49) @?= "\f1"
       serialize (GetEnv "test") @?= "\rtest\0"
+      serialize ("test" :: String) @?= "test\0"
+      serialize (42 :: Integer) @?= "42\0"
+      serialize (42 :: Int) @?= "42\0"
+  , "deserialize" ~: do
+      (deserialize (serialize ("test" :: String)) :: String) @?= "test"
+      (deserialize (serialize (42 :: Integer)) :: Integer) @?= 42
+      (deserialize (serialize (42 :: Int)) :: Int) @?= 42
   ]

@@ -8,16 +8,22 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Serialize (serialize, saveResult, writeFunc) where
+module Serialize
+    ( saveResult
+    , writeFunc
+    , Serializable(..)
+    ) where
 
 import qualified Data.Map as Map
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as BC
 import VirtualMachine
 import Data.String(IsString(..))
 import EK.Compiler(Result)
 
 class Serializable a where
   serialize :: a -> B.ByteString
+  deserialize :: B.ByteString -> a
 
 writeFunc :: (String, Insts) -> String -> IO ()
 writeFunc (key, insts) path =
@@ -47,12 +53,15 @@ instance Serializable Instruction where
 
 instance Serializable Integer where
   serialize integer = fromString (show integer) <> B.singleton 0
+  deserialize bytes = read (BC.unpack (B.init bytes))
 
 instance Serializable Int where
   serialize int = fromString (show int) <> B.singleton 0
+  deserialize bytes = read (BC.unpack (B.init bytes))
 
 instance Serializable String where
   serialize str = fromString str <> B.singleton 0
+  deserialize bytes = BC.unpack (B.init bytes)
 
 instance Serializable VMValue where
   serialize (IntegerValue integer) = B.singleton 1 <> serialize integer
