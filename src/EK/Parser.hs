@@ -7,20 +7,29 @@
 
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
 
-module EK.Parser (parseDocument) where
+module EK.Parser
+    ( parseDocument
+    , parseSimpleDocument
+    ) where
 
 import EK.Ast
 import EK.ExprParser
 import Parser
 import Token
+import Tokenizer
 import EK.TokenParser
 import Data.Maybe (isJust)
 import Control.Monad (liftM2, liftM3)
-
 import Diagnostic
 
-parseDocument :: [Token] -> Either Diagnostic [TotalStmt]
-parseDocument tokens = runParser document tokens >>= parseExprs . fst
+parseDocument :: [Token] -> IO [TotalStmt]
+parseDocument tokens = parse >>= getImportedTokens . fst >>= exprParse
+    where
+        parse = either (fail . show) return $ runParser document tokens
+        exprParse = either (fail . show) return . parseExprs
+
+parseSimpleDocument :: [Token] -> Either Diagnostic [TotalStmt]
+parseSimpleDocument tokens = runParser document tokens >>= parseExprs . fst
 
 --- Statements
 
@@ -28,7 +37,7 @@ document :: Parser Token [PartialStmt]
 document = many stmt <* eof
 
 stmt :: Parser Token PartialStmt
-stmt = atomDef <|> typeDef <|> structDef <|> funcDef <|> externDef
+stmt = atomDef <|> typeDef <|> structDef <|> funcDef <|> externDef <|> importDef
 
 atomDef :: Parser Token PartialStmt
 atomDef = parseTokenType AtomKw >> AtomDef <$> textIdentifier
@@ -53,6 +62,9 @@ structElem :: Parser Token StructElem
 structElem = do
   name <- textIdentifier
   StructElem name <$> typed
+
+importDef :: Parser Token PartialStmt
+importDef = parseTokenType ImportKw >> ImportDef <$> textIdentifier
 
 -- structElem separated by commas, with an optional trailing comma
 structElems :: Parser Token [StructElem]
@@ -98,8 +110,16 @@ typed = parseTokenType Colon >> typeId
 
 typeId :: Parser Token Type
 typeId = do
+  t <- typeIdButNotArrow
+  functionReturn <- optional (parseTokenType Arrow >> typeId)
+  return $ createFunction t functionReturn
+    where createFunction t Nothing = t
+          createFunction t (Just t') = FunctionType t t'
+
+typeIdButNotArrow :: Parser Token Type
+typeIdButNotArrow = do
   t <- primType
-  next <- optional (parseTokenType Pipe >> typeId)
+  next <- optional (parseTokenType Pipe >> typeIdButNotArrow)
   return $ combine t next
     where combine t Nothing = t
           combine t (Just t') = UnionType t t'
@@ -122,3 +142,15 @@ intRange = do
   u <- optional intLiteral
   parseTokenType BracketClose
   return $ IntRange l u
+
+-- Import Handling
+
+getImportedTokens :: [PartialStmt] -> IO [PartialStmt]
+getImportedTokens = fmap concat . mapM handleImportDef
+
+handleImportDef :: PartialStmt -> IO [PartialStmt]
+handleImportDef (ImportDef x) = readFile (x ++ ".ek") >>= either (fail . show) return . parseImportedTokens x >>= getImportedTokens
+handleImportDef x = return [x]
+
+parseImportedTokens :: String -> String -> Either Diagnostic [PartialStmt]
+parseImportedTokens fileName content = fst <$> (tokenizer fileName content >>= runParser document)

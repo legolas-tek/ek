@@ -32,7 +32,7 @@ int :: Int -> Token
 int i = tk (show i) IntLiter
 
 doc :: [Token] -> Either Diagnostic [Stmt Expr]
-doc = parseDocument
+doc = parseSimpleDocument
 
 pat :: [FuncPatternItem] -> FuncPattern
 pat a = FuncPattern a Nothing Nothing
@@ -41,12 +41,18 @@ tests :: Test
 tests = test
   [ "atom" ~: do
       doc [tkt AtomKw, idt "foo"] @?= Right [AtomDef "foo"]
+    , "import" ~: do
+        doc [tkt ImportKw, idt "foo"] @?= Right [ImportDef "foo"]
   , "type" ~: do
       doc [tkt TypeKw, idt "foo", tkt Equal, idt "bar"] @?= Right [TypeDef "foo" (TypeName "bar")]
       doc [tkt TypeKw, idt "bit", tkt Equal, tkt BracketOpen, int 0, tkt DotDot, int 1, tkt BracketClose]
         @?= Right [TypeDef "bit" (IntRange (Just 0) (Just 1))]
       doc [tkt TypeKw, idt "bit", tkt Equal, int 0, tkt Pipe, int 1]
         @?= Right [TypeDef "bit" (UnionType (IntRange (Just 0) (Just 0)) (IntRange (Just 1) (Just 1)))]
+      doc [tkt TypeKw, idt "foo", tkt Equal, idt "aaa", tkt Arrow, idt "bbb"]
+        @?= Right [TypeDef "foo" (FunctionType (TypeName "aaa") (TypeName "bbb"))]
+      doc [tkt TypeKw, idt "foo", tkt Equal, idt "aaa", tkt Pipe, idt "bbb", tkt Arrow, idt "ccc", tkt Pipe, idt "ddd"]
+        @?= Right [TypeDef "foo" (FunctionType (UnionType (TypeName "aaa") (TypeName "bbb")) (UnionType (TypeName "ccc") (TypeName "ddd")))]
       doc [tkt TypeKw, idt "int", tkt Equal, tkt BracketOpen, tkt DotDot, tkt BracketClose]
         @?= Right [TypeDef "int" (IntRange Nothing Nothing)]
       doc [tkt TypeKw, idt "uint", tkt Equal, tkt BracketOpen, int 0, tkt DotDot, tkt BracketClose]

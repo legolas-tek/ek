@@ -50,6 +50,7 @@ parseBody _ (ExternDef pat) = return $ ExternDef pat
 parseBody _ (AtomDef name) = return $ AtomDef name
 parseBody _ (TypeDef name ty) = return $ TypeDef name ty
 parseBody _ (StructDef name elems) = return $ StructDef name elems
+parseBody _ (ImportDef name) = return $ ImportDef name
 
 argFuncItem :: String -> FuncItem
 argFuncItem s = FunctionName [Symbol s] primaryPrec

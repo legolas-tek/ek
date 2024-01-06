@@ -21,7 +21,13 @@ data VMValue = IntegerValue Integer
              | AtomValue String
              | FunctionValue Insts
              | StringValue String
-             deriving (Show, Eq)
+             deriving (Eq)
+
+instance Show VMValue where
+  show (IntegerValue v) = show v
+  show (AtomValue v) = v
+  show (FunctionValue _) = "(function)"
+  show (StringValue v) = v
 
 data Operator = Add
               | Sub
@@ -29,6 +35,7 @@ data Operator = Add
               | Div
               | Eq
               | Less
+              | Print
               deriving (Eq)
 
 instance Show Operator where
@@ -38,6 +45,7 @@ instance Show Operator where
   show Div = "div"
   show Eq = "eq"
   show Less = "less"
+  show Print = "print"
 
 data Instruction = Push VMValue
                  | Call
@@ -67,28 +75,29 @@ instance Show Instruction where
   show (LoadArg offset) = "load_arg " ++ show offset
   show (GetEnv value) = "getenv " ++ value
 
-exec :: Env -> Args -> Insts -> Stack -> Either String VMValue
-exec _ _ [] (s:_) = Right s
-exec _ _ [] [] = Left "No value on stack"
-exec _ _ (Ret:_) (s:_) = Right s
-exec _ _ (Ret:_) [] = Left "No value on stack"
+exec :: Env -> Args -> Insts -> Stack -> IO VMValue
+exec _ _ [] (s:_) = return s
+exec _ _ [] [] = fail "No value on stack"
+exec _ _ (Ret:_) (s:_) = return s
+exec _ _ (Ret:_) [] = fail "No value on stack"
 exec env args (Push v:insts) stack = exec env args insts (v:stack)
-exec env args (CallOp op:insts) (v1:v2:stack) = applyOp op v1 v2
-  >>= \result -> exec env args insts (result:stack)
-exec _ _ (CallOp _:_) _ = Left "Not enough arguments for operator"
+exec env args (CallOp Print:insts) (v:stack) = putStrLn (show v) >> exec env args insts stack
+exec env args (CallOp op:insts) (v1:v2:stack) =
+  either fail (\val -> exec env args insts (val:stack)) (applyOp op v1 v2)
+exec _ _ (CallOp _:_) _ = fail "Not enough arguments for operator"
 exec env args (Call:insts) (arg:FunctionValue fn:stack) = exec env [arg] fn []
   >>= \result -> exec env args insts (result:stack)
-exec _ _ (Call:_) _ = Left "Cannot call value of non-function type"
+exec _ _ (Call:_) _ = fail "Cannot call value of non-function type"
 exec env args (JmpFalse offset:insts) (AtomValue "false":stack)
   = exec env args (drop offset insts) stack
 exec env args (JmpFalse _:insts) (AtomValue "true":stack) = exec env args insts stack
-exec _ _ (JmpFalse _:_) _ = Left "Invalid condition"
+exec _ _ (JmpFalse _:_) _ = fail "Invalid condition"
 exec env args (Dup:insts) (v:stack) = exec env args insts (v:v:stack)
-exec _ _ (Dup:_) [] = Left "No value to duplicate"
+exec _ _ (Dup:_) [] = fail "No value to duplicate"
 exec env args (LoadArg offset:insts) stack = exec env args insts (args !! offset:stack)
 exec env args (GetEnv value:insts) stack = case Data.Map.lookup value env of
   Just val -> exec env args insts (val:stack)
-  Nothing  -> Left "No value in env"
+  Nothing  -> fail "No value in env"
 
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)
