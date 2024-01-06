@@ -5,6 +5,9 @@
 --
 --}
 
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Serialize (serialize, saveResult, writeFunc) where
 
 import qualified Data.Map as Map
@@ -42,8 +45,17 @@ instance Serializable Instruction where
   serialize (GetEnv value) = B.singleton 13 <> fromString value <> B.singleton 0
   serialize (CallOp Print) = B.singleton 14
 
+instance Serializable Integer where
+  serialize integer = fromString (show integer) <> B.singleton 0
+
+instance Serializable Int where
+  serialize int = fromString (show int) <> B.singleton 0
+
+instance Serializable String where
+  serialize str = fromString str <> B.singleton 0
+
 instance Serializable VMValue where
-  serialize (IntegerValue value) = B.singleton 1 <> fromString (show value) <> B.singleton 0
-  serialize (AtomValue value) = B.singleton 2 <> fromString value <> B.singleton 0
-  serialize (StringValue value) = B.singleton 3 <> fromString value <> B.singleton 0
+  serialize (IntegerValue integer) = B.singleton 1 <> serialize integer
+  serialize (AtomValue atom) = B.singleton 2 <> serialize atom
+  serialize (StringValue str) = B.singleton 3 <> serialize str
   serialize (FunctionValue _) = B.singleton 0
