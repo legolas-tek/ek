@@ -26,7 +26,6 @@ parseDocument :: [Token] -> IO [TotalStmt]
 parseDocument tokens = parse >>= getImportedTokens . fst >>= exprParse
     where
         parse = either (fail . show) return $ runParser document tokens
-
         exprParse = either (fail . show) return . parseExprs
 
 parseSimpleDocument :: [Token] -> Either Diagnostic [TotalStmt]
