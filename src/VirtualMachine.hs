@@ -92,6 +92,8 @@ exec env args (CallOp op:insts) (v1:v2:stack) =
 exec _ _ (CallOp _:_) _ = fail "Not enough arguments for operator"
 exec env args (Call:insts) (arg:FunctionValue fn:stack) = exec env [arg] fn []
   >>= \result -> exec env args insts (result:stack)
+exec env args (Call:insts) (arg:ClosureValue fn captures:stack) = exec env (arg:captures) fn []
+  >>= \result -> exec env args insts (result:stack)
 exec _ _ (Call:_) _ = fail "Cannot call value of non-function type"
 exec env args (JmpFalse offset:insts) (AtomValue "false":stack)
   = exec env args (drop offset insts) stack
