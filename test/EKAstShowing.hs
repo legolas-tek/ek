@@ -31,7 +31,7 @@ tests = test
       show' (TypeDef "foo" (IntRange (Just 0) (Just 42))) @?= "type foo = [0..42]"
       show' (TypeDef "uint" (IntRange (Just 0) Nothing)) @?= "type uint = [0..]"
       show' (TypeDef "negative" (IntRange Nothing (Just 0))) @?= "type negative = [..0]"
-      show' (TypeDef "foo" (UnionType (TypeName "bar") (TypeName "baz"))) @?= "type foo = bar | baz"
+      show' (TypeDef "foo" (UnionType (TypeName "bar") (TypeName "baz"))) @?= "type foo = (bar | baz)"
       show' (StructDef "foo" []) @?= "struct foo {}"
       show' (StructDef "foo" [StructElem "bar" (TypeName "baz")]) @?= "struct foo { bar : baz }"
       show' (StructDef "foo" [StructElem "bar" (TypeName "baz"), StructElem "code" (IntRange Nothing Nothing)]) @?= "struct foo { bar : baz, code : [..] }"
