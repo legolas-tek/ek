@@ -19,7 +19,10 @@ writeFunc (key, insts) path =
     B.concat (fmap serialize insts) <> B.singleton 0)
 
 saveResult :: Result -> String -> IO ()
-saveResult result path = sequence_ $ map (\pair -> writeFunc pair path) (Map.toList result)
+saveResult result path =
+    B.writeFile (path ++ ".eko") (B.singleton 42) >>
+    mapM_ (\pair -> writeFunc pair path) (Map.toList result)
+
 
 serialize :: Instruction -> B.ByteString
 serialize (Push value) = B.singleton 1 <> serializeVMValue value
