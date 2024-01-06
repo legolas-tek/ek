@@ -142,8 +142,8 @@ getImportedTokens :: [PartialStmt] -> IO [PartialStmt]
 getImportedTokens = fmap concat . mapM handleImportDef
 
 handleImportDef :: PartialStmt -> IO [PartialStmt]
-handleImportDef (ImportDef x) = readFile x >>= either (fail . show) return . parseImportedTokens x
-handleImportDef _ = return []
+handleImportDef (ImportDef x) = readFile (x ++ ".ek") >>= either (fail . show) return . parseImportedTokens x >>= getImportedTokens
+handleImportDef x = return [x]
 
 parseImportedTokens :: String -> String -> Either Diagnostic [PartialStmt]
 parseImportedTokens fileName content = fst <$> (tokenizer fileName content >>= runParser document)
