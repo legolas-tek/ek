@@ -5,8 +5,6 @@
 -- argument parser
 -}
 
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
 module ArgParser
@@ -16,13 +14,9 @@ module ArgParser
   ) where
 
 import Parser
-import SourcePos
 import Diagnostic
 
 type ArgParser a = Parser String a
-
-instance Parsable String where
-  advance (pos@SourcePos { .. }) _ = pos { sourceColumn = sourceColumn + 1 }
 
 data OutputType = OutputTokens | OutputAst | OutputBytecode
   deriving (Eq)
