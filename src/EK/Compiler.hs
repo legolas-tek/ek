@@ -23,6 +23,7 @@ data Env = Env
   , capturable :: [String]
   , captured :: [String]
   , result :: Result
+  , fnName :: String
   }
 
 type Result = Map String Insts
@@ -46,7 +47,7 @@ patternArguments :: FuncPattern -> [String]
 patternArguments (FuncPattern items _ _) = concatMap patternToArgument items
 
 compileStmt :: Stmt Expr -> Result
-compileStmt (FuncDef pattern expr) = evalState (compileFn pattern expr) (Env (patternArguments pattern) [] [] empty)
+compileStmt (FuncDef pattern expr) = evalState (compileFn pattern expr) (Env (patternArguments pattern) [] [] empty (show pattern))
 compileStmt _ = empty
 
 compileFn :: FuncPattern -> Expr -> State Env Result
@@ -65,7 +66,28 @@ compileExpr (EK.Ast.Call name callItems) = do
   return $ (call:items) ++ (if needsCallVoid then [Push $ AtomValue "void", VirtualMachine.Call] else [])
   where isFn (GetEnv _) = True
         isFn _ = False
+compileExpr (Lambda name expr) = do
+  outsideEnv <- get
+  let lambdaName = fnName outsideEnv ++ "\\" ++ name
+  put Env { args = [name]
+          , capturable = args outsideEnv ++ capturable outsideEnv
+          , captured = []
+          , result = result outsideEnv
+          , fnName = lambdaName
+          }
+  content <- compileExpr expr
+  createLambdaFn content
+  insideEnv <- get
+  put outsideEnv { result = result insideEnv }
+  captures <- mapM compileCall $ captured insideEnv
+  return $ captures ++ [GetEnv lambdaName, Closure (length captures)]
 compileExpr _ = error "Not implemented"
+
+createLambdaFn :: Insts -> State Env ()
+createLambdaFn content = do
+  env <- get
+  put env { result = result env <> fromList [(fnName env, content ++ [Ret])] }
+  return ()
 
 compileCall :: String -> State Env Instruction
 compileCall name = do
