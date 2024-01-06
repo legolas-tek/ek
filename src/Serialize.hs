@@ -7,12 +7,19 @@
 
 module Serialize (serialize) where
 
-import VirtualMachine
+import qualified Data.Map as Map
 import qualified Data.ByteString as B
+import VirtualMachine
 import Data.String(IsString(..))
+import EK.Compiler(Result)
 
-saveInsts :: Insts -> String -> IO ()
-saveInsts insts path = B.writeFile (path ++ ".eko") (B.concat (fmap serialize insts))
+writeFunc :: (String, Insts) -> String -> IO ()
+writeFunc (key, insts) path =
+    B.writeFile (path ++ ".eko") (fromString key <> B.singleton 0 <>
+    (B.concat (fmap serialize insts)) <> B.singleton 0)
+
+saveInsts :: Result -> String -> ()
+saveInsts result path = mapM_ writeFunc (Map.toList result) path
 
 serialize :: Instruction -> B.ByteString
 serialize (Push value) = B.singleton 1 <> serializeVMValue value
