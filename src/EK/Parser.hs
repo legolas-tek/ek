@@ -7,9 +7,9 @@
 
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
 
-module EK.Parser (
-    parseDocument,
-    parseSimpleDocument
+module EK.Parser
+    ( parseDocument
+    , parseSimpleDocument
     ) where
 
 import EK.Ast
@@ -20,7 +20,6 @@ import Tokenizer
 import EK.TokenParser
 import Data.Maybe (isJust)
 import Control.Monad (liftM2, liftM3)
-import Data.Functor ((<&>))
 import Diagnostic
 
 parseDocument :: [Token] -> IO [TotalStmt]
@@ -140,11 +139,11 @@ intRange = do
 -- Import Handling
 
 getImportedTokens :: [PartialStmt] -> IO [PartialStmt]
-getImportedTokens (ImportDef x: xs) = readFile x >>= either (fail . show) return . parseImportedTokens x >>= getImportedTokens'
-    where
-        getImportedTokens' stmts = getImportedTokens (stmts ++ xs) >>= \rest -> return $ stmts ++ rest
-getImportedTokens (_: rest) = getImportedTokens rest
-getImportedTokens [] = return []
+getImportedTokens = fmap concat . mapM handleImportDef
+
+handleImportDef :: PartialStmt -> IO [PartialStmt]
+handleImportDef (ImportDef x) = readFile x >>= either (fail . show) return . parseImportedTokens x
+handleImportDef _ = return []
 
 parseImportedTokens :: String -> String -> Either Diagnostic [PartialStmt]
-parseImportedTokens fileName content = (tokenizer fileName content >>= runParser document) <&> fst
+parseImportedTokens fileName content = fst <$> (tokenizer fileName content >>= runParser document)
