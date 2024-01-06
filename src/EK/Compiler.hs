@@ -5,8 +5,6 @@
 -- Compiler
 --}
 
-{-# LANGUAGE TupleSections #-}
-
 module EK.Compiler
   ( compileToVM
   , Result
@@ -18,7 +16,7 @@ import EK.Ast
 import Data.Map (Map, fromList, empty, union, toList)
 import Data.List (elemIndex)
 import Data.Functor ((<&>))
-import Control.Applicative (liftA2)
+import Control.Monad.State.Lazy
 
 data Env = Env
   { args :: [String]
@@ -28,30 +26,6 @@ data Env = Env
   }
 
 type Result = Map String Insts
-
-newtype State s a = State { runState :: s -> (a, s) }
-
-instance Functor (State s) where
-  fmap f (State g) = State $ \s -> let (a, s') = g s in (f a, s')
-
-instance Applicative (State s) where
-  pure x = State (x,)
-  liftA2 f (State g) (State h) = State $ \s -> let (a, s') = g s
-                                                   (b, s'') = h s'
-                                               in (f a b, s'')
-
-instance Monad (State s) where
-  return = pure
-  State g >>= f = State $ \s -> let (a, s') = g s in runState (f a) s'
-
-evalState :: State s a -> s -> a
-evalState (State f) = fst . f
-
-getState :: State s s
-getState = State $ \s -> (s, s)
-
-putState :: s -> State s ()
-putState s = State $ const ((), s)
 
 showBytecode :: Result -> String
 showBytecode = concatMap showEntry . toList
@@ -78,7 +52,7 @@ compileStmt _ = empty
 compileFn :: FuncPattern -> Expr -> State Env Result
 compileFn pattern expr = do
   exprInsts <- compileExpr expr
-  env <- getState
+  env <- get
   return $ result env <> fromList [(show pattern, exprInsts ++ [Ret])]
 
 compileExpr :: Expr -> State Env Insts
@@ -95,7 +69,7 @@ compileExpr _ = error "Not implemented"
 
 compileCall :: String -> State Env Instruction
 compileCall name = do
-  env <- getState
+  env <- get
   case elemIndex name (args env) of
     Just i -> return $ LoadArg i
     Nothing -> (if name `elem` capturable env then (do
@@ -104,9 +78,9 @@ compileCall name = do
 
 capture :: String -> State Env Int
 capture name = do
-  env <- getState
+  env <- get
   let ret = length $ args env
-  putState env { args = args env ++ [name], captured = captured env ++ [name] }
+  put env { args = args env ++ [name], captured = captured env ++ [name] }
   return ret
 
 compileCallItems :: [Expr] -> State Env Insts
