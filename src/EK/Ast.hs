@@ -49,6 +49,7 @@ data CallItem
 data Stmt expr
   = AtomDef String
   | TypeDef String Type
+  | ImportDef String
   | StructDef String [StructElem]
   | FuncDef FuncPattern expr
   | ExternDef FuncPattern
@@ -124,6 +125,7 @@ instance Show expr => Show (Stmt expr) where
   show (StructDef s elems) = "struct " ++ s ++ " { " ++ intercalate ", " (show <$> elems) ++ " }"
   show (FuncDef pattern expr) = "fn " ++ show pattern ++ " = " ++ show expr
   show (ExternDef pattern) = "extern fn " ++ show pattern
+  show (ImportDef s) = "import " ++ s
 
 instance Show StructElem where
   show (StructElem s t) = s ++ " : " ++ show t
@@ -156,6 +158,7 @@ instance Functor Stmt where
   fmap _ (TypeDef s t) = TypeDef s t
   fmap _ (StructDef s elems) = StructDef s elems
   fmap _ (ExternDef pat) = ExternDef pat
+  fmap _ (ImportDef s) = ImportDef s
 
 instance Traversable Stmt where
   traverse f (FuncDef pat expr) = FuncDef pat <$> f expr
@@ -163,6 +166,7 @@ instance Traversable Stmt where
   traverse _ (TypeDef s t) = pure $ TypeDef s t
   traverse _ (StructDef s elems) = pure $ StructDef s elems
   traverse _ (ExternDef pat) = pure $ ExternDef pat
+  traverse _ (ImportDef s) = pure $ ImportDef s
 
 instance Foldable Stmt where
   foldMap f (FuncDef _ expr) = f expr
