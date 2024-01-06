@@ -34,7 +34,7 @@ main = do
   content <- readFileOrStdIn $ argInput arg
   tokens <- either (fail . show) return $ tokenizer ("stdin" `fromMaybe` argInput arg) content
   when (argOutputType arg == Just OutputTokens) $ output $ show tokens
-  ast <- either (fail . show) return $ parseDocument tokens
+  ast <- parseDocument tokens
   when (argOutputType arg == Just OutputAst) $ output $ show ast
   insts <- either fail return $ compileToVM ast
   putStrLn $ showBytecode insts
