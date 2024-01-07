@@ -87,7 +87,7 @@ compileExpr (Lambda name expr) = do
   outsideEnv <- get
   let lambdaName = fnName outsideEnv ++ "\\" ++ name
   put Env { args = [name]
-          , capturable = args outsideEnv ++ capturable outsideEnv
+          , capturable = filter (not . isPrefixOf "_") $ args outsideEnv ++ capturable outsideEnv
           , captured = []
           , result = result outsideEnv
           , fnName = lambdaName
@@ -97,7 +97,6 @@ compileExpr (Lambda name expr) = do
   put outsideEnv { result = result insideEnv }
   captures <- mapM compileCall $ captured insideEnv
   return $ captures ++ [GetEnv lambdaName, Closure (length captures)]
-compileExpr _ = error "Not implemented"
 
 createFn :: Expr -> State Env ()
 createFn expr = do

@@ -196,4 +196,71 @@ tests = test
                                   ])
                                 ]
         compileToVM stmts @?= Right expected
+    , "simple placeholder pattern" ~: do
+        let stmts =
+              [ FuncDef
+                  (FuncPattern
+                      [ SymbolPattern "id"
+                      , PlaceholderPattern
+                      ]
+                      Nothing
+                      Nothing)
+                  (Lambda "a"
+                     (EK.Ast.Call "a" []))
+              ]
+        let expected = fromList [("id _",
+                                  [ GetEnv "id _\\a"
+                                  , Closure 0
+                                  , LoadArg 0
+                                  , VirtualMachine.Call
+                                  , Ret
+                                  ])
+                                , ("id _\\a",
+                                  [ LoadArg 0
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
+    , "3 placeholder patterns" ~: do
+        let stmts =
+              [ FuncDef
+                  (FuncPattern
+                      [ SymbolPattern "foo"
+                      , PlaceholderPattern
+                      , PlaceholderPattern
+                      , PlaceholderPattern
+                      ]
+                      Nothing
+                      Nothing)
+                  (EK.Ast.Call "aliased" [])
+              , ExternDef
+                  (FuncPattern [SymbolPattern "aliased"] Nothing Nothing)
+              ]
+        let expected = fromList [("foo _ _ _",
+                                  [ LoadArg 0
+                                  , GetEnv "foo _ _ _\\_1"
+                                  , Closure 1
+                                  , Ret
+                                  ])
+                                , ("foo _ _ _\\_1",
+                                  [ LoadArg 1
+                                  , LoadArg 0
+                                  , GetEnv "foo _ _ _\\_1\\_2"
+                                  , Closure 2
+                                  , Ret
+                                  ])
+                                , ("foo _ _ _\\_1\\_2",
+                                  [ GetEnv "aliased"
+                                  , Push $ AtomValue "void"
+                                  , VirtualMachine.Call
+                                  , LoadArg 1
+                                  , VirtualMachine.Call
+                                  , LoadArg 2
+                                  , VirtualMachine.Call
+                                  , LoadArg 0
+                                  , VirtualMachine.Call
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
   ]
