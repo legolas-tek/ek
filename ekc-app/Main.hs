@@ -44,7 +44,7 @@ main = do
   let output o = writeFileOrStdOut (argOutput arg) o >> exitSuccess
   content <- readFileOrStdIn $ argInput arg
   (tokens, diags) <- either (fail . show) return $ tokenizer ("stdin" `fromMaybe` argInput arg) content
-  when (argOutputType arg == Just OutputTokens) $ output $ show tokens
+  when (argOutputType arg == Just OutputTokens) $ output $ unlines $ show <$> tokens
   (ast, diags') <- parseDocument tokens
   when (argOutputType arg == Just OutputAst) $ output $ show ast
   mapM_ (putStrLn . show) (diags ++ diags')

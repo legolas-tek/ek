@@ -25,4 +25,4 @@ extern fn builtin print: any -> void
 
 extern fn builtin exit: int -> never
 
-extern fn builtin if //: bool -> (void -> int) -> (void -> int) -> int
+extern fn builtin if: bool -> (void -> int) -> (void -> int) -> int

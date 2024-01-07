@@ -129,7 +129,7 @@ typeIdButNotArrow = do
           combine t (Just t') = UnionType t t'
 
 primType :: Parser Token Type
-primType = typeName <|> intType <|> intRange
+primType = typeName <|> intType <|> intRange <|> parenType
 
 typeName :: Parser Token Type
 typeName = TypeName <$> textIdentifier
@@ -146,6 +146,11 @@ intRange = do
   u <- optional intLiteral
   parseTokenType BracketClose
   return $ IntRange l u
+
+parenType :: Parser Token Type
+parenType = parseTokenType ParenOpen *> typeId <* parseTokenType ParenClose
+
+-- Import Handling
 
 getImportedTokens :: [PartialStmt] -> IO ([PartialStmt], [Diagnostic])
 getImportedTokens stmts = do
