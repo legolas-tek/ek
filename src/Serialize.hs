@@ -22,9 +22,23 @@ import EK.Compiler(Result)
 import Parser
 import Data.Word
 import Control.Applicative (liftA2)
+import Text.Printf (printf)
+
+exact :: Word8 -> Parser Word8 Word8
+exact expected
+  = printf "Expected '%c' but %s" expected
+    `mapError` parseOneIf (== expected)
+
+string :: [Word8] -> Parser Word8 [Word8]
+string expected
+  = printf "Expected \"%s\" but %s" (map BI.w2c expected)
+    `mapError` traverse exact expected
 
 word8ToInt :: Word8 -> Int
 word8ToInt = fromIntegral . toInteger
+
+stringToWord8 :: String -> [Word8]
+stringToWord8 str = B.unpack (serialize str)
 
 class Serializable a where
   serialize :: a -> B.ByteString
@@ -55,7 +69,6 @@ instance Serializable VMValue where
             <|> parseOneIf (== 2) *> (AtomValue <$> deserialize)
             <|> parseOneIf (== 3) *> (StringValue <$> deserialize)
 
--- Possiblement ajouter un 0 a la fin de chaques Instructions pour les délimiter
 instance Serializable Instruction where
   serialize (Push value) = B.singleton 1 <> serialize value
   serialize Call = B.singleton 2
@@ -98,9 +111,9 @@ instance (Serializable a, Serializable b) => Serializable (a, b) where
   deserialize = liftA2 (,) deserialize deserialize <* parseOneIf (== 0)
 
 instance Serializable Result where
-  serialize result = B.singleton 42 <> B.concat (fmap serialize (Map.toList result))
+  serialize result = serialize ("#!/usr/bin/env ek" :: String) <> B.concat (fmap serialize (Map.toList result))
 
-  deserialize = parseOneIf(== 42) *> (Map.fromList <$> (many deserialize))
+  deserialize = string (stringToWord8 "#!/usr/bin/env ek") *> (Map.fromList <$> (many deserialize))
 
 saveResult :: Result -> String -> IO ()
 saveResult result path =
