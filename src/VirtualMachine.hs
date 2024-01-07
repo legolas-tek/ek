@@ -109,7 +109,7 @@ exec _ _ (Dup:_) [] = fail "No value to duplicate"
 exec env args (LoadArg offset:insts) stack = exec env args insts (args !! offset:stack)
 exec env args (GetEnv value:insts) stack = case Data.Map.lookup value env of
   Just val -> exec env args insts (val:stack)
-  Nothing  -> fail "No value in env"
+  Nothing  -> fail $ "Could not find `" ++ value ++ "' in environment"
 exec env args (Closure count:insts) (FunctionValue fn:stack) = exec env args insts (ClosureValue fn (take count stack):drop count stack)
 exec _ _ (Closure _:_) _ = fail "Cannot create closure of non-function type"
 

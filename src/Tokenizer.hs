@@ -85,7 +85,7 @@ identifyKw "import" = ImportKw
 identifyKw _ = TextIdentifier
 
 parseOperatorId :: Parser Char (String, TokenType)
-parseOperatorId = some (parseOneIf (`elem` ".=/-+*!?%<>&|^~")) >>= tup
+parseOperatorId = some (parseOneIf (`elem` ".=/-+*!?%<>&|^~$")) >>= tup
   where tup identifier = return (identifier, identifyOp identifier)
 
 identifyOp :: String -> TokenType
