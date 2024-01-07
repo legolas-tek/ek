@@ -10,7 +10,6 @@
 
 module Serialize
     ( saveResult
-    , writeFunc
     , Serializable(..)
     ) where
 
@@ -26,16 +25,6 @@ import Data.Word
 class Serializable a where
   serialize :: a -> B.ByteString
   deserialize :: Parser Word8 a
-
-writeFunc :: (String, Insts) -> String -> IO ()
-writeFunc (key, insts) path =
-    B.writeFile (path ++ ".eko") (fromString key <> B.singleton 0 <>
-    B.concat (fmap serialize insts) <> B.singleton 0)
-
-saveResult :: Result -> String -> IO ()
-saveResult result path =
-    B.writeFile (path ++ ".eko") (B.singleton 42) >>
-    mapM_ (\pair -> writeFunc pair path) (Map.toList result)
 
 instance Serializable Integer where
   serialize integer = fromString (show integer) <> B.singleton 0
@@ -89,3 +78,16 @@ instance Serializable Instruction where
             <|> parseOneIf (== 12) *> (LoadArg <$> deserialize)
             <|> parseOneIf (== 13) *> (GetEnv <$> deserialize)
             <|> parseOneIf (== 14) *> pure (CallOp Print)
+
+instance Serializable [Instruction] where
+  serialize insts = B.concat (fmap serialize insts)
+
+instance Serializable a => Serializable (String, a) where
+  serialize (key, insts) = fromString key <> B.singleton 0 <> serialize insts <> B.singleton 0
+
+instance Serializable Result where
+  serialize result = B.singleton 42 <> B.concat (fmap serialize (Map.toList result))
+
+saveResult :: Result -> String -> IO ()
+saveResult result path =
+    B.writeFile (path ++ ".eko") (serialize result)

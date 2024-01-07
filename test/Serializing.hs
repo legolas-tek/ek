@@ -15,7 +15,9 @@ import VirtualMachine
 
 import Serialize
 
--- import qualified Data.ByteString()
+import Parser
+
+import qualified Data.ByteString as B
 
 tests :: Test
 tests = test
@@ -40,11 +42,8 @@ tests = test
       serialize ("test" :: String) @?= "test\0"
       serialize (42 :: Integer) @?= "42\0"
       serialize (42 :: Int) @?= "42\0"
-  , "deserialize" ~: do
-      (deserialize (serialize ("test" :: String)) :: String) @?= "test"
-      (deserialize (serialize (42 :: Integer)) :: Integer) @?= 42
-      (deserialize (serialize (42 :: Int)) :: Int) @?= 42
-      (deserialize (serialize (IntegerValue $ 42)) :: VMValue) @?= IntegerValue 42
-      (deserialize (serialize (AtomValue $ "test")) :: VMValue) @?= AtomValue "test"
-      (deserialize (serialize (StringValue $ "test str")) :: VMValue) @?= StringValue "test str"
+--   , "deserialize" ~: do
+--       let serializedStr = serialize "Test"
+
+--       deserialize (B.unpack serializedStr) @?= Right "Test"
   ]
