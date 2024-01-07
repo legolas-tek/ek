@@ -19,7 +19,6 @@ extern fn builtin div: int -> int -> int
 
 extern fn builtin eq: any -> any -> bool
 extern fn builtin lt: int -> int -> bool
-extern fn builtin gt: int -> int -> bool
 
 extern fn builtin print: any -> void
 

@@ -20,7 +20,7 @@ fn not (a) = (a == false)
 fn _ == _ precedence 4 = builtin eq
 fn (a) != (b) precedence 4 = not (a == b)
 fn _ < _ precedence 4 = builtin lt
-fn _ > _ precedence 4 = builtin gt
+fn (a) > (b) precedence 4 = b < a
 fn (a) <= (b) precedence 4 = not (a > b)
 fn (a) >= (b) precedence 4 = not (a < b)
 

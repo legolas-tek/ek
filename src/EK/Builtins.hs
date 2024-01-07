@@ -35,4 +35,10 @@ builtins = Map.fromList
   , ("builtin div", [GetEnv "builtin div\\a", Ret])
   , ("builtin div\\a", [LoadArg 0, GetEnv "builtin div\\b", Closure 1, Ret])
   , ("builtin div\\b", [LoadArg 0, LoadArg 1, CallOp Div, Ret])
+  , ("builtin eq", [GetEnv "builtin eq\\a", Ret])
+  , ("builtin eq\\a", [LoadArg 0, GetEnv "builtin eq\\b", Closure 1, Ret])
+  , ("builtin eq\\b", [LoadArg 0, LoadArg 1, CallOp Eq, Ret])
+  , ("builtin lt", [GetEnv "builtin lt\\a", Ret])
+  , ("builtin lt\\a", [LoadArg 0, GetEnv "builtin lt\\b", Closure 1, Ret])
+  , ("builtin lt\\b", [LoadArg 0, LoadArg 1, CallOp Less, Ret])
   ]
