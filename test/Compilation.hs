@@ -18,24 +18,7 @@ import Data.Map (fromList)
 
 tests :: Test
 tests = test
-  [ "func def" ~: do
-      let stmts =
-            [ FuncDef
-                (FuncPattern
-                   [ SymbolPattern "foo"
-                   , ArgPattern False "a" Nothing
-                   , ArgPattern False "b" Nothing
-                   , ArgPattern False "c" Nothing
-                   ]
-                   Nothing
-                   Nothing)
-                (IntegerLit 42)
-            ]
-      let expected = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42)
-                                                   , Ret
-                                                   ])]
-      compileToVM stmts @?= Right expected
-    , "show Bytecode Push" ~: do
+  [ "show Bytecode Push" ~: do
         let insts = fromList [("foo (a) (b) (c)", [ Push (IntegerValue 42) ])]
         showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n"
     , "show Bytecode Call" ~: do
@@ -92,9 +75,38 @@ tests = test
                                                    , CallOp Add
                                                    ])]
         showBytecode insts @?= "foo (a) (b) (c):\n\tpush 42\n\tret\n\tgetenv foo\n\tload_arg 42\n\tcall_op add\n"
-    , "call with expressions" ~: do
+    , "constant func with 3 args" ~: do
+      let stmts =
+            [ FuncDef
+                (FuncPattern
+                   [ SymbolPattern "foo"
+                   , ArgPattern False "a" Nothing
+                   , ArgPattern False "b" Nothing
+                   , ArgPattern False "c" Nothing
+                   ]
+                   Nothing
+                   Nothing)
+                (IntegerLit 42)
+            ]
+      let expected = fromList [ ("foo _ _ _",
+                                 [ GetEnv "foo _ _ _\\a"
+                                 , Closure 0 -- could be removed
+                                 , Ret
+                                 ])
+                              , ("foo _ _ _\\a",
+                                  [ GetEnv "foo _ _ _\\a\\b"
+                                  , Closure 0 -- could be removed
+                                  , Ret
+                                  ])
+                              , ("foo _ _ _\\a\\b",
+                                  [ Push $ IntegerValue 42
+                                  , Ret
+                                  ])
+                              ]
+      compileToVM stmts @?= Right expected
+    , "calling function with 3 args" ~: do
         let stmts =
-              [ FuncDef
+              [ ExternDef
                   (FuncPattern
                      [ SymbolPattern "foo"
                      , ArgPattern False "a" Nothing
@@ -103,24 +115,27 @@ tests = test
                      ]
                      Nothing
                      Nothing)
+              , FuncDef
+                  (FuncPattern [SymbolPattern "main"] Nothing Nothing)
                   (EK.Ast.Call (FunctionName [Symbol "foo"] defaultPrec)
-                               [IntegerLit 1
+                               [ IntegerLit 1
                                , StringLit "hello"
                                , IntegerLit 42
                                ]
                   )
               ]
-        let expected = fromList [("foo (a) (b) (c)", [ GetEnv "foo"
-                                                     , Push (IntegerValue 1)
-                                                     , VirtualMachine.Call
-                                                     , Push (StringValue "hello")
-                                                     , VirtualMachine.Call
-                                                     , Push (IntegerValue 42)
-                                                     , VirtualMachine.Call
-                                                     , Ret
-                                                     ])]
+        let expected = fromList [("main",
+                                  [ GetEnv "foo"
+                                  , Push (IntegerValue 1)
+                                  , VirtualMachine.Call
+                                  , Push (StringValue "hello")
+                                  , VirtualMachine.Call
+                                  , Push (IntegerValue 42)
+                                  , VirtualMachine.Call
+                                  , Ret
+                                  ])]
         compileToVM stmts @?= Right expected
-    , "a function with args" ~: do
+    , "identity function" ~: do
         let stmts =
               [ FuncDef
                   (FuncPattern
@@ -131,8 +146,121 @@ tests = test
                      Nothing)
                   (EK.Ast.Call "a" [])
               ]
-        let expected = fromList [("id (a)", [ LoadArg 0
-                                            , Ret
-                                            ])]
+        let expected = fromList [("id _",
+                                  [ LoadArg 0
+                                  , Ret
+                                  ])]
+        compileToVM stmts @?= Right expected
+    , "calling constant" ~: do
+        let stmts =
+              [ FuncDef
+                  (FuncPattern [SymbolPattern "key"] Nothing Nothing)
+                  (IntegerLit 42)
+              , FuncDef
+                  (FuncPattern [SymbolPattern "answer"] Nothing Nothing)
+                  (EK.Ast.Call "key" [])
+              ]
+        let expected = fromList [("key",
+                                  [ Push $ IntegerValue 42
+                                  , Ret
+                                  ])
+                                , ("answer",
+                                  [ GetEnv "key"
+                                  , Push $ AtomValue "void"
+                                  , VirtualMachine.Call
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
+    , "lambda closure" ~: do
+        let stmts =
+              [ FuncDef
+                  (FuncPattern
+                      [ SymbolPattern "const"
+                      , ArgPattern False "a" Nothing
+                      ]
+                      Nothing
+                      Nothing)
+                  (Lambda "b"
+                     (EK.Ast.Call "a" []))
+              ]
+        let expected = fromList [("const _",
+                                  [ LoadArg 0
+                                  , GetEnv "const _\\b"
+                                  , Closure 1
+                                  , Ret
+                                  ])
+                                , ("const _\\b",
+                                  [ LoadArg 1
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
+    , "simple placeholder pattern" ~: do
+        let stmts =
+              [ FuncDef
+                  (FuncPattern
+                      [ SymbolPattern "id"
+                      , PlaceholderPattern
+                      ]
+                      Nothing
+                      Nothing)
+                  (Lambda "a"
+                     (EK.Ast.Call "a" []))
+              ]
+        let expected = fromList [("id _",
+                                  [ GetEnv "id _\\a"
+                                  , Closure 0
+                                  , LoadArg 0
+                                  , VirtualMachine.Call
+                                  , Ret
+                                  ])
+                                , ("id _\\a",
+                                  [ LoadArg 0
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
+    , "3 placeholder patterns" ~: do
+        let stmts =
+              [ FuncDef
+                  (FuncPattern
+                      [ SymbolPattern "foo"
+                      , PlaceholderPattern
+                      , PlaceholderPattern
+                      , PlaceholderPattern
+                      ]
+                      Nothing
+                      Nothing)
+                  (EK.Ast.Call "aliased" [])
+              , ExternDef
+                  (FuncPattern [SymbolPattern "aliased"] Nothing Nothing)
+              ]
+        let expected = fromList [("foo _ _ _",
+                                  [ LoadArg 0
+                                  , GetEnv "foo _ _ _\\_1"
+                                  , Closure 1
+                                  , Ret
+                                  ])
+                                , ("foo _ _ _\\_1",
+                                  [ LoadArg 1
+                                  , LoadArg 0
+                                  , GetEnv "foo _ _ _\\_1\\_2"
+                                  , Closure 2
+                                  , Ret
+                                  ])
+                                , ("foo _ _ _\\_1\\_2",
+                                  [ GetEnv "aliased"
+                                  , Push $ AtomValue "void"
+                                  , VirtualMachine.Call
+                                  , LoadArg 1
+                                  , VirtualMachine.Call
+                                  , LoadArg 2
+                                  , VirtualMachine.Call
+                                  , LoadArg 0
+                                  , VirtualMachine.Call
+                                  , Ret
+                                  ])
+                                ]
         compileToVM stmts @?= Right expected
   ]

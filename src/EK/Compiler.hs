@@ -14,48 +14,119 @@ module EK.Compiler
 import VirtualMachine hiding (Env)
 import EK.Ast
 import Data.Map (Map, fromList, empty, union, toList)
-import Data.List (elemIndex)
+import Data.List (elemIndex, isPrefixOf)
 import Data.Functor ((<&>))
+import Control.Monad.State.Lazy
 
-type Env = [String]
+data Env = Env
+  { args :: [String]
+  , capturable :: [String]
+  , captured :: [String]
+  , result :: Result
+  , fnName :: String
+  }
+
 type Result = Map String Insts
 
 showBytecode :: Result -> String
-showBytecode result = concatMap showEntry (toList result)
+showBytecode = concatMap showEntry . toList
     where showEntry (key, value) = key ++ ":\n" ++ unlines (map (("\t" ++) . show) value)
 
-
 compileToVM :: [Stmt Expr] -> Either String Result
-compileToVM stmts = compileStmts stmts []
+compileToVM stmts = Right $ compileStmts stmts
 
-compileStmts :: [Stmt Expr] -> Env -> Either String Result
-compileStmts arr env = mapM (compileStmt env) arr <&> foldr union empty
+compileStmts :: [Stmt Expr] -> Result
+compileStmts = foldr (union . compileStmt) empty
 
-addArgToEnv :: FuncPatternItem -> Env
-addArgToEnv (ArgPattern _ name _) = [name]
-addArgToEnv (SymbolPattern _) = []
-addArgToEnv PlaceholderPattern = []
+patternToArgument :: (Int, FuncPatternItem) -> [String]
+patternToArgument (_, ArgPattern _ name _) = [name]
+patternToArgument (_, SymbolPattern _) = []
+patternToArgument (i, PlaceholderPattern) = ["_" ++ show i]
 
-addArgsToEnv :: FuncPattern -> Env -> Env
-addArgsToEnv (FuncPattern items _ _) initEnv = concatMap addArgToEnv items ++ initEnv
+patternArguments :: FuncPattern -> [String]
+patternArguments (FuncPattern items _ _) = concatMap patternToArgument (zip [0..] items)
 
-compileStmt :: Env -> Stmt Expr -> Either String Result
-compileStmt env (FuncDef pattern expr) = do
-  exprInsts <- compileExpr expr (addArgsToEnv pattern env)
-  return (fromList [(show pattern, exprInsts ++ [Ret])])
-compileStmt _ _ = Right empty
+compileStmt :: Stmt Expr -> Result
+compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (patternArguments pattern) [] [] empty (show $ patternToName pattern))
+compileStmt _ = empty
 
-compileExpr :: Expr -> Env -> Either String Insts
-compileExpr (IntegerLit i) _ = Right [Push (IntegerValue i)]
-compileExpr (StringLit s) _ = Right [Push (StringValue s)]
-compileExpr (EK.Ast.Call name callItems) env =
-  compileCallItems callItems env >>= \insts ->
-    return (case elemIndex (show name) env of
-      Just i -> LoadArg i : insts
-      Nothing -> GetEnv (show name) : insts)
+compileFn :: Expr -> State Env ()
+compileFn expr = do
+  args' <- gets args
+  case args' of
+    [] -> createFn expr -- first arg is void, but we never load_arg so it's ok
+    [_] -> createFn expr -- easy case
+    (x:xs) -> do
+      outsideEnv <- get
+      let lambdaName = fnName outsideEnv ++ "\\" ++ x
+      put Env { args = xs
+              , capturable = x : capturable outsideEnv
+              , captured = []
+              , result = result outsideEnv
+              , fnName = lambdaName
+              }
+      compileFn expr -- recursive call
+      insideEnv <- get
+      put outsideEnv { args = [x]
+                     , result = result insideEnv
+                     }
+      captures <- mapM compileCall $ captured insideEnv
+      modify $ \env -> env { result = result env <> fromList [(fnName env, captures ++ [GetEnv lambdaName, Closure (length captures), Ret])] }
 
-compileCallItems :: [Expr] -> Env -> Either String Insts
-compileCallItems items env = concat <$> mapM (`compileCallItem` env) items
+compileExpr :: Expr -> State Env Insts
+compileExpr (IntegerLit i) = return [Push (IntegerValue i)]
+compileExpr (StringLit s) = return [Push (StringValue s)]
+compileExpr (EK.Ast.Call name callItems) = do
+  call <- compileCall (show name)
+  items <- compileCallItems callItems
+  let needsCallVoid = isFn call && null items
+  return $ (call:items) ++ (if needsCallVoid then [Push $ AtomValue "void", VirtualMachine.Call] else [])
+  where isFn (GetEnv _) = True
+        isFn _ = False
+compileExpr (Lambda name expr) = do
+  outsideEnv <- get
+  let lambdaName = fnName outsideEnv ++ "\\" ++ name
+  put Env { args = [name]
+          , capturable = filter (not . isPrefixOf "_") $ args outsideEnv ++ capturable outsideEnv
+          , captured = []
+          , result = result outsideEnv
+          , fnName = lambdaName
+          }
+  createFn expr
+  insideEnv <- get
+  put outsideEnv { result = result insideEnv }
+  captures <- mapM compileCall $ captured insideEnv
+  return $ captures ++ [GetEnv lambdaName, Closure (length captures)]
 
-compileCallItem :: Expr -> Env -> Either String Insts
-compileCallItem expr env = compileExpr expr env <&> (++ [VirtualMachine.Call])
+createFn :: Expr -> State Env ()
+createFn expr = do
+  args' <- gets args
+  capturable' <- gets capturable
+  content <- compileExpr expr
+  additional <- concat <$> mapM handleArg (reverse capturable' ++ args')
+  env <- get
+  put env { result = result env <> fromList [(fnName env, content ++ additional ++ [Ret])] }
+    where handleArg x | "_" `isPrefixOf` x = (:[VirtualMachine.Call]) <$> compileCall x
+                      | otherwise = return []
+
+compileCall :: String -> State Env Instruction
+compileCall name = do
+  env <- get
+  case elemIndex name (args env) of
+    Just i -> return $ LoadArg i
+    Nothing -> (if name `elem` capturable env then (do
+      i <- capture name
+      return $ LoadArg i) else return $ GetEnv name)
+
+capture :: String -> State Env Int
+capture name = do
+  env <- get
+  let ret = length $ args env
+  put env { args = args env ++ [name], captured = captured env ++ [name] }
+  return ret
+
+compileCallItems :: [Expr] -> State Env Insts
+compileCallItems items = concat <$> mapM compileCallItem items
+
+compileCallItem :: Expr -> State Env Insts
+compileCallItem expr = compileExpr expr <&> (++ [VirtualMachine.Call])

@@ -118,4 +118,24 @@ tests = test
         division @?= IntegerValue 2
         printOp <- catchExec [Push $ IntegerValue 42, CallOp Print, Ret]
         printOp @?= StringValue "user error (No value on stack)"
+    , "closures" ~: do
+        let addition = [ LoadArg 0
+                       , LoadArg 1
+                       , CallOp Add
+                       , Ret
+                       ]
+        let closure = [ Push $ IntegerValue 10
+                      , Push $ FunctionValue addition
+                      , Closure 1
+                      , Ret
+                      ]
+        let usage = [ Push $ FunctionValue closure
+                    , Push $ AtomValue "void"
+                    , Call
+                    , Push $ IntegerValue 32
+                    , Call
+                    , Ret
+                    ]
+        result <- ex usage []
+        result @?= IntegerValue 42
   ]
