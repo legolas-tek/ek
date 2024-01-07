@@ -44,7 +44,7 @@ patternToArgument (_, SymbolPattern _) = []
 patternToArgument (i, PlaceholderPattern) = ["_" ++ show i]
 
 patternArguments :: FuncPattern -> [String]
-patternArguments (FuncPattern' items _ _) = concatMap patternToArgument (zip [0..] items)
+patternArguments (FuncPattern items _ _) = concatMap patternToArgument (zip [0..] items)
 
 compileStmt :: TotalStmt -> Result
 compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (patternArguments pattern) [] [] empty (show $ patternToName pattern))

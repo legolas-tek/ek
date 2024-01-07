@@ -76,7 +76,7 @@ type TotalStmt = EK.Ast.Stmt Expr Type
 
 type Prec = Int
 
-data FuncPattern' typeval = FuncPattern'
+data FuncPattern' typeval = FuncPattern
   { funcPatternItems :: [FuncPatternItem' typeval]
   , funcPatternType :: Maybe typeval
   , funcPatternPrec :: Maybe Prec
@@ -92,7 +92,7 @@ type FuncPattern = FuncPattern' Type
 type FuncPatternItem = FuncPatternItem' Type
 
 patternToName :: FuncPattern' typeval -> FunctionName
-patternToName (FuncPattern' items _ prec) = FunctionName (map patternToName' items) (defaultPrec `fromMaybe` prec)
+patternToName (FuncPattern items _ prec) = FunctionName (map patternToName' items) (defaultPrec `fromMaybe` prec)
   where
     patternToName' (ArgPattern {}) = Placeholder
     patternToName' (SymbolPattern s) = Symbol s
@@ -152,7 +152,7 @@ instance Show Type where
   show (FunctionType a b) = "(" ++ show a ++ " -> " ++ show b ++ ")"
 
 instance Show typeval => Show (FuncPattern' typeval) where
-  show (FuncPattern' items typ prec) = unwords (show <$> items) ++ showType typ ++ showPrec prec
+  show (FuncPattern items typ prec) = unwords (show <$> items) ++ showType typ ++ showPrec prec
     where showPrec (Just p) = " precedence " ++ show p
           showPrec Nothing = ""
           showType (Just t) = " : " ++ show t

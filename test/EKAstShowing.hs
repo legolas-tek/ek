@@ -13,7 +13,7 @@ import Test.HUnit
 
 import EK.Ast
 
-show' :: Stmt Expr -> String
+show' :: TotalStmt -> String
 show' = show
 
 tests :: Test

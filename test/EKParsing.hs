@@ -31,7 +31,7 @@ idt s = tk s TextIdentifier
 int :: Int -> Token
 int i = tk (show i) IntLiter
 
-doc :: [Token] -> Either Diagnostic [Stmt Expr]
+doc :: [Token] -> Either Diagnostic [TotalStmt]
 doc = parseSimpleDocument
 
 pat :: [FuncPatternItem] -> FuncPattern

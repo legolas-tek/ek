@@ -10,7 +10,6 @@
 
 module EK.ExprParser
   ( parseExprs
-  , PartialStmt
   ) where
 
 import EK.Ast
