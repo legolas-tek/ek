@@ -21,6 +21,8 @@ import Data.String(IsString(..))
 import EK.Compiler(Result)
 import Parser
 import Data.Word
+import Control.Applicative (liftA2)
+
 
 class Serializable a where
   serialize :: a -> B.ByteString
@@ -28,14 +30,17 @@ class Serializable a where
 
 instance Serializable Integer where
   serialize integer = fromString (show integer) <> B.singleton 0
+
   deserialize = (read . fmap BI.w2c) <$> many (parseOneIf (/= 0))
 
 instance Serializable Int where
   serialize int = fromString (show int) <> B.singleton 0
+
   deserialize = (read . fmap BI.w2c) <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
 
 instance Serializable String where
   serialize str = fromString str <> B.singleton 0
+
   deserialize = fmap BI.w2c <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
 
 instance Serializable VMValue where
@@ -48,6 +53,7 @@ instance Serializable VMValue where
             <|> parseOneIf (== 2) *> (AtomValue <$> deserialize)
             <|> parseOneIf (== 3) *> (StringValue <$> deserialize)
 
+-- Possiblement ajouter un 0 a la fin de chaques Instructions pour les délimiter
 instance Serializable Instruction where
   serialize (Push value) = B.singleton 1 <> serialize value
   serialize Call = B.singleton 2
@@ -80,13 +86,19 @@ instance Serializable Instruction where
             <|> parseOneIf (== 14) *> pure (CallOp Print)
 
 instance Serializable [Instruction] where
-  serialize insts = B.concat (fmap serialize insts)
+  serialize insts = B.concat (fmap serialize insts) <> B.singleton 0
+
+  deserialize = many deserialize <* parseOneIf (== 0)
 
 instance Serializable a => Serializable (String, a) where
   serialize (key, insts) = fromString key <> B.singleton 0 <> serialize insts <> B.singleton 0
 
+  deserialize = liftA2 (,) (fmap BI.w2c <$> many (parseOneIf (/= 0))) deserialize <* parseOneIf (== 0)
+
 instance Serializable Result where
   serialize result = B.singleton 42 <> B.concat (fmap serialize (Map.toList result))
+
+  deserialize = parseOneIf(== 42) *> (Map.fromList <$> (many deserialize))
 
 saveResult :: Result -> String -> IO ()
 saveResult result path =
