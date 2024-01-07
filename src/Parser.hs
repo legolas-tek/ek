@@ -55,8 +55,8 @@ eof = parseNot (parseOneIf $ const True) <|> fail "Unexpected trailing token"
 runParser :: Parser inp out -> [inp] -> Either ParserError (out, [inp])
 runParser (Parser p) input = p (SourcePos "" 1 1) [] input >>= \(x, rest, _, _) -> Right (x, rest)
 
-runParserOnFile :: Parser inp out -> String -> [inp] -> Either ParserError out
-runParserOnFile (Parser p) fileName fileContent = p (SourcePos fileName 1 1) [] fileContent >>= \(x, _, _, _) -> Right x
+runParserOnFile :: Parser inp out -> String -> [inp] -> Either ParserError (out, [Diagnostic])
+runParserOnFile (Parser p) fileName fileContent = p (SourcePos fileName 1 1) [] fileContent >>= \(x, _, diags, _) -> Right (x, diags)
 
 parseOneIf' :: (Show inp, Parsable inp) => (inp -> Bool) -> Parser' inp inp
 parseOneIf'  _ sourcePos _ [] = Left $ Diagnostic Error "found EOF" sourcePos

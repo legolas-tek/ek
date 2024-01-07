@@ -143,14 +143,24 @@ intRange = do
   parseTokenType BracketClose
   return $ IntRange l u
 
--- Import Handling
+getImportedTokens :: [PartialStmt] -> IO ([PartialStmt], [Diagnostic])
+getImportedTokens stmts = do
+    results <- mapM handleImportDef stmts
+    let (stmts', diags) = unzip results
+    return (concat stmts', concat diags)
 
-getImportedTokens :: [PartialStmt] -> IO [PartialStmt]
-getImportedTokens = fmap concat . mapM handleImportDef
+handleImportDef :: PartialStmt -> IO ([PartialStmt], [Diagnostic])
+handleImportDef (ImportDef x) = do
+    content <- readFile (x ++ ".ek")
+    case parseImportedTokens x content of
+        Left diag -> return ([], [diag])
+        Right (tokens, diagnostics) -> do
+            (importedTokens, diagnostics') <- getImportedTokens tokens
+            return (importedTokens, diagnostics ++ diagnostics')
+handleImportDef x = return ([x], [])
 
-handleImportDef :: PartialStmt -> IO [PartialStmt]
-handleImportDef (ImportDef x) = readFile (x ++ ".ek") >>= either (fail . show) return . parseImportedTokens x >>= getImportedTokens
-handleImportDef x = return [x]
-
-parseImportedTokens :: String -> String -> Either Diagnostic [PartialStmt]
-parseImportedTokens fileName content = fst <$> (tokenizer fileName content >>= runParser document)
+parseImportedTokens :: String -> String -> Either Diagnostic ([PartialStmt], [Diagnostic])
+parseImportedTokens fileName content = do
+    (tokens, diagnostics) <- tokenizer fileName content
+    (result, diagnostics') <- runParserOnFile document fileName tokens
+    Right (result, diagnostics ++ diagnostics')
