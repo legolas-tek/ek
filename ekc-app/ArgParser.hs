@@ -18,7 +18,7 @@ import Diagnostic
 
 type ArgParser a = Parser String a
 
-data OutputType = OutputTokens | OutputAst | OutputBytecode | OutputDiags
+data OutputType = OutputTokens | OutputAst | OutputBytecode
   deriving (Eq)
 
 data Arguments = Arguments
@@ -60,7 +60,6 @@ outputType :: ArgParser OutputType
 outputType = outputTypeFlag *> parseOneIf (== "tokens") *> pure OutputTokens
          <|> outputTypeFlag *> parseOneIf (== "ast") *> pure OutputAst
          <|> outputTypeFlag *> parseOneIf (== "bytecode") *> pure OutputBytecode
-         <|> outputTypeFlag *> parseOneIf (== "diags") *> pure OutputDiags
 
 withArgOutput :: String -> Arguments
 withArgOutput o = mempty { argOutput = Just o }
