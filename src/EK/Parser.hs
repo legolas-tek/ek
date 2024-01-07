@@ -22,11 +22,15 @@ import Data.Maybe (isJust)
 import Control.Monad (liftM2, liftM3)
 import Diagnostic
 
-parseDocument :: [Token] -> IO [TotalStmt]
-parseDocument tokens = parse >>= getImportedTokens . fst >>= exprParse
-    where
-        parse = either (fail . show) return $ runParser document tokens
-        exprParse = either (fail . show) return . parseExprs
+parseDocument :: [Token] -> IO ([TotalStmt], [Diagnostic])
+parseDocument tokens = do
+  (stmts, diags) <- parse
+  (exprs, diags') <- getImportedTokens stmts
+  totals <- exprParse exprs
+  return (totals, diags ++ diags')
+  where
+    parse = either (fail . show) return $ runParserOnFile document "" tokens
+    exprParse = either (fail . show) return . parseExprs
 
 parseSimpleDocument :: [Token] -> Either Diagnostic [TotalStmt]
 parseSimpleDocument tokens = runParser document tokens >>= parseExprs . fst

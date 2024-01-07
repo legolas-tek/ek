@@ -32,9 +32,9 @@ main = do
   arg <- either (fail . show) return $ parseArguments args'
   let output o = writeFileOrStdOut (argOutput arg) o >> exitSuccess
   content <- readFileOrStdIn $ argInput arg
-  tokens <- either (fail . show) return $ tokenizer ("stdin" `fromMaybe` argInput arg) content
+  (tokens, diags) <- either (fail . show) return $ tokenizer ("stdin" `fromMaybe` argInput arg) content
   when (argOutputType arg == Just OutputTokens) $ output $ show tokens
-  ast <- parseDocument tokens
+  (ast, diags') <- parseDocument tokens
   when (argOutputType arg == Just OutputAst) $ output $ show ast
   insts <- either fail return $ compileToVM ast
   putStrLn $ showBytecode insts
