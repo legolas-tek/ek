@@ -32,10 +32,10 @@ showBytecode :: Result -> String
 showBytecode = concatMap showEntry . toList
     where showEntry (key, value) = key ++ ":\n" ++ unlines (map (("\t" ++) . show) value)
 
-compileToVM :: [Stmt Expr] -> Either String Result
+compileToVM :: [TotalStmt] -> Either String Result
 compileToVM stmts = Right $ compileStmts stmts
 
-compileStmts :: [Stmt Expr] -> Result
+compileStmts :: [TotalStmt] -> Result
 compileStmts = foldr (union . compileStmt) empty
 
 patternToArgument :: (Int, FuncPatternItem) -> [String]
@@ -44,9 +44,9 @@ patternToArgument (_, SymbolPattern _) = []
 patternToArgument (i, PlaceholderPattern) = ["_" ++ show i]
 
 patternArguments :: FuncPattern -> [String]
-patternArguments (FuncPattern items _ _) = concatMap patternToArgument (zip [0..] items)
+patternArguments (FuncPattern' items _ _) = concatMap patternToArgument (zip [0..] items)
 
-compileStmt :: Stmt Expr -> Result
+compileStmt :: TotalStmt -> Result
 compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (patternArguments pattern) [] [] empty (show $ patternToName pattern))
 compileStmt _ = empty
 

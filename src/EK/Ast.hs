@@ -13,9 +13,13 @@ module EK.Ast
   , CallItem(..)
   , StructElem(..)
   , Type(..)
-  , FuncPattern(..)
-  , FuncPatternItem(..)
+  , FuncPattern
+  , FuncPattern'(..)
+  , FuncPatternItem
+  , FuncPatternItem'(..)
   , Prec
+  , TotalStmt
+  , PartialStmt
   , patternToName
   , defaultPrec
   , precedence
@@ -24,6 +28,7 @@ module EK.Ast
 import Data.List (intercalate)
 import Data.String (IsString(..))
 import Data.Maybe (fromMaybe)
+import Token
 
 data Symbol
   = Symbol String
@@ -46,14 +51,15 @@ data CallItem
   | PlaceholderCall
   deriving (Eq)
 
-data Stmt expr
+data Stmt expr typeval
   = AtomDef String
-  | TypeDef String Type
+  | TypeDef String typeval
   | ImportDef String
   | StructDef String [StructElem]
-  | FuncDef FuncPattern expr
-  | ExternDef FuncPattern
+  | FuncDef (FuncPattern' typeval) expr
+  | ExternDef (FuncPattern' typeval)
   deriving (Eq)
+
 
 data StructElem = StructElem String Type
   deriving (Eq)
@@ -65,22 +71,28 @@ data Type
   | FunctionType Type Type
   deriving (Eq)
 
+type PartialStmt = EK.Ast.Stmt [Token] Type
+type TotalStmt = EK.Ast.Stmt Expr Type
+
 type Prec = Int
 
-data FuncPattern = FuncPattern
-  { funcPatternItems :: [FuncPatternItem]
-  , funcPatternType :: Maybe Type
+data FuncPattern' typeval = FuncPattern'
+  { funcPatternItems :: [FuncPatternItem' typeval]
+  , funcPatternType :: Maybe typeval
   , funcPatternPrec :: Maybe Prec
   } deriving (Eq)
 
-data FuncPatternItem
-  = ArgPattern Bool String (Maybe Type)
+data FuncPatternItem' typeval
+  = ArgPattern Bool String (Maybe typeval)
   | SymbolPattern String
   | PlaceholderPattern
   deriving (Eq)
 
-patternToName :: FuncPattern -> FunctionName
-patternToName (FuncPattern items _ prec) = FunctionName (map patternToName' items) (defaultPrec `fromMaybe` prec)
+type FuncPattern = FuncPattern' Type
+type FuncPatternItem = FuncPatternItem' Type
+
+patternToName :: FuncPattern' typeval -> FunctionName
+patternToName (FuncPattern' items _ prec) = FunctionName (map patternToName' items) (defaultPrec `fromMaybe` prec)
   where
     patternToName' (ArgPattern {}) = Placeholder
     patternToName' (SymbolPattern s) = Symbol s
@@ -118,7 +130,7 @@ showCall (Placeholder:xs) (e:is) = show e : showCall xs is
 showCall [] _ = []
 showCall _ [] = ["#error#"]
 
-instance Show expr => Show (Stmt expr) where
+instance (Show expr, Show typeval) => Show (Stmt expr typeval) where
   show (AtomDef s) = "atom " ++ s
   show (TypeDef s t) = "type " ++ s ++ " = " ++ show t
   show (StructDef s []) = "struct " ++ s ++ " {}"
@@ -139,35 +151,16 @@ instance Show Type where
   show (UnionType a b) = "(" ++ show a ++ " | " ++ show b ++ ")"
   show (FunctionType a b) = "(" ++ show a ++ " -> " ++ show b ++ ")"
 
-instance Show FuncPattern where
-  show (FuncPattern items typ prec) = unwords (show <$> items) ++ showType typ ++ showPrec prec
+instance Show typeval => Show (FuncPattern' typeval) where
+  show (FuncPattern' items typ prec) = unwords (show <$> items) ++ showType typ ++ showPrec prec
     where showPrec (Just p) = " precedence " ++ show p
           showPrec Nothing = ""
           showType (Just t) = " : " ++ show t
           showType Nothing = ""
 
-instance Show FuncPatternItem where
+instance Show typeval => Show (FuncPatternItem' typeval) where
   show (ArgPattern lazy s (Just t)) = "(" ++ (if lazy then "lazy " else "") ++ s ++ " : " ++ show t ++ ")"
   show (ArgPattern lazy s Nothing) = "(" ++ (if lazy then "lazy " else "") ++ s ++ ")"
   show (SymbolPattern s) = s
   show PlaceholderPattern = "_"
 
-instance Functor Stmt where
-  fmap f (FuncDef pat expr) = FuncDef pat (f expr)
-  fmap _ (AtomDef s) = AtomDef s
-  fmap _ (TypeDef s t) = TypeDef s t
-  fmap _ (StructDef s elems) = StructDef s elems
-  fmap _ (ExternDef pat) = ExternDef pat
-  fmap _ (ImportDef s) = ImportDef s
-
-instance Traversable Stmt where
-  traverse f (FuncDef pat expr) = FuncDef pat <$> f expr
-  traverse _ (AtomDef s) = pure $ AtomDef s
-  traverse _ (TypeDef s t) = pure $ TypeDef s t
-  traverse _ (StructDef s elems) = pure $ StructDef s elems
-  traverse _ (ExternDef pat) = pure $ ExternDef pat
-  traverse _ (ImportDef s) = pure $ ImportDef s
-
-instance Foldable Stmt where
-  foldMap f (FuncDef _ expr) = f expr
-  foldMap _ _ = mempty

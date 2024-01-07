@@ -90,7 +90,7 @@ externDef = parseTokenType ExternKw >> parseTokenType FnKw >> ExternDef <$> func
 --- Function pattern
 
 funcPattern :: Parser Token FuncPattern
-funcPattern = liftM3 FuncPattern (some funcPatternItem) (optional typed) (optional precedenceClause)
+funcPattern = liftM3 FuncPattern' (some funcPatternItem) (optional typed) (optional precedenceClause)
 
 funcPatternItem :: Parser Token FuncPatternItem
 funcPatternItem = placeholder PlaceholderPattern <|> (SymbolPattern <$> identifier) <|> argumentPatternItem

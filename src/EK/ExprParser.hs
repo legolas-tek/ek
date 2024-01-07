@@ -10,7 +10,6 @@
 
 module EK.ExprParser
   ( parseExprs
-  , TotalStmt
   , PartialStmt
   ) where
 
@@ -24,9 +23,6 @@ import Control.Monad (liftM2)
 import Control.Applicative (Alternative(empty))
 import Data.Monoid (Alt(..))
 import Data.List (findIndex)
-
-type TotalStmt = EK.Ast.Stmt Expr
-type PartialStmt = EK.Ast.Stmt [Token]
 
 type FuncItem = FunctionName
 
