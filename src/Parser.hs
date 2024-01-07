@@ -43,25 +43,25 @@ import SourcePos
 
 type ParserError = Diagnostic
 
-type Parser' inp out = SourcePos -> [inp] -> Either ParserError (out, [inp], SourcePos)
+type Parser' inp out = SourcePos -> [Diagnostic] -> [inp] -> Either ParserError (out, [inp], [Diagnostic], SourcePos)
 newtype Parser inp out  = Parser {runParser' :: Parser' inp out}
 
 getPos :: Parser inp SourcePos
-getPos = Parser $ \sourcePos input -> Right (sourcePos, input, sourcePos)
+getPos = Parser $ \sourcePos diagnostics input -> Right (sourcePos, input, diagnostics, sourcePos)
 
 eof :: (Show inp, Parsable inp) => Parser inp ()
 eof = parseNot (parseOneIf $ const True) <|> fail "Unexpected trailing token"
 
 runParser :: Parser inp out -> [inp] -> Either ParserError (out, [inp])
-runParser (Parser p) input = p (SourcePos "" 1 1) input >>= \(x, rest, _) -> Right (x, rest)
+runParser (Parser p) input = p (SourcePos "" 1 1) [] input >>= \(x, rest, _, _) -> Right (x, rest)
 
-runParserOnFile :: Parser inp out -> String -> [inp] -> Either ParserError out
-runParserOnFile (Parser p) fileName fileContent = p (SourcePos fileName 1 1) fileContent >>= \(x, _, _) -> Right x
+runParserOnFile :: Parser inp out -> String -> [inp] -> Either ParserError (out, [Diagnostic])
+runParserOnFile (Parser p) fileName fileContent = p (SourcePos fileName 1 1) [] fileContent >>= \(x, _, diags, _) -> Right (x, diags)
 
 parseOneIf' :: (Show inp, Parsable inp) => (inp -> Bool) -> Parser' inp inp
-parseOneIf'  _ sourcePos [] = Left $ Diagnostic Error "found EOF" sourcePos
-parseOneIf' predicate sourcePos (x:xs)
-  | predicate x = Right (x, xs, advance sourcePos x)
+parseOneIf'  _ sourcePos _ [] = Left $ Diagnostic Error "found EOF" sourcePos
+parseOneIf' predicate sourcePos diags (x:xs)
+  | predicate x = Right (x, xs, diags, advance sourcePos x)
   | otherwise   = Left $ Diagnostic Error ("found " ++ show x) sourcePos
 
 parseOneIf :: (Show inp, Parsable inp) => (inp -> Bool) -> Parser inp inp
@@ -116,33 +116,36 @@ parseStringLit :: Parser Char String
 parseStringLit = parseChar '"' *> many (parseEscapedChar <|> parseAnyButChar '"') <* parseChar '"'
 
 parseNot :: Parser inp out -> Parser inp ()
-parseNot p = Parser $ \sourcePos input -> parseNot' sourcePos input (runParser' p sourcePos input)
-  where parseNot' sourcePos input (Left _) = Right ((), input, sourcePos)
-        parseNot' sourcePos _ _            = Left $ Diagnostic Error "Unexpected token" sourcePos
+parseNot p = Parser $ \sourcePos diags input -> parseNot' sourcePos [] input (runParser' p sourcePos diags input)
+  where parseNot' sourcePos diags input (Left _) = Right ((), input, diags, sourcePos)
+        parseNot' sourcePos _ _ _            = Left $ Diagnostic Error "Unexpected token" sourcePos
 
 instance Functor (Parser inp) where
-  fmap fct p = Parser $ \sourcePos input -> fmap' (runParser' p sourcePos input)
+  fmap fct p = Parser $ \sourcePos diags input -> fmap' (runParser' p sourcePos diags input)
     where fmap' (Left err) = Left err
-          fmap' (Right (x, rest, sourcePos')) = Right (fct x, rest, sourcePos')
+          fmap' (Right (x, rest, diags, sourcePos')) = Right (fct x, rest, diags, sourcePos')
 
 instance Applicative (Parser inp) where
-  pure x = Parser $ \sourcePos input -> Right (x, input, sourcePos)
+  pure x = Parser $ \sourcePos diags input -> Right (x, input, diags, sourcePos)
   liftA2 fct p1 p2 = p1 >>= \x -> fct x <$> p2
 
 instance Alternative (Parser inp) where
-  empty = Parser $ \sourcePos _ -> Left $ Diagnostic Error "Empty parser" sourcePos
+  empty = Parser $ \sourcePos _ _ -> Left $ Diagnostic Error "Empty parser" sourcePos
   p1 <|> p2 = Parser $ \sourcePos input -> runParser' p1 sourcePos input <> runParser' p2 sourcePos input
 
 instance Monad (Parser inp) where
-  p >>= fct = Parser $ \sourcePos input -> runParser' p sourcePos input >>= \(x, rest, sourcePos') -> runParser' (fct x) sourcePos' rest
+  p >>= fct = Parser $ \sourcePos diags input -> runParser' p sourcePos diags input >>= \(x, rest, diags', sourcePos') -> runParser' (fct x) sourcePos' diags' rest
 
 instance MonadFail (Parser inp) where
-  fail err = Parser $ \sourcePos _ -> Left $ Diagnostic Error err sourcePos
+  fail err = Parser $ \sourcePos _ _ -> Left $ Diagnostic Error err sourcePos
 
 instance MonadPlus (Parser inp) where
   -- default
 
 mapError :: (String -> String) -> Parser inp out -> Parser inp out
-mapError fct p = Parser $ \sourcePos input -> mapError' (runParser' p sourcePos input)
+mapError fct p = Parser $ \sourcePos diags input -> mapError' (runParser' p sourcePos diags input)
   where mapError' (Left diag) = Left $ diag { message = fct (message diag) }
         mapError' ok           = ok
+
+diagnose :: Diagnostic -> Parser inp ()
+diagnose diag = Parser $ \sourcePos diags input -> Right ((), input, diags ++ [diag], sourcePos)

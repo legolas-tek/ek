@@ -23,7 +23,7 @@ type TokenizerError = Diagnostic
 tokens :: Parser Char [Token]
 tokens = many token <* useless <* eof
 
-tokenizer :: String -> String -> Either TokenizerError [Token]
+tokenizer :: String -> String -> Either TokenizerError ([Token], [Diagnostic])
 tokenizer = runParserOnFile tokens
 
 -- Identify the token type
