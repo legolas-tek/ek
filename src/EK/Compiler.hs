@@ -47,11 +47,31 @@ patternArguments :: FuncPattern -> [String]
 patternArguments (FuncPattern items _ _) = concatMap patternToArgument items
 
 compileStmt :: Stmt Expr -> Result
-compileStmt (FuncDef pattern expr) = evalState (compileFn expr) (Env (patternArguments pattern) [] [] empty (show $ patternToName pattern))
+compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (patternArguments pattern) [] [] empty (show $ patternToName pattern))
 compileStmt _ = empty
 
-compileFn :: Expr -> State Env Result
-compileFn expr = createFn expr >> result <$> get
+compileFn :: Expr -> State Env ()
+compileFn expr = do
+  args' <- gets args
+  case args' of
+    [] -> createFn expr -- first arg is void, but we never load_arg so it's ok
+    [_] -> createFn expr -- easy case
+    (x:xs) -> do
+      outsideEnv <- get
+      let lambdaName = fnName outsideEnv ++ "\\" ++ x
+      put Env { args = xs
+              , capturable = x : capturable outsideEnv
+              , captured = []
+              , result = result outsideEnv
+              , fnName = lambdaName
+              }
+      compileFn expr -- recursive call
+      insideEnv <- get
+      put outsideEnv { args = [x]
+                     , result = result insideEnv
+                     }
+      captures <- mapM compileCall $ captured insideEnv
+      modify $ \env -> env { result = result env <> fromList [(fnName env, captures ++ [GetEnv lambdaName, Closure (length captures), Ret])] }
 
 compileExpr :: Expr -> State Env Insts
 compileExpr (IntegerLit i) = return [Push (IntegerValue i)]
