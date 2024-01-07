@@ -36,7 +36,7 @@ main = do
   when (argOutputType arg == Just OutputTokens) $ output $ show tokens
   (ast, diags') <- parseDocument tokens
   when (argOutputType arg == Just OutputAst) $ output $ show ast
-  output $ show diags ++ show diags'
+  mapM_ (putStrLn . show) (diags ++ diags')
   insts <- either fail return $ compileToVM ast
   putStrLn $ showBytecode insts
   return ()
