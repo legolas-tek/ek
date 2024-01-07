@@ -146,3 +146,6 @@ mapError :: (String -> String) -> Parser inp out -> Parser inp out
 mapError fct p = Parser $ \sourcePos diags input -> mapError' (runParser' p sourcePos diags input)
   where mapError' (Left diag) = Left $ diag { message = fct (message diag) }
         mapError' ok           = ok
+
+diagnose :: Diagnostic -> Parser inp ()
+diagnose diag = Parser $ \sourcePos diags input -> Right ((), input, diags ++ [diag], sourcePos)
