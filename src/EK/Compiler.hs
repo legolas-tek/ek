@@ -14,7 +14,7 @@ module EK.Compiler
 import VirtualMachine hiding (Env)
 import EK.Ast
 import Data.Map (Map, fromList, empty, union, toList)
-import Data.List (elemIndex)
+import Data.List (elemIndex, isPrefixOf)
 import Data.Functor ((<&>))
 import Control.Monad.State.Lazy
 
@@ -38,13 +38,13 @@ compileToVM stmts = Right $ compileStmts stmts
 compileStmts :: [Stmt Expr] -> Result
 compileStmts = foldr (union . compileStmt) empty
 
-patternToArgument :: FuncPatternItem -> [String]
-patternToArgument (ArgPattern _ name _) = [name]
-patternToArgument (SymbolPattern _) = []
-patternToArgument PlaceholderPattern = []
+patternToArgument :: (Int, FuncPatternItem) -> [String]
+patternToArgument (_, ArgPattern _ name _) = [name]
+patternToArgument (_, SymbolPattern _) = []
+patternToArgument (i, PlaceholderPattern) = ["_" ++ show i]
 
 patternArguments :: FuncPattern -> [String]
-patternArguments (FuncPattern items _ _) = concatMap patternToArgument items
+patternArguments (FuncPattern items _ _) = concatMap patternToArgument (zip [0..] items)
 
 compileStmt :: Stmt Expr -> Result
 compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (patternArguments pattern) [] [] empty (show $ patternToName pattern))
@@ -101,9 +101,14 @@ compileExpr _ = error "Not implemented"
 
 createFn :: Expr -> State Env ()
 createFn expr = do
+  args' <- gets args
+  capturable' <- gets capturable
   content <- compileExpr expr
+  additional <- concat <$> mapM handleArg (reverse capturable' ++ args')
   env <- get
-  put env { result = result env <> fromList [(fnName env, content ++ [Ret])] }
+  put env { result = result env <> fromList [(fnName env, content ++ additional ++ [Ret])] }
+    where handleArg x | "_" `isPrefixOf` x = (:[VirtualMachine.Call]) <$> compileCall x
+                      | otherwise = return []
 
 compileCall :: String -> State Env Instruction
 compileCall name = do
