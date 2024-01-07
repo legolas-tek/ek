@@ -71,8 +71,8 @@ data Type
   | FunctionType Type Type
   deriving (Eq)
 
-type PartialStmt = EK.Ast.Stmt [Token] Type
-type TotalStmt = EK.Ast.Stmt Expr Type
+type PartialStmt = Stmt [Token] Type
+type TotalStmt = Stmt Expr Type
 
 type Prec = Int
 
