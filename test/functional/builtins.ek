@@ -1,0 +1,8 @@
+//
+// RUN: ekrun %s | FileCheck -v %s
+//
+
+import std
+
+// CHECK: 42
+fn main = print (42 toString)
