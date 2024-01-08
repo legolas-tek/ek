@@ -8,12 +8,13 @@
 module Main (main) where
 
 import Serialize
-import EK.Builtins (runVM)
+import EK.Builtins
+
 import System.Environment (getArgs)
+import Data.Maybe (listToMaybe)
 
 main :: IO ()
-main = do
-    (arg:_) <- getArgs
-    loadResult arg >>= \load -> case load of
-        Left err -> putStrLn (show err)
-        Right res -> runVM res
+main = getArgs >>= maybe (putStrLn "Usage: ./ek <file.eko>") handleArg . listToMaybe
+
+handleArg :: String -> IO ()
+handleArg arg = loadResult arg >>= either print runVM
