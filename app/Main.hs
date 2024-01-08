@@ -12,10 +12,6 @@ module Main (main) where
 import System.IO
 import System.Exit
 
-import Parser
-import Lisp
-import Ast
-import Evaluation
 import Token
 import Tokenizer
 import EK.Ast
@@ -27,27 +23,6 @@ import Diagnostic
 
 import Control.Exception (try, catch, IOException)
 import Control.Monad (when)
-import Data.Bifunctor (first)
-
-parseLine :: String -> Either String ([Ast], String)
-parseLine line = first show (runParser (many parseSExpr) line) >>=
-    \(sexprs, rest) -> (, if null rest then "" else rest ++ "\n") <$> mapM sexprToAST sexprs
-
-evalAsts :: Environment -> [Ast] -> EvalResult
-evalAsts env [] = Right (env, VoidValue)
-evalAsts env [x] = evalAst env x
-evalAsts env (x:xs) = evalAst env x >>= \(env', _) -> evalAsts env' xs
-
-handleResult :: String -> Environment -> Either EvalError (Environment, RuntimeValue, String)
-handleResult s env = do
-    (asts, rest) <- parseLine s
-    (env', value) <- evalAsts env asts
-    return (env', value, rest)
-
-printResult :: Environment -> Either EvalError (Environment, RuntimeValue, String) -> IO (Environment, String)
-printResult env (Left err) = putStrLn ("Error: " ++ err) >> return (env, "")
-printResult _ (Right (env, VoidValue, rest)) = return (env, rest)
-printResult _ (Right (env, val, rest)) = print val >> return (env, rest)
 
 printPrompt :: Bool -> IO ()
 printPrompt new = hIsTerminalDevice stdin >>= \isTerm ->

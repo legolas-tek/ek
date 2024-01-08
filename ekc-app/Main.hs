@@ -11,11 +11,9 @@ import ArgParser
 import Tokenizer
 import EK.Parser
 import EK.Compiler
-import VirtualMachine
 import EK.Builtins
 
 import Data.Maybe (fromMaybe)
-import qualified Data.Map as Map
 
 import System.Environment (getArgs)
 import System.Exit (exitSuccess)
