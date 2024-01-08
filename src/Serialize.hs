@@ -7,9 +7,13 @@
 
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Serialize
     ( saveResult
+    , string
+    , exact
+    , stringToWord8
     , Serializable(..)
     ) where
 
@@ -23,6 +27,9 @@ import Parser
 import Data.Word
 import Control.Applicative (liftA2)
 import Text.Printf (printf)
+import Diagnostic
+
+type DeserializerError = Diagnostic
 
 exact :: Word8 -> Parser Word8 Word8
 exact expected
@@ -38,7 +45,7 @@ word8ToInt :: Word8 -> Int
 word8ToInt = fromIntegral . toInteger
 
 stringToWord8 :: String -> [Word8]
-stringToWord8 str = B.unpack (serialize str)
+stringToWord8 str = B.unpack (BI.packChars str)
 
 class Serializable a where
   serialize :: a -> B.ByteString
@@ -111,10 +118,25 @@ instance (Serializable a, Serializable b) => Serializable (a, b) where
   deserialize = liftA2 (,) deserialize deserialize <* parseOneIf (== 0)
 
 instance Serializable Result where
-  serialize result = serialize ("#!/usr/bin/env ek" :: String) <> B.concat (fmap serialize (Map.toList result))
+  serialize result = "#!/usr/bin/env ek" <> B.concat (fmap serialize (Map.toList result))
 
   deserialize = string (stringToWord8 "#!/usr/bin/env ek") *> (Map.fromList <$> (many deserialize))
 
 saveResult :: Result -> String -> IO ()
 saveResult result path =
     B.writeFile (path ++ ".eko") (serialize result)
+
+resultParser :: Parser Word8 Result
+resultParser = deserialize <* eof
+
+convertIOByteString :: IO B.ByteString -> IO [Word8]
+convertIOByteString ioByteString =
+  fmap B.unpack ioByteString
+
+getWord8List :: String -> IO [Word8]
+getWord8List path = fmap B.unpack $ B.readFile path
+
+loadResult :: String -> IO (Either DeserializerError Result)
+loadResult path = do
+  word8List <- getWord8List path
+  return $ runParserOnFile resultParser path word8List

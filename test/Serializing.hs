@@ -11,6 +11,7 @@ module Serializing (tests) where
 import Test.HUnit
 import VirtualMachine
 import Serialize
+import Parser
 
 tests :: Test
 tests = test
@@ -35,8 +36,8 @@ tests = test
       serialize ("test" :: String) @?= "test\0"
       serialize (42 :: Integer) @?= "42\0"
       serialize (42 :: Int) @?= "42\0"
---   , "deserialize" ~: do
---       let serializedStr = serialize ("test" :: String)
+  , "deserialize" ~: do
+      let str = string (stringToWord8 "test")
 
---       runParser (deserialize :: Parser Word8 String) (B.unpack serializedStr) @?= Right ("Test", (encode ""))
+      runParser str (stringToWord8 "test") @?= Right ((stringToWord8 "test"), (stringToWord8 ""))
   ]
