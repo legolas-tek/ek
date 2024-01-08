@@ -115,7 +115,7 @@ instance Serializable [Instruction] where
 instance (Serializable a, Serializable b) => Serializable (a, b) where
   serialize (key, insts) = serialize key <> serialize insts
 
-  deserialize = liftA2 (,) deserialize deserialize <* parseOneIf (== 0)
+  deserialize = liftA2 (,) deserialize deserialize
 
 instance Serializable Result where
   serialize result = "#!/usr/bin/env ek" <> B.concat (fmap serialize (Map.toList result))
