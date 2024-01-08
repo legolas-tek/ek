@@ -130,7 +130,7 @@ instance Serializable Result where
 
 saveResult :: Result -> String -> IO ()
 saveResult result path =
-    B.writeFile (path ++ ".eko") (serialize result)
+    B.writeFile path (serialize result)
 
 resultParser :: Parser Word8 Result
 resultParser = deserialize <* eof
