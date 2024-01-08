@@ -7,6 +7,7 @@
 
 module EK.Builtins
   ( builtins
+  , runVM
   ) where
 
 import VirtualMachine
@@ -16,6 +17,14 @@ import qualified Data.Map as Map
 
 void :: Instruction
 void = Push $ AtomValue "void"
+
+runVM :: Result -> IO ()
+runVM res = do
+  mainFn <- maybe (fail "No main function") return $ Map.lookup "main" res
+  let insts = res <> builtins
+  let env = FunctionValue <$> insts
+  _ <- exec env [] mainFn []
+  return ()
 
 builtins :: Result
 builtins = Map.fromList

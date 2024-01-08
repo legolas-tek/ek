@@ -10,6 +10,7 @@
 
 module EK.ExprParser
   ( parseExprs
+  , parseReplExpr
   ) where
 
 import EK.Ast
@@ -34,6 +35,9 @@ primaryPrec = defaultPrec
 parseExprs :: [PartialStmt] -> Either Diagnostic [TotalStmt]
 parseExprs partials = mapM (parseBody partials) partials
 
+parseReplExpr :: [TotalStmt] -> [Token] -> Either Diagnostic Expr
+parseReplExpr partials body = parseExpr (concatMap funcItems partials) body
+
 parseBody :: [PartialStmt] -> PartialStmt -> Either Diagnostic TotalStmt
 parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ concatMap funcItems partials) body
   where
@@ -53,7 +57,7 @@ argFuncItem s = FunctionName [Symbol s] primaryPrec
 parseExpr :: [FuncItem] -> [Token] -> Either Diagnostic Expr
 parseExpr fi tokens = fst <$> runParser (parsePrec fi lowestPrec <* eof) tokens
 
-funcItems :: PartialStmt -> [FuncItem]
+funcItems :: Stmt a b -> [FuncItem]
 funcItems (FuncDef pat _) = [patternToName pat]
 funcItems (ExternDef pat) = [patternToName pat]
 funcItems (AtomDef name) = [FunctionName [Symbol name] primaryPrec]
