@@ -112,7 +112,7 @@ structExprContent funcItems = structExprContent' <|> (pure <$> parsePrec funcIte
     structExprContent' = liftM2 (:) (parsePrec funcItems lowestPrec) (parseTokenType Comma >> structExprContent funcItems)
 
 structExpr :: [FuncItem] -> Parser Token Expr
-structExpr funcItems = StructLit <$> (identifier <* parseTokenType CurlyOpen) <*> (structExprContent funcItems <* parseTokenType CurlyClose)
+structExpr funcItems = StructLit <$> (TypeName <$> identifier <* parseTokenType CurlyOpen) <*> (structExprContent funcItems <* parseTokenType CurlyClose)
 
 lambdaExpr :: [FuncItem] -> Parser Token Expr
 lambdaExpr funcItems = do
