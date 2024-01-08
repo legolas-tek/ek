@@ -27,6 +27,7 @@ module Parser
   , getPos
   , eof
   , runParserOnFile
+  , diagnose
   , (<|>)
   ) where
 
