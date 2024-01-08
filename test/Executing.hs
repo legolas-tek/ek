@@ -106,7 +106,7 @@ tests = test
         result <- exec (fromList [("a", IntegerValue 42)]) [] [GetEnv "a", Ret] []
         result @?= IntegerValue 42
         result2 <- catchExec [GetEnv "failure expected"]
-        result2 @?= StringValue "user error (No value in env)"
+        result2 @?= StringValue "user error (Could not find `failure expected' in environment)"
     , "operators" ~: do
         add <- ex [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Add, Ret] []
         add @?= IntegerValue 15

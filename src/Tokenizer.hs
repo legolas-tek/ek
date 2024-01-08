@@ -82,10 +82,11 @@ identifyKw "fn" = FnKw
 identifyKw "extern" = ExternKw
 identifyKw "precedence" = PrecedenceKw
 identifyKw "import" = ImportKw
+identifyKw "lazy" = LazyKw
 identifyKw _ = TextIdentifier
 
 parseOperatorId :: Parser Char (String, TokenType)
-parseOperatorId = some (parseOneIf (`elem` ".=/-+*!?%<>&|^~")) >>= tup
+parseOperatorId = some (parseOneIf (`elem` ".=/-+*!?%<>&|^~$")) >>= tup
   where tup identifier = return (identifier, identifyOp identifier)
 
 identifyOp :: String -> TokenType

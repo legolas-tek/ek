@@ -1,0 +1,17 @@
+//
+// RUN: ekrun %s | FileCheck -v %s
+//
+
+import std
+
+fn main =
+// CHECK: 4
+    print (2 + 2)
+// CHECK: 4
+ >> print (2 * 2)
+// CHECK: 42
+ >> print (6 * 7)
+// CHECK: -7
+ >> print (2 - 9)
+// CHECK: 3
+ >> print (9 / 3)

@@ -16,6 +16,7 @@ module VirtualMachine
     ) where
 
 import Data.Map (Map, lookup)
+import System.Exit (exitWith, ExitCode(..))
 
 data VMValue = IntegerValue Integer
              | AtomValue String
@@ -38,6 +39,7 @@ data Operator = Add
               | Eq
               | Less
               | Print
+              | Exit
               deriving (Eq)
 
 instance Show Operator where
@@ -48,6 +50,7 @@ instance Show Operator where
   show Eq = "eq"
   show Less = "less"
   show Print = "print"
+  show Exit = "exit"
 
 data Instruction = Push VMValue
                  | Call
@@ -87,6 +90,8 @@ exec _ _ (Ret:_) (s:_) = return s
 exec _ _ (Ret:_) [] = fail "No value on stack"
 exec env args (Push v:insts) stack = exec env args insts (v:stack)
 exec env args (CallOp Print:insts) (v:stack) = print v >> exec env args insts stack
+exec _ _ (CallOp Exit:_) ((IntegerValue 0):_) = exitWith ExitSuccess
+exec _ _ (CallOp Exit:_) ((IntegerValue v):_) = exitWith $ ExitFailure $ fromIntegral v
 exec env args (CallOp op:insts) (v1:v2:stack) =
   either fail (\val -> exec env args insts (val:stack)) (applyOp op v1 v2)
 exec _ _ (CallOp _:_) _ = fail "Not enough arguments for operator"
@@ -104,7 +109,7 @@ exec _ _ (Dup:_) [] = fail "No value to duplicate"
 exec env args (LoadArg offset:insts) stack = exec env args insts (args !! offset:stack)
 exec env args (GetEnv value:insts) stack = case Data.Map.lookup value env of
   Just val -> exec env args insts (val:stack)
-  Nothing  -> fail "No value in env"
+  Nothing  -> fail $ "Could not find `" ++ value ++ "' in environment"
 exec env args (Closure count:insts) (FunctionValue fn:stack) = exec env args insts (ClosureValue fn (take count stack):drop count stack)
 exec _ _ (Closure _:_) _ = fail "Cannot create closure of non-function type"
 

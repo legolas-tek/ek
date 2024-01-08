@@ -1,0 +1,8 @@
+//
+// RUN: ekrun %s | FileCheck -v %s
+//
+
+import std
+
+// CHECK: Hello, World!
+fn main = print "Hello, World!"

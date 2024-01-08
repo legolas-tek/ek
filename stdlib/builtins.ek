@@ -1,0 +1,27 @@
+//
+// EPITECH PROJECT, 2024
+// Glados
+// File description:
+// EK Standard library - builtins
+//
+
+import bool
+
+atom void
+atom never // not an atom, should be an uninhabited type
+
+type int = [..]
+
+extern fn builtin add: int -> int -> int
+extern fn builtin sub: int -> int -> int
+extern fn builtin mul: int -> int -> int
+extern fn builtin div: int -> int -> int
+
+extern fn builtin eq: any -> any -> bool
+extern fn builtin lt: int -> int -> bool
+
+extern fn builtin print: any -> void
+
+extern fn builtin exit: int -> never
+
+extern fn builtin if: bool -> (void -> int) -> (void -> int) -> int

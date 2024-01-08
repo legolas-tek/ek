@@ -1,0 +1,11 @@
+//
+// EPITECH PROJECT, 2024
+// Glados
+// File description:
+// EK Standard library - booleans
+//
+
+atom true
+atom false
+
+type bool = true | false

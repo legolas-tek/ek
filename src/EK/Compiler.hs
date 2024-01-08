@@ -48,6 +48,7 @@ patternArguments (FuncPattern items _ _) = concatMap patternToArgument (zip [0..
 
 compileStmt :: TotalStmt -> Result
 compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (patternArguments pattern) [] [] empty (show $ patternToName pattern))
+compileStmt (AtomDef name) = fromList [(name, [Push $ AtomValue name, Ret])]
 compileStmt _ = empty
 
 compileFn :: Expr -> State Env ()
