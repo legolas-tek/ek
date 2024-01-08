@@ -21,14 +21,17 @@ module Serialize
 import qualified Data.Map as Map
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Internal as BI
+
+import Diagnostic
 import VirtualMachine
+import Parser
+
 import Data.String(IsString(..))
 import EK.Compiler(Result)
-import Parser
-import Data.Word
+import Data.Word (Word8)
 import Control.Applicative (liftA2)
 import Text.Printf (printf)
-import Diagnostic
+import System.Directory (getPermissions, setPermissions, setOwnerExecutable)
 
 type DeserializerError = Diagnostic
 
@@ -128,9 +131,13 @@ instance Serializable Result where
 
   deserialize = string (stringToWord8 "#!/usr/bin/env ek\n") *> (Map.fromList <$> (many deserialize))
 
+setFileExecutable :: String -> IO ()
+setFileExecutable path = getPermissions path >>= \perms ->
+    setPermissions path (setOwnerExecutable True perms)
+
 saveResult :: Result -> String -> IO ()
 saveResult result path =
-    B.writeFile path (serialize result)
+    B.writeFile path (serialize result) >> setFileExecutable path
 
 resultParser :: Parser Word8 Result
 resultParser = deserialize <* eof
