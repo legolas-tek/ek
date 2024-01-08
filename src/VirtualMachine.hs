@@ -16,8 +16,8 @@ module VirtualMachine
     ) where
 
 import Data.Map (Map, lookup)
-import System.Exit (exitWith, ExitCode(..))
-import System.IO (hPutStrLn, stderr)
+import System.Exit (exitWith, ExitCode(..), exitSuccess)
+import System.IO (hPutStr, stderr)
 
 data VMValue = IntegerValue Integer
              | AtomValue String
@@ -93,8 +93,8 @@ exec _ _ (Ret:_) (s:_) = return s
 exec _ _ (Ret:_) [] = fail "No value on stack"
 exec env args (Push v:insts) stack = exec env args insts (v:stack)
 exec env args (CallOp Print:insts) (v:stack) = print v >> exec env args insts stack
-exec env args (CallOp EPrint:insts) (v:stack) = hPutStrLn stderr (show v) >> exec env args insts stack
-exec _ _ (CallOp Exit:_) ((IntegerValue 0):_) = exitWith ExitSuccess
+exec env args (CallOp EPrint:insts) (v:stack) = hPutStr stderr (show v) >> exec env args insts stack
+exec _ _ (CallOp Exit:_) ((IntegerValue 0):_) = exitSuccess
 exec _ _ (CallOp Exit:_) ((IntegerValue v):_) = exitWith $ ExitFailure $ fromIntegral v
 exec env args (CallOp op:insts) (v1:v2:stack) =
   either fail (\val -> exec env args insts (val:stack)) (applyOp op v1 v2)
