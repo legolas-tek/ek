@@ -8,10 +8,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Serializing (tests) where
+import qualified Data.ByteString as B
 import Test.HUnit
 import VirtualMachine
 import Serialize
 import Parser
+import Diagnostic
+import SourcePos
+import Data.Word
 
 tests :: Test
 tests = test
@@ -36,8 +40,15 @@ tests = test
       serialize ("test" :: String) @?= "test\0"
       serialize (42 :: Integer) @?= "42\0"
       serialize (42 :: Int) @?= "42\0"
-  , "deserialize" ~: do
+  , "string" ~: do
       let str = string (stringToWord8 "test")
 
       runParser str (stringToWord8 "test") @?= Right ((stringToWord8 "test"), (stringToWord8 ""))
+      runParser str (stringToWord8 "test123") @?= Right ((stringToWord8 "test"), (stringToWord8 "123"))
+      runParser str (stringToWord8 "123") @?= Left (Diagnostic Error "Expected \"test\" but Expected 't' but found 49" (SourcePos "" 1 1))
+  , "deserialize" ~: do
+      let serializedStr = B.unpack (serialize ("test" :: String))
+
+      runParser deserialize serializedStr @?= Right (("test" :: String), (stringToWord8 ""))
+      runParser (deserialize :: Parser Word8 String) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found EOF" (SourcePos "" 1 12))
   ]

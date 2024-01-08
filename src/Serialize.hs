@@ -14,6 +14,7 @@ module Serialize
     , string
     , exact
     , stringToWord8
+    , loadResult
     , Serializable(..)
     ) where
 
@@ -128,10 +129,6 @@ saveResult result path =
 
 resultParser :: Parser Word8 Result
 resultParser = deserialize <* eof
-
-convertIOByteString :: IO B.ByteString -> IO [Word8]
-convertIOByteString ioByteString =
-  B.unpack <$> ioByteString
 
 getWord8List :: String -> IO [Word8]
 getWord8List path = B.unpack <$> B.readFile path
