@@ -31,8 +31,8 @@ idt s = tk s TextIdentifier
 int :: Int -> Token
 int i = tk (show i) IntLiter
 
-doc :: [Token] -> Either Diagnostic [Stmt Expr]
-doc = parseDocument
+doc :: [Token] -> Either Diagnostic [TotalStmt]
+doc = parseSimpleDocument
 
 pat :: [FuncPatternItem] -> FuncPattern
 pat a = FuncPattern a Nothing Nothing
@@ -41,12 +41,18 @@ tests :: Test
 tests = test
   [ "atom" ~: do
       doc [tkt AtomKw, idt "foo"] @?= Right [AtomDef "foo"]
+    , "import" ~: do
+        doc [tkt ImportKw, idt "foo"] @?= Right [ImportDef "foo"]
   , "type" ~: do
       doc [tkt TypeKw, idt "foo", tkt Equal, idt "bar"] @?= Right [TypeDef "foo" (TypeName "bar")]
       doc [tkt TypeKw, idt "bit", tkt Equal, tkt BracketOpen, int 0, tkt DotDot, int 1, tkt BracketClose]
         @?= Right [TypeDef "bit" (IntRange (Just 0) (Just 1))]
       doc [tkt TypeKw, idt "bit", tkt Equal, int 0, tkt Pipe, int 1]
         @?= Right [TypeDef "bit" (UnionType (IntRange (Just 0) (Just 0)) (IntRange (Just 1) (Just 1)))]
+      doc [tkt TypeKw, idt "foo", tkt Equal, idt "aaa", tkt Arrow, idt "bbb"]
+        @?= Right [TypeDef "foo" (FunctionType (TypeName "aaa") (TypeName "bbb"))]
+      doc [tkt TypeKw, idt "foo", tkt Equal, idt "aaa", tkt Pipe, idt "bbb", tkt Arrow, idt "ccc", tkt Pipe, idt "ddd"]
+        @?= Right [TypeDef "foo" (FunctionType (UnionType (TypeName "aaa") (TypeName "bbb")) (UnionType (TypeName "ccc") (TypeName "ddd")))]
       doc [tkt TypeKw, idt "int", tkt Equal, tkt BracketOpen, tkt DotDot, tkt BracketClose]
         @?= Right [TypeDef "int" (IntRange Nothing Nothing)]
       doc [tkt TypeKw, idt "uint", tkt Equal, tkt BracketOpen, int 0, tkt DotDot, tkt BracketClose]
@@ -80,25 +86,25 @@ tests = test
         @?= Right [FuncDef (pat [SymbolPattern "key"]) (IntegerLit 42)]
   , "Empty StructLit" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, tkt CurlyClose]
-        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [])]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit (TypeName"bar") [])]
   , "one int in StructLit" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt CurlyClose]
-        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42])]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit (TypeName "bar") [IntegerLit 42])]
   , "rwo int in StructLit" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, int 43, tkt CurlyClose]
-        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, IntegerLit 43])]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit (TypeName "bar") [IntegerLit 42, IntegerLit 43])]
   , "one string in StructLit" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, tk "foo" StringLiter, tkt CurlyClose]
-        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [StringLit "foo"])]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit (TypeName "bar") [StringLit "foo"])]
   , "many elements in StructLit" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, tk "foo" StringLiter, tkt Comma, int 43, tkt CurlyClose]
-        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, StringLit "foo", IntegerLit 43])]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit (TypeName "bar") [IntegerLit 42, StringLit "foo", IntegerLit 43])]
   , "one int and one string in StructLit" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, tk "foo" StringLiter, tkt CurlyClose]
-        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, StringLit "foo"])]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit (TypeName "bar") [IntegerLit 42, StringLit "foo"])]
   , "StructLit trailing comma" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, tk "foo" StringLiter, tkt Comma, tkt CurlyClose]
-        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit "bar" [IntegerLit 42, StringLit "foo"])]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit (TypeName "bar") [IntegerLit 42, StringLit "foo"])]
   , "function alias" ~: do
       doc [ tkt FnKw, idt "key", tkt Equal, int 42
           , tkt FnKw, idt "alias", tkt Equal, idt "key"

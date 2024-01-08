@@ -24,6 +24,7 @@ dependencies:
 - containers
 - range >= 0.3 && < 0.4
 - bytestring
+- mtl >= 2 && < 3
 
 ghc-options:
 - -Wall
@@ -43,6 +44,15 @@ executables:
   glados:
     main:                Main.hs
     source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - glados
+  ekc:
+    main:                Main.hs
+    source-dirs:         ekc-app
     ghc-options:
     - -threaded
     - -rtsopts

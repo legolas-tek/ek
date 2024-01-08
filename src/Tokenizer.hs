@@ -23,7 +23,7 @@ type TokenizerError = Diagnostic
 tokens :: Parser Char [Token]
 tokens = many token <* useless <* eof
 
-tokenizer :: String -> String -> Either TokenizerError [Token]
+tokenizer :: String -> String -> Either TokenizerError ([Token], [Diagnostic])
 tokenizer = runParserOnFile tokens
 
 -- Identify the token type
@@ -81,10 +81,12 @@ identifyKw "type" = TypeKw
 identifyKw "fn" = FnKw
 identifyKw "extern" = ExternKw
 identifyKw "precedence" = PrecedenceKw
+identifyKw "import" = ImportKw
+identifyKw "lazy" = LazyKw
 identifyKw _ = TextIdentifier
 
 parseOperatorId :: Parser Char (String, TokenType)
-parseOperatorId = some (parseOneIf (`elem` ".=/-+*!?%<>&|^~")) >>= tup
+parseOperatorId = some (parseOneIf (`elem` ".=/-+*!?%<>&|^~$")) >>= tup
   where tup identifier = return (identifier, identifyOp identifier)
 
 identifyOp :: String -> TokenType

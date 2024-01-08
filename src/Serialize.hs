@@ -134,4 +134,4 @@ getWord8List :: String -> IO [Word8]
 getWord8List path = B.unpack <$> B.readFile path
 
 loadResult :: String -> IO (Either DeserializerError Result)
-loadResult path = runParserOnFile resultParser path <$> getWord8List path
+loadResult path = (fst <$> ) . runParserOnFile resultParser path <$> getWord8List path

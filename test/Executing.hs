@@ -106,7 +106,7 @@ tests = test
         result <- exec (fromList [("a", IntegerValue 42)]) [] [GetEnv "a", Ret] []
         result @?= IntegerValue 42
         result2 <- catchExec [GetEnv "failure expected"]
-        result2 @?= StringValue "user error (No value in env)"
+        result2 @?= StringValue "user error (Could not find `failure expected' in environment)"
     , "operators" ~: do
         add <- ex [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Add, Ret] []
         add @?= IntegerValue 15
@@ -118,4 +118,24 @@ tests = test
         division @?= IntegerValue 2
         printOp <- catchExec [Push $ IntegerValue 42, CallOp Print, Ret]
         printOp @?= StringValue "user error (No value on stack)"
+    , "closures" ~: do
+        let addition = [ LoadArg 0
+                       , LoadArg 1
+                       , CallOp Add
+                       , Ret
+                       ]
+        let closure = [ Push $ IntegerValue 10
+                      , Push $ FunctionValue addition
+                      , Closure 1
+                      , Ret
+                      ]
+        let usage = [ Push $ FunctionValue closure
+                    , Push $ AtomValue "void"
+                    , Call
+                    , Push $ IntegerValue 32
+                    , Call
+                    , Ret
+                    ]
+        result <- ex usage []
+        result @?= IntegerValue 42
   ]
