@@ -23,6 +23,7 @@ builtins = Map.fromList
   , ("builtin print\\impl", [LoadArg 0, CallOp Print, void, Ret])
   , ("builtin eprint", [GetEnv "builtin eprint\\impl", Ret])
   , ("builtin eprint\\impl", [LoadArg 0, CallOp EPrint, void, Ret])
+  , ("builtin readLine", [CallOp ReadLine, Ret])
   , ("builtin exit", [GetEnv "builtin exit\\impl", Ret])
   , ("builtin exit\\impl", [LoadArg 0, CallOp Exit, void, Ret])
   , ("builtin add", [GetEnv "builtin add\\a", Ret])

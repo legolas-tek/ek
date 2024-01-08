@@ -33,6 +33,9 @@ fn (a) >> (b) precedence 1 = b
 
 fn print _ = builtin print
 fn eprint _ = builtin eprint
+
+fn readLine = builtin readLine
+
 fn exit _ = builtin exit
 
 fn panic (str) = eprint str >> exit 1
