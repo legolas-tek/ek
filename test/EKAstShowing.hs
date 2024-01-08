@@ -19,12 +19,12 @@ show' = show
 tests :: Test
 tests = test
   [ "expr" ~: do
-      show ((IntegerLit 42 :: Expr)) @?= "42"
+      show (IntegerLit 42 :: Expr) @?= "42"
       show (StringLit "foo" :: Expr) @?= "\"foo\""
       show (Call (FunctionName [Symbol "foo"] defaultPrec) [] :: Expr) @?= "(foo)"
       show (Call (FunctionName [Symbol "foo", Placeholder] defaultPrec) [IntegerLit 42] :: Expr) @?= "(foo 42)"
       show (Call (FunctionName [Symbol "foo", Placeholder, Symbol "bar"] defaultPrec) [IntegerLit 42] :: Expr) @?= "(foo 42 bar)"
-      show (Call (FunctionName [Placeholder, Symbol "+", Placeholder] defaultPrec) [Call (FunctionName [Symbol "a"] defaultPrec ) [], IntegerLit 1] :: Expr) @?= "((a) + 1)"
+      show (Call (FunctionName [Placeholder, Symbol "+", Placeholder] defaultPrec) [Call (FunctionName [Symbol "a"] defaultPrec) [], IntegerLit 1] :: Expr) @?= "((a) + 1)"
   , "type def" ~: do
       show' (AtomDef "foo") @?= "atom foo"
       show' (ImportDef "foo") @?= "import foo"
