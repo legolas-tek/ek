@@ -72,6 +72,7 @@ instance Serializable VMValue where
   serialize (AtomValue atom) = B.singleton 2 <> serialize atom
   serialize (StringValue str) = B.singleton 3 <> serialize str
   serialize (FunctionValue _) = B.singleton 0
+  serialize (ClosureValue _ _) = B.singleton 0
 
   deserialize = parseOneIf (== 1) *> (IntegerValue <$> deserialize)
             <|> parseOneIf (== 2) *> (AtomValue <$> deserialize)
