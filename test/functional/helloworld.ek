@@ -1,5 +1,6 @@
 //
 // RUN: ekrun %s | FileCheck -v %s
+// RUN: ekc %s -o %t && %t | FileCheck -v %s
 //
 
 import std
