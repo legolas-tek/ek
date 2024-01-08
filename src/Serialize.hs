@@ -118,9 +118,9 @@ instance (Serializable a, Serializable b) => Serializable (a, b) where
   deserialize = liftA2 (,) deserialize deserialize
 
 instance Serializable Result where
-  serialize result = "#!/usr/bin/env ek" <> B.concat (fmap serialize (Map.toList result))
+  serialize result = "#!/usr/bin/env ek\n" <> B.concat (fmap serialize (Map.toList result))
 
-  deserialize = string (stringToWord8 "#!/usr/bin/env ek") *> (Map.fromList <$> (many deserialize))
+  deserialize = string (stringToWord8 "#!/usr/bin/env ek\n") *> (Map.fromList <$> (many deserialize))
 
 saveResult :: Result -> String -> IO ()
 saveResult result path =
@@ -131,12 +131,10 @@ resultParser = deserialize <* eof
 
 convertIOByteString :: IO B.ByteString -> IO [Word8]
 convertIOByteString ioByteString =
-  fmap B.unpack ioByteString
+  B.unpack <$> ioByteString
 
 getWord8List :: String -> IO [Word8]
-getWord8List path = fmap B.unpack $ B.readFile path
+getWord8List path = B.unpack <$> B.readFile path
 
 loadResult :: String -> IO (Either DeserializerError Result)
-loadResult path = do
-  word8List <- getWord8List path
-  return $ runParserOnFile resultParser path word8List
+loadResult path = runParserOnFile resultParser path <$> getWord8List path
