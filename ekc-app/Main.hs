@@ -12,9 +12,9 @@ import Tokenizer
 import EK.Parser
 import EK.Compiler
 import EK.Builtins
-import Data.Maybe (fromMaybe)
 import Serialize
 
+import Data.Maybe (fromMaybe)
 import System.Environment (getArgs)
 import System.Exit (exitSuccess)
 import Control.Monad (when)

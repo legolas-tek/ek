@@ -8,7 +8,7 @@
 SRC		=	app/Main.hs 		\
 			src/Lib.hs			\
 
-NAME	=	glados
+NAME	=	glados ekc ek
 
 STACK	=	stack
 
