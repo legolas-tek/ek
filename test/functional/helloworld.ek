@@ -5,4 +5,4 @@
 import std
 
 // CHECK: Hello, World!
-fn main = print "Hello, World!"
+fn main = print "Hello, World!" >> eprint "test\n"
