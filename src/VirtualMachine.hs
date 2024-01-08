@@ -43,6 +43,7 @@ data Operator = Add
               | EPrint
               | Exit
               | ReadLine
+              | ToString
               deriving (Eq)
 
 instance Show Operator where
@@ -55,7 +56,8 @@ instance Show Operator where
   show Print = "print"
   show Exit = "exit"
   show EPrint = "eprint"
-  show ReadLine = "readline"
+  show ReadLine = "readLine"
+  show ToString = "toString"
 
 data Instruction = Push VMValue
                  | Call
@@ -97,6 +99,7 @@ exec env args (Push v:insts) stack = exec env args insts (v:stack)
 exec env args (CallOp Print:insts) (v:stack) = print v >> exec env args insts stack
 exec env args (CallOp EPrint:insts) (v:stack) = hPutStr stderr (show v) >> exec env args insts stack
 exec env args (CallOp ReadLine:insts) stack = getLine >>= \line -> exec env args insts (StringValue line:stack)
+exec env args (CallOp ToString:insts) (v:stack) = exec env args insts (StringValue (show v):stack)
 exec _ _ (CallOp Exit:_) ((IntegerValue 0):_) = exitSuccess
 exec _ _ (CallOp Exit:_) ((IntegerValue v):_) = exitWith $ ExitFailure $ fromIntegral v
 exec env args (CallOp op:insts) (v1:v2:stack) =

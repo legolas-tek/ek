@@ -23,6 +23,8 @@ extern fn builtin lt: int -> int -> bool
 extern fn builtin print: any -> void
 extern fn builtin eprint: any -> void
 
+extern fn builtin toString: any -> string
+
 extern fn builtin readLine: string
 
 extern fn builtin exit: int -> never
