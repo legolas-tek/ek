@@ -11,11 +11,8 @@ import ArgParser
 import Tokenizer
 import EK.Parser
 import EK.Compiler
-import VirtualMachine
 import EK.Builtins
-
 import Data.Maybe (fromMaybe)
-import qualified Data.Map as Map
 
 import System.Environment (getArgs)
 import System.Exit (exitSuccess)
@@ -28,14 +25,6 @@ readFileOrStdIn (Just file) = readFile file
 writeFileOrStdOut :: Maybe String -> String -> IO ()
 writeFileOrStdOut Nothing content = putStrLn content
 writeFileOrStdOut (Just file) content = writeFile file content
-
-runVM :: Result -> IO ()
-runVM res = do
-  mainFn <- maybe (fail "No main function") return $ Map.lookup "main" res
-  let insts = res <> builtins
-  let env = FunctionValue <$> insts
-  _ <- exec env [] mainFn []
-  return ()
 
 main :: IO ()
 main = do
