@@ -27,7 +27,8 @@ fn (a) >= (b) precedence 4 = not (a < b)
 fn (a) && (lazy b) precedence 3 = if a then b else false
 fn (a) || (lazy b) precedence 2 = if a then true else b
 
-fn if _ then _ else _ precedence 1 = builtin if
+fn if (cond) then (lazy truebr) else (lazy falsebr) precedence 1
+   = builtin if $ cond $ (\v = truebr) $ (\v = falsebr)
 
 fn (a) >> (b) precedence 1 = b
 
