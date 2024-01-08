@@ -10,8 +10,6 @@
 
 module EK.ExprParser
   ( parseExprs
-  , TotalStmt
-  , PartialStmt
   ) where
 
 import EK.Ast
@@ -24,9 +22,6 @@ import Control.Monad (liftM2)
 import Control.Applicative (Alternative(empty))
 import Data.Monoid (Alt(..))
 import Data.List (findIndex)
-
-type TotalStmt = EK.Ast.Stmt Expr
-type PartialStmt = EK.Ast.Stmt [Token]
 
 type FuncItem = FunctionName
 
@@ -117,7 +112,7 @@ structExprContent funcItems = structExprContent' <|> (pure <$> parsePrec funcIte
     structExprContent' = liftM2 (:) (parsePrec funcItems lowestPrec) (parseTokenType Comma >> structExprContent funcItems)
 
 structExpr :: [FuncItem] -> Parser Token Expr
-structExpr funcItems = StructLit <$> (identifier <* parseTokenType CurlyOpen) <*> (structExprContent funcItems <* parseTokenType CurlyClose)
+structExpr funcItems = StructLit <$> (TypeName <$> identifier <* parseTokenType CurlyOpen) <*> (structExprContent funcItems <* parseTokenType CurlyClose)
 
 lambdaExpr :: [FuncItem] -> Parser Token Expr
 lambdaExpr funcItems = do
