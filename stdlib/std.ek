@@ -32,6 +32,7 @@ fn if _ then _ else _ precedence 1 = builtin if
 fn (a) >> (b) precedence 1 = b
 
 fn print _ = builtin print
+fn eprint _ = builtin eprint
 fn exit _ = builtin exit
 
 fn panic (str) = print str >> exit 1

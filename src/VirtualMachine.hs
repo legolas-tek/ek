@@ -17,6 +17,7 @@ module VirtualMachine
 
 import Data.Map (Map, lookup)
 import System.Exit (exitWith, ExitCode(..))
+import System.IO (hPutStrLn, stderr)
 
 data VMValue = IntegerValue Integer
              | AtomValue String
@@ -39,6 +40,7 @@ data Operator = Add
               | Eq
               | Less
               | Print
+              | EPrint
               | Exit
               deriving (Eq)
 
@@ -51,6 +53,7 @@ instance Show Operator where
   show Less = "less"
   show Print = "print"
   show Exit = "exit"
+  show EPrint = "eprint"
 
 data Instruction = Push VMValue
                  | Call
@@ -90,6 +93,7 @@ exec _ _ (Ret:_) (s:_) = return s
 exec _ _ (Ret:_) [] = fail "No value on stack"
 exec env args (Push v:insts) stack = exec env args insts (v:stack)
 exec env args (CallOp Print:insts) (v:stack) = print v >> exec env args insts stack
+exec env args (CallOp EPrint:insts) (v:stack) = hPutStrLn stderr (show v) >> exec env args insts stack
 exec _ _ (CallOp Exit:_) ((IntegerValue 0):_) = exitWith ExitSuccess
 exec _ _ (CallOp Exit:_) ((IntegerValue v):_) = exitWith $ ExitFailure $ fromIntegral v
 exec env args (CallOp op:insts) (v1:v2:stack) =
