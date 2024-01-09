@@ -13,6 +13,8 @@ module SourcePos
       Parsable(..)
     ) where
 
+import Data.Word
+
 data SourcePos = SourcePos { sourceName :: String
                            , sourceLine :: Int
                            , sourceColumn :: Int
@@ -25,6 +27,9 @@ instance Parsable String where
 
 instance Parsable Char where
     advance (SourcePos name line _) '\n' = SourcePos name (line + 1) 1
+    advance (SourcePos name line column) _ = SourcePos name line (column + 1)
+
+instance Parsable Word8 where
     advance (SourcePos name line column) _ = SourcePos name line (column + 1)
 
 instance Show SourcePos where
