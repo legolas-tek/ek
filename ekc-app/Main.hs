@@ -11,12 +11,10 @@ import ArgParser
 import Tokenizer
 import EK.Parser
 import EK.Compiler
-import VirtualMachine
 import EK.Builtins
+import Serialize
 
 import Data.Maybe (fromMaybe)
-import qualified Data.Map as Map
-
 import System.Environment (getArgs)
 import System.Exit (exitSuccess)
 import Control.Monad (when)
@@ -29,13 +27,9 @@ writeFileOrStdOut :: Maybe String -> String -> IO ()
 writeFileOrStdOut Nothing content = putStrLn content
 writeFileOrStdOut (Just file) content = writeFile file content
 
-runVM :: Result -> IO ()
-runVM res = do
-  mainFn <- maybe (fail "No main function") return $ Map.lookup "main" res
-  let insts = res <> builtins
-  let env = FunctionValue <$> insts
-  _ <- exec env [] mainFn []
-  return ()
+save :: Result -> Maybe String -> IO ()
+save result Nothing = saveResult result "a.out"
+save result (Just file) = saveResult result file
 
 main :: IO ()
 main = do
@@ -51,3 +45,4 @@ main = do
   insts <- either fail return $ compileToVM ast
   when (argOutputType arg == Just OutputBytecode) $ output $ showBytecode insts
   when (argOutputType arg == Just OutputResult) $ runVM insts
+  save insts (argOutput arg)
