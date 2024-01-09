@@ -7,6 +7,7 @@
 
 module EK.Builtins
   ( builtins
+  , runVM
   ) where
 
 import VirtualMachine
@@ -47,3 +48,11 @@ builtins = Map.fromList
   , ("builtin lt\\a", [LoadArg 0, GetEnv "builtin lt\\b", Closure 1, Ret])
   , ("builtin lt\\b", [LoadArg 0, LoadArg 1, CallOp Less, Ret])
   ]
+
+runVM :: Result -> IO ()
+runVM res = do
+  mainFn <- maybe (fail "No main function") return $ Map.lookup "main" res
+  let insts = res <> builtins
+  let env = FunctionValue <$> insts
+  _ <- exec env [] mainFn []
+  return ()
