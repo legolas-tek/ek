@@ -134,7 +134,7 @@ compileCapture name = do
     Just i -> return $ LoadArg i
     Nothing -> case find ((== name) . fst) (capturable env) of
       Just arg@(_, _) -> LoadArg <$> capture arg
-      Nothing -> return $ GetEnv name
+      Nothing -> error "impossible: value is captured but not in scope"
 
 capture :: (String, Bool) -> State Env Int
 capture arg = do
