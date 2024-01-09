@@ -18,6 +18,7 @@ import Data.Maybe (fromMaybe)
 import System.Environment (getArgs)
 import System.Exit (exitSuccess)
 import Control.Monad (when)
+import EK.Optimizer (optimizeBytecode)
 
 readFileOrStdIn :: Maybe String -> IO String
 readFileOrStdIn Nothing = getContents
@@ -41,8 +42,9 @@ main = do
   when (argOutputType arg == Just OutputTokens) $ output $ unlines $ show <$> tokens
   (ast, diags') <- parseDocument tokens
   when (argOutputType arg == Just OutputAst) $ output $ show ast
-  mapM_ (putStrLn . show) (diags ++ diags')
-  insts <- either fail return $ compileToVM ast
+  mapM_ print (diags ++ diags')
+  insts' <- either fail return $ compileToVM ast
+  let insts = if argOptimize arg then optimizeBytecode insts' else insts'
   when (argOutputType arg == Just OutputBytecode) $ output $ showBytecode insts
   when (argOutputType arg == Just OutputResult) $ runVM insts
   save insts (argOutput arg)
