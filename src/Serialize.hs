@@ -98,6 +98,9 @@ instance Serializable Instruction where
   serialize (CallOp Print) = B.singleton 14
   serialize (CallOp Exit) = B.singleton 15
   serialize (Closure value) = B.singleton 16 <> B.singleton (fromIntegral value)
+  serialize (CallOp EPrint) = B.singleton 17
+  serialize (CallOp ReadLine) = B.singleton 18
+  serialize (CallOp ToString) = B.singleton 19
 
   deserialize = parseOneIf (== 1) *> (Push <$> deserialize)
             <|> parseOneIf (== 2) *> pure Call
@@ -115,6 +118,9 @@ instance Serializable Instruction where
             <|> parseOneIf (== 14) *> pure (CallOp Print)
             <|> parseOneIf (== 15) *> pure (CallOp Exit)
             <|> parseOneIf (== 16) *> (Closure <$> (word8ToInt <$> parseOneIf (const True)))
+            <|> parseOneIf (== 17) *> pure (CallOp EPrint)
+            <|> parseOneIf (== 18) *> pure (CallOp ReadLine)
+            <|> parseOneIf (== 19) *> pure (CallOp ToString)
 
 instance Serializable [Instruction] where
   serialize insts = B.concat (fmap serialize insts) <> B.singleton 0
