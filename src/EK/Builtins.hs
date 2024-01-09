@@ -41,4 +41,8 @@ builtins = Map.fromList
   , ("builtin lt", [GetEnv "builtin lt\\a", Ret])
   , ("builtin lt\\a", [LoadArg 0, GetEnv "builtin lt\\b", Closure 1, Ret])
   , ("builtin lt\\b", [LoadArg 0, LoadArg 1, CallOp Less, Ret])
+  , ("builtin if", [GetEnv "builtin if\\cond", Ret])
+  , ("builtin if\\cond", [LoadArg 0, GetEnv "builtin if\\then", Closure 1, Ret])
+  , ("builtin if\\then", [LoadArg 0, LoadArg 1, GetEnv "builtin if\\else", Closure 2, Ret])
+  , ("builtin if\\else", [LoadArg 1, JmpFalse 4, LoadArg 2, void, Call, Ret, LoadArg 0, void, Call, Ret])
   ]

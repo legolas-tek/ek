@@ -74,7 +74,7 @@ compileFn expr = do
                      , result = result insideEnv
                      , lambdaCount = lambdaCount insideEnv
                      }
-      captures <- concat <$> mapM compileCall (captured insideEnv)
+      captures <- mapM compileCapture (reverse $ captured insideEnv)
       modify $ \env -> env { result = result env <> fromList [(fnName env, captures ++ [GetEnv lambdaName, Closure (length $ captured insideEnv), Ret])] }
 
 compileExpr :: Expr -> State Env Insts
@@ -100,7 +100,7 @@ compileExpr (Lambda name expr) = do
   createFn expr
   insideEnv <- get
   put outsideEnv { result = result insideEnv, lambdaCount = lambdaCount insideEnv }
-  captures <- concat <$> mapM compileCall (captured insideEnv)
+  captures <- mapM compileCapture (reverse $ captured insideEnv)
   return $ captures ++ [GetEnv lambdaName, Closure (length captures)]
 compileExpr _ = error "not implemented"
 
@@ -119,12 +119,22 @@ compileCall :: String -> State Env [Instruction]
 compileCall name = do
   env <- get
   case elemIndex name (fst <$> args env) of
-    Just i | snd (args env !! i) -> return [LoadArg i, Push $ AtomValue "void", VirtualMachine.Call]
+    Just i | snd (args env !! i) -> return $ lazyLoadArg i
            | otherwise -> return [LoadArg i]
     Nothing -> case find ((== name) . fst) (capturable env) of
-      Just arg@(_, True) -> (:[Push $ AtomValue "void", VirtualMachine.Call]) . LoadArg <$> capture arg
+      Just arg@(_, True) -> lazyLoadArg <$> capture arg
       Just arg@(_, False) -> (:[]) . LoadArg <$> capture arg
       Nothing -> return [GetEnv name]
+  where lazyLoadArg i = [LoadArg i, Push $ AtomValue "void", VirtualMachine.Call]
+
+compileCapture :: String -> State Env Instruction
+compileCapture name = do
+  env <- get
+  case elemIndex name (fst <$> args env) of
+    Just i -> return $ LoadArg i
+    Nothing -> case find ((== name) . fst) (capturable env) of
+      Just arg@(_, _) -> LoadArg <$> capture arg
+      Nothing -> return $ GetEnv name
 
 capture :: (String, Bool) -> State Env Int
 capture arg = do
