@@ -32,9 +32,13 @@ fn if _ then _ else _ precedence 1 = builtin if
 fn (a) >> (b) precedence 1 = b
 
 fn print _ = builtin print
+fn eprint _ = builtin eprint
+
+fn readLine = builtin readLine
+
 fn exit _ = builtin exit
 
-fn panic (str) = print str >> exit 1
+fn panic (str) = eprint str >> exit 1
 
 fn assert (cond) message (str) = if cond then void else panic str
 
@@ -43,3 +47,4 @@ fn clamp (val) min (min) max (max) precedence 5 = if val < min then min else if 
 fn (a) min (b) precedence 4 = if a < b then a else b
 fn (a) max (b) precedence 4 = if a > b then a else b
 
+fn _ toString = builtin toString
