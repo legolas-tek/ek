@@ -25,6 +25,7 @@ data Arguments = Arguments
   { argInput :: Maybe String
   , argOutput :: Maybe String
   , argOutputType :: Maybe OutputType
+  , argOptimize :: Bool
   }
 
 instance Semigroup Arguments where
@@ -32,6 +33,7 @@ instance Semigroup Arguments where
     { argInput = argInput a <|> argInput b
     , argOutput = argOutput a <|> argOutput b
     , argOutputType = argOutputType a <|> argOutputType b
+    , argOptimize = argOptimize a || argOptimize b
     }
 
 instance Monoid Arguments where
@@ -39,6 +41,7 @@ instance Monoid Arguments where
     { argInput = Nothing
     , argOutput = Nothing
     , argOutputType = Nothing
+    , argOptimize = False
     }
 
 one :: ArgParser String
@@ -60,7 +63,7 @@ outputType :: ArgParser OutputType
 outputType = outputTypeFlag *> parseOneIf (== "tokens") *> pure OutputTokens
          <|> outputTypeFlag *> parseOneIf (== "ast") *> pure OutputAst
          <|> outputTypeFlag *> parseOneIf (== "bytecode") *> pure OutputBytecode
-          <|> outputTypeFlag *> parseOneIf (== "result") *> pure OutputResult
+         <|> outputTypeFlag *> parseOneIf (== "result") *> pure OutputResult
 
 withArgOutput :: String -> Arguments
 withArgOutput o = mempty { argOutput = Just o }
@@ -71,9 +74,13 @@ withArgOutputType t = mempty { argOutputType = Just t }
 withArgInput :: String -> Arguments
 withArgInput i = mempty { argInput = Just i }
 
+withArgOptimize :: Arguments
+withArgOptimize = mempty { argOptimize = True }
+
 argument :: ArgParser Arguments
 argument = withArgOutput <$> output
        <|> withArgOutputType <$> outputType
+       <|> withArgOptimize <$ parseExact "-O"
        <|> withArgInput <$> input
 
 arguments :: ArgParser Arguments
