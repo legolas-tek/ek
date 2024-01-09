@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - containers
 - range >= 0.3 && < 0.4
+- bytestring
 - mtl >= 2 && < 3
 
 ghc-options:
