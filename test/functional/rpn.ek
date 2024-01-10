@@ -57,3 +57,21 @@ fn main =
     >> 42 42 < print
 // CHECK: false
     >> 42 41 < print
+
+// CHECK: true
+    >> true true && print
+// CHECK: false
+    >> true false && print
+// CHECK: false
+    >> false true && print
+// CHECK: false
+    >> false false && print
+
+// CHECK: true
+    >> true true || print
+// CHECK: true
+    >> true false || print
+// CHECK: true
+    >> false true || print
+// CHECK: false
+    >> false false || print
