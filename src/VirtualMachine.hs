@@ -109,11 +109,13 @@ exec env args (Call:insts) (arg:FunctionValue fn:stack) = exec env [arg] fn []
   >>= \result -> exec env args insts (result:stack)
 exec env args (Call:insts) (arg:ClosureValue fn captures:stack) = exec env (arg:captures) fn []
   >>= \result -> exec env args insts (result:stack)
-exec _ _ (Call:_) _ = fail "Cannot call value of non-function type"
+exec _ _ (Call:_) (v:f:_) = error $ "Cannot call value of non-function type: " ++ show f ++ " " ++ show v
+exec _ _ (Call:_) _ = fail "Not enough values for call"
 exec env args (JmpFalse offset:insts) (AtomValue "false":stack)
   = exec env args (drop offset insts) stack
 exec env args (JmpFalse _:insts) (AtomValue "true":stack) = exec env args insts stack
-exec _ _ (JmpFalse _:_) _ = fail "Invalid condition"
+exec _ _ (JmpFalse _:_) (value:_) = fail $ "Invalid condition: " ++ show value
+exec _ _ (JmpFalse _:_) [] = fail "Invalid condition: no value on stack"
 exec env args (Dup:insts) (v:stack) = exec env args insts (v:v:stack)
 exec _ _ (Dup:_) [] = fail "No value to duplicate"
 exec env args (LoadArg offset:insts) stack = exec env args insts (args !! offset:stack)

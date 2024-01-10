@@ -1,0 +1,36 @@
+//
+// RUN: ekrun %s | FileCheck -v %s
+//
+
+import std
+
+fn dont (lazy x) = void
+fn do (lazy x) = x
+
+fn claus (lazy x) : int -> (int -> int) = \y = x
+fn handler (f) : (int -> int) -> void = print "Handler" >> print (f $ 3)
+
+
+// CHECK: Hello
+fn main = do (print "Hello")
+       >> dont (print "World")
+// CHECK-NEXT: false
+       >> print (true && false)
+// CHECK-NEXT: true
+       >> print (true && true)
+// CHECK-NEXT: false
+       >> print (false && true)
+// CHECK-NEXT: false
+       >> print (false && false)
+// CHECK-NEXT: true
+       >> print (true || false)
+// CHECK-NEXT: false
+       >> print (false || false)
+// CHECK-NEXT: true
+       >> print (false || true)
+// CHECK-NEXT: true
+       >> print (true || true)
+// CHECK-NEXT: Handler
+// CHECK-NEXT: Later
+// CHECK-NEXT: 7
+       >> print (handler (claus (print "Later" >> 7)))
