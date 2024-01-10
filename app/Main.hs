@@ -20,6 +20,7 @@ import EK.ExprParser
 import EK.Builtins
 import EK.Compiler
 import Diagnostic
+import VirtualMachine
 
 import Control.Exception (try, catch, IOException)
 import Control.Monad (when)
@@ -35,6 +36,9 @@ parseStmtOrExpr partials tokens = do
             Right result -> return (Left $ fst result)
             Left _ -> Right <$> (either (fail . show) return $ parseReplExpr partials tokens)
 
+printRes :: VMValue -> IO ()
+printRes (AtomValue "void") = return ()
+printRes a = print a
 
 mainLoop :: [TotalStmt] -> String -> IO ()
 mainLoop env rest = do
@@ -54,7 +58,7 @@ mainLoop env rest = do
             mainLoop (env ++ stmts) rest
         Right (Right expr) -> do
             insts <- either fail return $ compileToVM (FuncDef (FuncPattern [SymbolPattern "main"] Nothing Nothing) expr : env)
-            runVM insts `catch` (\e -> putStrLn $ show (e :: IOException))
+            (runVM insts >>= printRes) `catch` (\e -> putStrLn $ show (e :: IOException))
             mainLoop env rest
 
 main :: IO ()

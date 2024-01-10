@@ -45,6 +45,6 @@ main = do
   mapM_ (putStrLn . show) (diags ++ diags')
   insts <- either fail return $ compileToVM ast
   when (argOutputType arg == Just OutputBytecode) $ output $ showBytecode insts
-  when (argOutputType arg == Just OutputResult) $ runVM insts
+  when (argOutputType arg == Just OutputResult) $ runVM insts >> return ()
   save insts (argOutput arg)
   return ()
