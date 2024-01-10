@@ -1,0 +1,50 @@
+//
+// EPITECH PROJECT, 2024
+// Glados
+// File description:
+// EK Standard library - rpn
+//
+
+import bool
+import builtins
+
+//fn (f) $ _ = f
+
+fn _ _ + = builtin add
+fn _ _ - = builtin sub
+fn _ _ * = builtin mul
+fn _ _ / = builtin div
+
+//fn _ _ == = builtin eq
+//fn (a) not = a false ==
+//fn a b != = a b == not
+//fn _ _ < = builtin lt
+//fn (a) (b) > = b a <
+//fn (a) (b) <= = a b > not
+//fn (a) (b) >= = a b < not
+ 
+// fn (a) (lazy b) && = if a then b else false
+// fn (a) (lazy b) || = if a then true else b
+
+//fn if (cond) then (lazy truebr) else (lazy falsebr)
+// = builtin if $ cond $ (\v = truebr) $ (\v = falsebr)
+
+fn readLine = builtin readLine
+
+// fn _ exit = builtin exit
+
+// fn (str) panic = str eprint exit >>
+
+// fn assert (cond) message (str) = if cond then void else str panic
+
+// fn clamp (val) min (min) max (max) precedence 5 = if val min < then min else if val max > then max else val
+
+// fn (a) (b) min = if a b < then a else b
+// fn (a) (b) max = if a b > then a else b
+
+fn _ toString = builtin toString
+
+fn (a) >> (b) = b
+
+fn _ print = builtin print
+fn _ eprint = builtin eprint

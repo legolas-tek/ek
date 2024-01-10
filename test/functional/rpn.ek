@@ -1,0 +1,21 @@
+//
+// RUN: echo "test" | (ekrun %s) 2>%t | FileCheck -v %s && FileCheck --check-prefix ERROR -v %s < %t
+//
+
+import rpn
+
+fn main =
+// CHECK: 42
+    42 toString print
+// CHECK: test
+    >> readLine print
+// ERROR: caca
+    >> "caca" eprint
+// CHECK: 0
+    >> 42 -42 + print
+// CHECK: 42
+    >> 42 0 - print
+// CHECK: 42
+    >> 42 1 * print
+// CHECK: 42
+    >> 42 1 / print
