@@ -22,6 +22,7 @@ module EK.Ast
   , TotalStmt
   , PartialStmt
   , patternToName
+  , patternLazinesses
   , defaultPrec
   , precedence
   ) where
@@ -100,6 +101,12 @@ patternToName (FuncPattern items _ prec) = FunctionName (map patternToName' item
     patternToName' (ArgPattern {}) = Placeholder
     patternToName' (SymbolPattern s) = Symbol s
     patternToName' PlaceholderPattern = Placeholder
+
+patternLazinesses :: FuncPattern' a-> [Bool]
+patternLazinesses = concatMap patternLazyness . funcPatternItems
+  where patternLazyness (ArgPattern l _ _) = [l]
+        patternLazyness (SymbolPattern _) = []
+        patternLazyness PlaceholderPattern = [False]
 
 defaultPrec :: Prec
 defaultPrec = 9 -- same as haskell

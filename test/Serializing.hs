@@ -9,6 +9,7 @@
 
 module Serializing (tests) where
 import qualified Data.ByteString as B
+import qualified Data.Map as Map
 import Test.HUnit
 import VirtualMachine
 import Serialize
@@ -16,6 +17,7 @@ import Parser
 import Diagnostic
 import SourcePos
 import Data.Word
+import EK.Compiler(Result)
 
 tests :: Test
 tests = test
@@ -53,6 +55,7 @@ tests = test
 
       runParser deserialize serializedStr @?= Right (("test" :: String), (stringToWord8 ""))
       runParser (deserialize :: Parser Word8 String) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found EOF" (SourcePos "" 1 12))
+
    , "deserialize int" ~: do
       let serializedInt = B.unpack (serialize (42 :: Int))
 
@@ -127,8 +130,22 @@ tests = test
       runParser (deserialize :: Parser Word8 Instruction) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found 102" (SourcePos "" 1 1))
       runParser deserialize serializedClosure @?= Right ((Closure $ 42), (stringToWord8 ""))
       runParser (deserialize :: Parser Word8 Instruction) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found 102" (SourcePos "" 1 1))
+
    , "deserialize instruction list" ~: do
-      let  serializedInstructs = B.unpack (serialize [Push $ IntegerValue $ 42, Call, CallOp Add])
+      let serializedInstructs = B.unpack (serialize [Push $ IntegerValue $ 42, Call, CallOp Add])
 
       runParser deserialize serializedInstructs @?= Right ([(Push $ IntegerValue $ 42), Call, (CallOp Add)], (stringToWord8 ""))
+      runParser (deserialize :: Parser Word8 Insts) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found 102" (SourcePos "" 1 1))
+
+   , "deserialize tuple" ~: do
+      let serializedTuple = B.unpack $ serialize ("test" :: String, Call)
+
+      runParser deserialize serializedTuple @?= Right (("test" :: String, Call), (stringToWord8 ""))
+      runParser (deserialize :: Parser Word8 (String, Instruction)) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found EOF" (SourcePos "" 1 12))
+
+   , "deserialize tuple" ~: do
+      let serializedResult = B.unpack $ serialize $ Map.fromList [(("test1" :: String), [Call, Ret]), (("test2" :: String), [Dup, Ret])]
+
+      runParser deserialize serializedResult @?= Right (Map.fromList $ [(("test1" :: String) , [Call, Ret]), (("test2" :: String), [Dup, Ret])], (stringToWord8 ""))
+      runParser (deserialize :: Parser Word8 Result) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "Expected \"#!/usr/bin/env ek\n\" but Expected '#' but found 102" (SourcePos "" 1 1))
   ]

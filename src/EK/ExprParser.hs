@@ -24,7 +24,10 @@ import Control.Applicative (Alternative(empty))
 import Data.Monoid (Alt(..))
 import Data.List (findIndex)
 
-type FuncItem = FunctionName
+data FuncItem = FuncItem
+  { funcName :: FunctionName
+  , lazynesses :: [Bool]
+  } deriving (Eq, Show)
 
 lowestPrec :: Prec
 lowestPrec = 0
@@ -42,7 +45,7 @@ parseBody :: [PartialStmt] -> PartialStmt -> Either Diagnostic TotalStmt
 parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ concatMap funcItems partials) body
   where
     args = funcPatternItems pat >>= argFuncItems
-    argFuncItems (ArgPattern _ s _) = [argFuncItem s]
+    argFuncItems (ArgPattern _ s _) = [primaryFuncItem s]
     argFuncItems PlaceholderPattern = []
     argFuncItems (SymbolPattern _) = []
 parseBody _ (ExternDef pat) = return $ ExternDef pat
@@ -51,17 +54,20 @@ parseBody _ (TypeDef name ty) = return $ TypeDef name ty
 parseBody _ (StructDef name elems) = return $ StructDef name elems
 parseBody _ (ImportDef name) = return $ ImportDef name
 
-argFuncItem :: String -> FuncItem
-argFuncItem s = FunctionName [Symbol s] primaryPrec
+primaryFuncItem :: String -> FuncItem
+primaryFuncItem s = FuncItem (FunctionName [Symbol s] primaryPrec) []
 
 parseExpr :: [FuncItem] -> [Token] -> Either Diagnostic Expr
 parseExpr fi tokens = fst <$> runParser (parsePrec fi lowestPrec <* eof) tokens
 
 funcItems :: Stmt a b -> [FuncItem]
-funcItems (FuncDef pat _) = [patternToName pat]
-funcItems (ExternDef pat) = [patternToName pat]
-funcItems (AtomDef name) = [FunctionName [Symbol name] primaryPrec]
+funcItems (FuncDef pat _) = [patternToItem pat]
+funcItems (ExternDef pat) = [patternToItem pat]
+funcItems (AtomDef name) = [primaryFuncItem name]
 funcItems _ = []
+
+patternToItem :: FuncPattern' a -> FuncItem
+patternToItem pat = FuncItem (patternToName pat) (patternLazinesses pat)
 
 parsePrec :: [FuncItem] -> Prec -> Parser Token Expr
 parsePrec fi prec = primItem fi <|> parsePrefix fi prec >>= parseInfix fi prec
@@ -70,7 +76,7 @@ parsePrefix :: [FuncItem] -> Prec -> Parser Token CallItem
 parsePrefix fi prec = getAlt (foldMap (Alt . parsePrefix' fi prec) fi) <|> fail "Could not resolve expression"
 
 parsePrefix' :: [FuncItem] -> Prec -> FuncItem -> Parser Token CallItem
-parsePrefix' fi prec fname@(FunctionName (Symbol s:ss) fnprec)
+parsePrefix' fi prec fname@(FuncItem (FunctionName (Symbol s:ss) fnprec) _)
   = ExprCall <$> (identifierExact s >> createCall fname <$> parseFollowUp fi ss (max prec fnprec))
 parsePrefix' _ _ _ = empty
 
@@ -80,7 +86,7 @@ parseInfix fi prec initial = getAlt (foldMap (Alt . parseInfix' fi prec initial)
         noInfix PlaceholderCall = fail "Invalid placeholder"
 
 parseInfix' :: [FuncItem] -> Prec -> CallItem -> FuncItem -> Parser Token Expr
-parseInfix' fi prec initial fname@(FunctionName (Placeholder:ss) fnprec)
+parseInfix' fi prec initial fname@(FuncItem (FunctionName (Placeholder:ss) fnprec) _)
   | prec <= fnprec
   = parseFollowUp fi ss (succ fnprec) >>= (parseInfix fi prec . ExprCall) . createCall fname . (initial:)
   | otherwise
@@ -123,7 +129,7 @@ lambdaExpr funcItems = do
   parseTokenType Backslash
   args <- some textIdentifier
   parseTokenType Equal
-  body <- parsePrec (map argFuncItem args ++ funcItems) lowestPrec
+  body <- parsePrec (map primaryFuncItem args ++ funcItems) lowestPrec
   return $ createLambda args body
 
 createLambda :: [String] -> Expr -> Expr
@@ -136,8 +142,10 @@ createCall = createCallN 0
 
 createCallN :: Int -> FuncItem -> [CallItem] -> Expr
 createCallN n fn items = createCall' (findIndex isPlaceholder items)
-  where createCall' Nothing = Call fn $ [e | (ExprCall e) <- items]
+  where createCall' Nothing = Call (funcName fn) $ [wrap n e l | (n, ExprCall e, l) <- zip3 [0 :: Int ..] items (lazynesses fn)]
         createCall' (Just i) = Lambda argname $ createCallN (succ n) fn $ replaceAt i (ExprCall $ Call (FunctionName [Symbol argname] defaultPrec) []) items
+        wrap n e True = Lambda ("lazy " ++ show n) e
+        wrap _ e False = e
         argname = "$" ++ show n
         isPlaceholder PlaceholderCall = True
         isPlaceholder _ = False

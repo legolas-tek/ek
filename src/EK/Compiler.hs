@@ -14,16 +14,17 @@ module EK.Compiler
 import VirtualMachine hiding (Env)
 import EK.Ast
 import Data.Map (Map, fromList, empty, union, toList)
-import Data.List (elemIndex, isPrefixOf)
+import Data.List (elemIndex, isPrefixOf, find)
 import Data.Functor ((<&>))
 import Control.Monad.State.Lazy
 
 data Env = Env
-  { args :: [String]
-  , capturable :: [String]
+  { args :: [(String, Bool)]
+  , capturable :: [(String, Bool)]
   , captured :: [String]
   , result :: Result
   , fnName :: String
+  , lambdaCount :: Int
   }
 
 type Result = Map String Insts
@@ -47,7 +48,7 @@ patternArguments :: FuncPattern -> [String]
 patternArguments (FuncPattern items _ _) = concatMap patternToArgument (zip [0..] items)
 
 compileStmt :: TotalStmt -> Result
-compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (patternArguments pattern) [] [] empty (show $ patternToName pattern))
+compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (zip (patternArguments pattern) (patternLazinesses pattern)) [] [] empty (show $ patternToName pattern) 0)
 compileStmt (AtomDef name) = fromList [(name, [Push $ AtomValue name, Ret])]
 compileStmt _ = empty
 
@@ -59,20 +60,22 @@ compileFn expr = do
     [_] -> createFn expr -- easy case
     (x:xs) -> do
       outsideEnv <- get
-      let lambdaName = fnName outsideEnv ++ "\\" ++ x
+      let lambdaName = fnName outsideEnv ++ "\\" ++ fst x
       put Env { args = xs
               , capturable = x : capturable outsideEnv
               , captured = []
               , result = result outsideEnv
               , fnName = lambdaName
+              , lambdaCount = lambdaCount outsideEnv
               }
       compileFn expr -- recursive call
       insideEnv <- get
       put outsideEnv { args = [x]
                      , result = result insideEnv
+                     , lambdaCount = lambdaCount insideEnv
                      }
-      captures <- mapM compileCall $ captured insideEnv
-      modify $ \env -> env { result = result env <> fromList [(fnName env, captures ++ [GetEnv lambdaName, Closure (length captures), Ret])] }
+      captures <- mapM compileCapture (reverse $ captured insideEnv)
+      modify $ \env -> env { result = result env <> fromList [(fnName env, captures ++ [GetEnv lambdaName, Closure (length $ captured insideEnv), Ret])] }
 
 compileExpr :: Expr -> State Env Insts
 compileExpr (IntegerLit i) = return [Push (IntegerValue i)]
@@ -81,23 +84,25 @@ compileExpr (EK.Ast.Call name callItems) = do
   call <- compileCall (show name)
   items <- compileCallItems callItems
   let needsCallVoid = isFn call && null items
-  return $ (call:items) ++ (if needsCallVoid then [Push $ AtomValue "void", VirtualMachine.Call] else [])
-  where isFn (GetEnv _) = True
+  return $ call ++ items ++ (if needsCallVoid then [Push $ AtomValue "void", VirtualMachine.Call] else [])
+  where isFn [GetEnv _] = True
         isFn _ = False
 compileExpr (Lambda name expr) = do
   outsideEnv <- get
-  let lambdaName = fnName outsideEnv ++ "\\" ++ name
-  put Env { args = [name]
-          , capturable = filter (not . isPrefixOf "_") $ args outsideEnv ++ capturable outsideEnv
+  let lambdaName = fnName outsideEnv ++ "\\" ++ name ++ show (lambdaCount outsideEnv)
+  put Env { args = [(name, False)]
+          , capturable = filter (not . isPrefixOf "_" . fst) $ args outsideEnv ++ capturable outsideEnv
           , captured = []
           , result = result outsideEnv
           , fnName = lambdaName
+          , lambdaCount = lambdaCount outsideEnv + 1
           }
   createFn expr
   insideEnv <- get
-  put outsideEnv { result = result insideEnv }
-  captures <- mapM compileCall $ captured insideEnv
+  put outsideEnv { result = result insideEnv, lambdaCount = lambdaCount insideEnv }
+  captures <- mapM compileCapture (reverse $ captured insideEnv)
   return $ captures ++ [GetEnv lambdaName, Closure (length captures)]
+compileExpr _ = error "not implemented"
 
 createFn :: Expr -> State Env ()
 createFn expr = do
@@ -107,23 +112,35 @@ createFn expr = do
   additional <- concat <$> mapM handleArg (reverse capturable' ++ args')
   env <- get
   put env { result = result env <> fromList [(fnName env, content ++ additional ++ [Ret])] }
-    where handleArg x | "_" `isPrefixOf` x = (:[VirtualMachine.Call]) <$> compileCall x
+    where handleArg x | "_" `isPrefixOf` fst x = (++[VirtualMachine.Call]) <$> compileCall (fst x)
                       | otherwise = return []
 
-compileCall :: String -> State Env Instruction
+compileCall :: String -> State Env [Instruction]
 compileCall name = do
   env <- get
-  case elemIndex name (args env) of
-    Just i -> return $ LoadArg i
-    Nothing -> (if name `elem` capturable env then (do
-      i <- capture name
-      return $ LoadArg i) else return $ GetEnv name)
+  case elemIndex name (fst <$> args env) of
+    Just i | snd (args env !! i) -> return $ lazyLoadArg i
+           | otherwise -> return [LoadArg i]
+    Nothing -> case find ((== name) . fst) (capturable env) of
+      Just arg@(_, True) -> lazyLoadArg <$> capture arg
+      Just arg@(_, False) -> (:[]) . LoadArg <$> capture arg
+      Nothing -> return [GetEnv name]
+  where lazyLoadArg i = [LoadArg i, Push $ AtomValue "void", VirtualMachine.Call]
 
-capture :: String -> State Env Int
-capture name = do
+compileCapture :: String -> State Env Instruction
+compileCapture name = do
+  env <- get
+  case elemIndex name (fst <$> args env) of
+    Just i -> return $ LoadArg i
+    Nothing -> case find ((== name) . fst) (capturable env) of
+      Just arg@(_, _) -> LoadArg <$> capture arg
+      Nothing -> error "impossible: value is captured but not in scope"
+
+capture :: (String, Bool) -> State Env Int
+capture arg = do
   env <- get
   let ret = length $ args env
-  put env { args = args env ++ [name], captured = captured env ++ [name] }
+  put env { args = args env ++ [arg], captured = captured env ++ [fst arg] }
   return ret
 
 compileCallItems :: [Expr] -> State Env Insts
