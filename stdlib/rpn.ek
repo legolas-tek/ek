@@ -15,10 +15,10 @@ fn _ _ - = builtin sub
 fn _ _ * = builtin mul
 fn _ _ / = builtin div
 
-//fn _ _ == = builtin eq
-//fn (a) not = a false ==
-//fn a b != = a b == not
-//fn _ _ < = builtin lt
+fn _ _ == = builtin eq
+fn (a) not = a false ==
+fn (a) (b) != = a b == not
+fn _ _ < = builtin lt
 //fn (a) (b) > = b a <
 //fn (a) (b) <= = a b > not
 //fn (a) (b) >= = a b < not

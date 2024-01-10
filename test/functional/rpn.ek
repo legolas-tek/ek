@@ -19,3 +19,9 @@ fn main =
     >> 42 1 * print
 // CHECK: 42
     >> 42 1 / print
+// CHECK: true
+    >> 42 42 == print
+// CHECK: false
+    >> 42 42 == not print
+// CHECK: false
+    >> 42 42 != print
