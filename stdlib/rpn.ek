@@ -31,11 +31,11 @@ fn if (cond) then (lazy truebr) else (lazy falsebr)
 
 fn readLine = builtin readLine
 
-// fn _ exit = builtin exit
+fn _ exit = builtin exit
 
-// fn (str) panic = str eprint exit >>
+fn (str) panic = str eprint exit >>
 
-// fn assert (cond) message (str) = if cond then void else str panic
+fn (cond) message assert = if cond then void else message panic
 
 fn (val) (min) (max) clamp = if val min < then min else if val max > then max else val
 
