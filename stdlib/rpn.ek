@@ -37,7 +37,7 @@ fn readLine = builtin readLine
 
 // fn assert (cond) message (str) = if cond then void else str panic
 
-// fn clamp (val) min (min) max (max) precedence 5 = if val min < then min else if val max > then max else val
+fn (val) (min) (max) clamp = if val min < then min else if val max > then max else val
 
 fn (a) (b) min = if a b < then a else b
 fn (a) (b) max = if a b > then a else b
