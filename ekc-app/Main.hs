@@ -21,6 +21,8 @@ import System.Exit (exitSuccess)
 import Control.Monad (when)
 import EK.Optimizer (optimizeBytecode)
 
+import Control.Monad (void)
+
 readFileOrStdIn :: Maybe String -> IO String
 readFileOrStdIn Nothing = getContents
 readFileOrStdIn (Just file) = readFile file
@@ -47,5 +49,5 @@ main = do
   insts' <- either fail return $ compileToVM ast
   let insts = if argOptimize arg then optimizeBytecode insts' else insts'
   when (argOutputType arg == Just OutputBytecode) $ output $ showBytecode insts
-  when (argOutputType arg == Just OutputResult) $ runVM insts >> return ()
+  when (argOutputType arg == Just OutputResult) $ void $ runVM insts
   save insts (argOutput arg)
