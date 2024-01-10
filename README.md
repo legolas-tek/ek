@@ -34,6 +34,12 @@ cd B-FUN-500-PAR-5-2-glados-jeremy.elalouf.git
 make
 ```
 
+- To use the project globally, install it:
+
+```sh
+make install
+```
+
 ## How to Use? 🛠️
 
 Run `./glados` to open the REPL.
