@@ -11,6 +11,7 @@
 module EK.ExprParser
   ( parseExprs
   , parseReplExpr
+  , parseExprsAdding
   ) where
 
 import EK.Ast
@@ -36,13 +37,16 @@ primaryPrec :: Prec
 primaryPrec = defaultPrec
 
 parseExprs :: [PartialStmt] -> Either Diagnostic [TotalStmt]
-parseExprs partials = mapM (parseBody partials) partials
+parseExprs = parseExprsAdding []
+
+parseExprsAdding :: [TotalStmt] -> [PartialStmt] -> Either Diagnostic [TotalStmt]
+parseExprsAdding add partials = mapM (parseBody $ concatMap funcItems partials ++ concatMap funcItems add) partials
 
 parseReplExpr :: [TotalStmt] -> [Token] -> Either Diagnostic Expr
-parseReplExpr partials body = parseExpr (concatMap funcItems partials) body
+parseReplExpr = parseExpr . concatMap funcItems
 
-parseBody :: [PartialStmt] -> PartialStmt -> Either Diagnostic TotalStmt
-parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ concatMap funcItems partials) body
+parseBody :: [FuncItem] -> PartialStmt -> Either Diagnostic TotalStmt
+parseBody fi (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ fi) body
   where
     args = funcPatternItems pat >>= argFuncItems
     argFuncItems (ArgPattern _ s _) = [primaryFuncItem s]
