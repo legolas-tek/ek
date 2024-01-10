@@ -186,11 +186,11 @@ tests = test
               ]
         let expected = fromList [("const _",
                                   [ LoadArg 0
-                                  , GetEnv "const _\\b"
+                                  , GetEnv "const _\\b0"
                                   , Closure 1
                                   , Ret
                                   ])
-                                , ("const _\\b",
+                                , ("const _\\b0",
                                   [ LoadArg 1
                                   , Ret
                                   ])
@@ -209,13 +209,13 @@ tests = test
                      (EK.Ast.Call "a" []))
               ]
         let expected = fromList [("id _",
-                                  [ GetEnv "id _\\a"
+                                  [ GetEnv "id _\\a0"
                                   , Closure 0
                                   , LoadArg 0
                                   , VirtualMachine.Call
                                   , Ret
                                   ])
-                                , ("id _\\a",
+                                , ("id _\\a0",
                                   [ LoadArg 0
                                   , Ret
                                   ])
@@ -243,8 +243,8 @@ tests = test
                                   , Ret
                                   ])
                                 , ("foo _ _ _\\_1",
-                                  [ LoadArg 1
-                                  , LoadArg 0
+                                  [ LoadArg 0
+                                  , LoadArg 1
                                   , GetEnv "foo _ _ _\\_1\\_2"
                                   , Closure 2
                                   , Ret
@@ -258,6 +258,22 @@ tests = test
                                   , LoadArg 2
                                   , VirtualMachine.Call
                                   , LoadArg 0
+                                  , VirtualMachine.Call
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
+    , "lazy arg" ~: do
+        let stmts =
+              [ FuncDef
+                  (FuncPattern [SymbolPattern "do", ArgPattern True "a" Nothing]
+                      Nothing
+                      Nothing)
+                  (EK.Ast.Call "a" [])
+              ]
+        let expected = fromList [("do _",
+                                  [ LoadArg 0
+                                  , Push $ AtomValue "void"
                                   , VirtualMachine.Call
                                   , Ret
                                   ])

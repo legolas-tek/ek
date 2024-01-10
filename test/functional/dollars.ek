@@ -1,0 +1,16 @@
+//
+// RUN: ekrun %s | FileCheck -v %s
+//
+
+import std
+
+fn addThree (a) (b) (c) = a + b + c
+
+fn opThree (a) (b) (c) = a * (b + 1) + c
+
+// CHECK: 20
+fn main = print (addThree _ _ _ $ 5 $ 8 $ 7)
+// CHECK: 13
+       >> print (builtin add $ 5 $ 8)
+// CHECK: 52
+       >> print (opThree _ _ _ $ 5 $ 8 $ 7)

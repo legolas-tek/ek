@@ -41,11 +41,10 @@ main = do
   (tokens, diags) <- either (fail . show) return $ tokenizer ("stdin" `fromMaybe` argInput arg) content
   when (argOutputType arg == Just OutputTokens) $ output $ unlines $ show <$> tokens
   (ast, diags') <- parseDocument tokens
-  when (argOutputType arg == Just OutputAst) $ output $ show ast
+  when (argOutputType arg == Just OutputAst) $ output $ unlines $ show <$> ast
   mapM_ print (diags ++ diags')
   insts' <- either fail return $ compileToVM ast
   let insts = if argOptimize arg then optimizeBytecode insts' else insts'
   when (argOutputType arg == Just OutputBytecode) $ output $ showBytecode insts
   when (argOutputType arg == Just OutputResult) $ runVM insts
   save insts (argOutput arg)
-  return ()
