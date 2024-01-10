@@ -10,6 +10,7 @@
 
 module EK.ExprParser
   ( parseExprs
+  , parseReplExpr
   ) where
 
 import EK.Ast
@@ -37,6 +38,9 @@ primaryPrec = defaultPrec
 parseExprs :: [PartialStmt] -> Either Diagnostic [TotalStmt]
 parseExprs partials = mapM (parseBody partials) partials
 
+parseReplExpr :: [TotalStmt] -> [Token] -> Either Diagnostic Expr
+parseReplExpr partials body = parseExpr (concatMap funcItems partials) body
+
 parseBody :: [PartialStmt] -> PartialStmt -> Either Diagnostic TotalStmt
 parseBody partials (FuncDef pat body) = FuncDef pat <$> parseExpr (args ++ concatMap funcItems partials) body
   where
@@ -56,14 +60,14 @@ primaryFuncItem s = FuncItem (FunctionName [Symbol s] primaryPrec) []
 parseExpr :: [FuncItem] -> [Token] -> Either Diagnostic Expr
 parseExpr fi tokens = fst <$> runParser (parsePrec fi lowestPrec <* eof) tokens
 
-patternToItem :: FuncPattern -> FuncItem
-patternToItem pat = FuncItem (patternToName pat) (patternLazinesses pat)
-
-funcItems :: PartialStmt -> [FuncItem]
+funcItems :: Stmt a b -> [FuncItem]
 funcItems (FuncDef pat _) = [patternToItem pat]
 funcItems (ExternDef pat) = [patternToItem pat]
 funcItems (AtomDef name) = [primaryFuncItem name]
 funcItems _ = []
+
+patternToItem :: FuncPattern' a -> FuncItem
+patternToItem pat = FuncItem (patternToName pat) (patternLazinesses pat)
 
 parsePrec :: [FuncItem] -> Prec -> Parser Token Expr
 parsePrec fi prec = primItem fi <|> parsePrefix fi prec >>= parseInfix fi prec

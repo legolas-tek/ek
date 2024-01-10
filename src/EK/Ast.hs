@@ -102,7 +102,7 @@ patternToName (FuncPattern items _ prec) = FunctionName (map patternToName' item
     patternToName' (SymbolPattern s) = Symbol s
     patternToName' PlaceholderPattern = Placeholder
 
-patternLazinesses :: FuncPattern -> [Bool]
+patternLazinesses :: FuncPattern' a-> [Bool]
 patternLazinesses = concatMap patternLazyness . funcPatternItems
   where patternLazyness (ArgPattern l _ _) = [l]
         patternLazyness (SymbolPattern _) = []

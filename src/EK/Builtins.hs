@@ -18,6 +18,13 @@ import qualified Data.Map as Map
 void :: Instruction
 void = Push $ AtomValue "void"
 
+runVM :: Result -> IO VMValue
+runVM res = do
+  mainFn <- maybe (fail "No main function") return $ Map.lookup "main" res
+  let insts = res <> builtins
+  let env = FunctionValue <$> insts
+  exec env [] mainFn []
+
 builtins :: Result
 builtins = Map.fromList
   [ ("builtin print", [GetEnv "builtin print\\impl", Ret])
@@ -52,11 +59,3 @@ builtins = Map.fromList
   , ("builtin if\\then", [LoadArg 0, LoadArg 1, GetEnv "builtin if\\else", Closure 2, Ret])
   , ("builtin if\\else", [LoadArg 1, JmpFalse 4, LoadArg 2, void, Call, Ret, LoadArg 0, void, Call, Ret])
   ]
-
-runVM :: Result -> IO ()
-runVM res = do
-  mainFn <- maybe (fail "No main function") return $ Map.lookup "main" res
-  let insts = res <> builtins
-  let env = FunctionValue <$> insts
-  _ <- exec env [] mainFn []
-  return ()
