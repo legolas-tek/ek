@@ -19,9 +19,9 @@ fn _ _ == = builtin eq
 fn (a) not = a false ==
 fn (a) (b) != = a b == not
 fn _ _ < = builtin lt
-//fn (a) (b) > = b a <
-//fn (a) (b) <= = a b > not
-//fn (a) (b) >= = a b < not
+fn (a) (b) > = b a <
+fn (a) (b) <= = a b > not
+fn (a) (b) >= = a b < not
  
 // fn (a) (lazy b) && = if a then b else false
 // fn (a) (lazy b) || = if a then true else b
