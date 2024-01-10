@@ -75,3 +75,12 @@ fn main =
     >> false true || print
 // CHECK: false
     >> false false || print
+
+// CHECK: 42
+    >> 42 42 min print
+// CHECK: 42
+    >> 42 84 min print
+// CHECK: 42
+    >> 42 42 max print
+// CHECK: 84
+    >> 42 84 max print
