@@ -1,0 +1,80 @@
+//
+// RUN: ekrun %s | FileCheck -v %s
+//
+
+import std
+
+// # Functions
+
+fn add (a) (b) = a + b
+
+fn one = 1
+
+// ## Placeholder arguments
+
+fn addPl _ _ = _ + _
+
+// ## Operator function precedence
+
+fn (a) +- (b) precedence 6 = a + b - b
+
+// ## Lazy arguments
+
+fn debug (lazy b) = print "DEBUG: " >> b
+fn lazies = debug print "Hello, world!"
+
+// ## Recursive functions
+
+fn factorial (n) = if n == 0 then 1 else n * factorial (n - 1)
+
+// # Expressions
+
+// ## Calls
+
+fn simple (x) = x
+
+// ## Lambdas
+
+fn id = \x = x
+fn lambdaId = print (id $ 1)
+
+fn add (x) = \y = x + y
+fn lambdaAdd = print (add 1 $ 2)
+
+// ## Partial application
+
+fn inc = _ + 1
+
+fn partial = print (inc $ 1)
+
+fn fLambda _ = \x = 2 * x + 1
+fn fArg (x) = 2 * x + 1
+fn fDot _ = (_ + 1) . (2 * _) 
+
+// CHECK: 42
+fn main = print (simple 42)
+// CHECK: 1
+    >> lambdaId
+// CHECK: 3
+    >> lambdaAdd
+// CHECK: 2
+    >> partial
+// CHECK: 67
+    >> print (fLambda 33)
+// CHECK: 67
+    >> print (fArg 33)
+// CHECK: 67
+    >> print (fDot 33)
+// CHECK: 42
+    >> print (add 3 39)
+// CHECK: 42
+    >> print (addPl 3 39)
+// CHECK: 1
+    >> print one
+// CHECK: 7
+    >> print (7 +- 42)
+// CHECK: DEBUG:
+// CHECK: Hello, world!
+    >> lazies
+// CHECK: 120
+    >> print factorial 5

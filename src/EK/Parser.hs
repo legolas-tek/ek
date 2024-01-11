@@ -9,6 +9,7 @@
 
 module EK.Parser
     ( parseDocument
+    , parseDocumentAdding
     , parseSimpleDocument
     ) where
 
@@ -23,14 +24,17 @@ import Control.Monad (liftM2, liftM3)
 import Diagnostic
 
 parseDocument :: [Token] -> IO ([TotalStmt], [Diagnostic])
-parseDocument tokens = do
+parseDocument = parseDocumentAdding []
+
+parseDocumentAdding :: [TotalStmt] -> [Token] -> IO ([TotalStmt], [Diagnostic])
+parseDocumentAdding add tokens = do
   (stmts, diags) <- parse
   (exprs, diags') <- getImportedTokens stmts
   totals <- exprParse exprs
   return (totals, diags ++ diags')
   where
     parse = either (fail . show) return $ runParserOnFile document "" tokens
-    exprParse = either (fail . show) return . parseExprs
+    exprParse = either (fail . show) return . parseExprsAdding add
 
 parseSimpleDocument :: [Token] -> Either Diagnostic [TotalStmt]
 parseSimpleDocument tokens = runParser document tokens >>= parseExprs . fst

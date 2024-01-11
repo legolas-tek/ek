@@ -1,0 +1,36 @@
+//
+// RUN: ekrun %s | FileCheck -v %s
+//
+
+import std
+
+fn fib (n) =
+    if n < 2 then
+        1
+    else
+        fib (n - 1) + fib (n - 2)
+
+// CHECK: 1
+fn main = print fib 0
+// CHECK: 1
+    >> print fib 1
+// CHECK: 2
+    >> print fib 2
+// CHECK: 3
+    >> print fib 3
+// CHECK: 5
+    >> print fib 4
+// CHECK: 8
+    >> print fib 5
+// CHECK: 13
+    >> print fib 6
+// CHECK: 21
+    >> print fib 7
+// CHECK: 34
+    >> print fib 8
+// CHECK: 55
+    >> print fib 9
+// CHECK: 89
+    >> print fib 10
+// CHECK: 144
+    >> print fib 11

@@ -6,6 +6,5 @@ import std
 
 // CHECK: 42
 // CHECK: test
-// ERROR: error
-fn main = print (42 toString) >> print readLine >> eprint "error"
-
+// ERROR: hello
+fn main = print (42 toString) >> print readLine >> eprint "hello"

@@ -5,7 +5,7 @@
 -- Main
 --}
 
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Main (main) where
 
@@ -31,10 +31,10 @@ printPrompt new = hIsTerminalDevice stdin >>= \isTerm ->
 
 parseStmtOrExpr :: [TotalStmt] -> [Token] -> IO (Either [TotalStmt] Expr)
 parseStmtOrExpr partials tokens = do
-    res <- try (parseDocument tokens) :: IO (Either IOException ([TotalStmt], [Diagnostic]))
+    res <- try (parseDocumentAdding partials tokens) :: IO (Either IOException ([TotalStmt], [Diagnostic]))
     case res of
             Right result -> return (Left $ fst result)
-            Left _ -> Right <$> (either (fail . show) return $ parseReplExpr partials tokens)
+            Left _ -> Right <$> either (fail . show) return (parseReplExpr partials tokens)
 
 printRes :: VMValue -> IO ()
 printRes (AtomValue "void") = return ()
@@ -51,14 +51,14 @@ mainLoop env rest = do
     toEither <- try res :: IO (Either IOException (Either [TotalStmt] Expr))
     case toEither of
         Left err -> do
-            mapM_ (putStrLn . show) (diags)
+            mapM_ print diags
             print err
             mainLoop env rest
         Right (Left stmts) -> do
             mainLoop (env ++ stmts) rest
         Right (Right expr) -> do
             insts <- either fail return $ compileToVM (FuncDef (FuncPattern [SymbolPattern "main"] Nothing Nothing) expr : env)
-            (runVM insts >>= printRes) `catch` (\e -> putStrLn $ show (e :: IOException))
+            (runVM insts >>= printRes) `catch` print @IOException
             mainLoop env rest
 
 main :: IO ()

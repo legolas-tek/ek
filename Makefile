@@ -30,4 +30,7 @@ tests_run:
 	$(STACK) test --coverage
 	$(STACK) hpc report --all --destdir test/coverage
 
-.PHONY: all clean fclean re tests_run
+install:
+	$(STACK) install
+
+.PHONY: all clean fclean re tests_run install

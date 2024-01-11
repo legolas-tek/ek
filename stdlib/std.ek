@@ -49,3 +49,5 @@ fn (a) min (b) precedence 4 = if a < b then a else b
 fn (a) max (b) precedence 4 = if a > b then a else b
 
 fn _ toString = builtin toString
+
+fn (f) . (g) = \x = (f $ (g $ x))
