@@ -1,0 +1,83 @@
+{
+	"name": "eklsp",
+	"description": "GRPH Language Support",
+	"author": "Snowy_1803",
+	"license": "MPL",
+	"version": "1.0.0",
+	"publisher": "ek-lang",
+	"categories": [
+		"Programming Languages"
+	],
+	"keywords": [
+		"multi-root ready"
+	],
+	"engines": {
+		"vscode": "^1.52.0"
+	},
+	"activationEvents": [
+		"onLanguage:ek"
+	],
+	"main": "./out/extension",
+	"contributes": {
+		"configuration": [
+			{
+				"title": "GRPH",
+				"properties": {
+					"ek.languageServerPath": {
+						"type": "string",
+						"default": "ek-lsp",
+						"description": "Location where the GRPH-LSP can be found."
+					}
+				}
+			}
+		],
+		"languages": [{
+			"id": "ek",
+			"extensions": [".ek"],
+			"aliases": ["GRPH", "Graphism"],
+			"firstLine": "#requires GRPH 1.11",
+			"configuration": "./language-configuration.json"
+		}],
+		"semanticTokenTypes": [
+			{
+				"id": "command",
+				"superType": "keyword",
+				"description": "A GRPH #command"
+			}
+		],
+		"semanticTokenScopes": [
+			{
+				"language": "ek",
+				"scopes": {
+					"command": ["keyword.command"]
+				}
+			}
+		],
+		"configurationDefaults": {
+			"[ek]": {
+				"editor.detectIndentation": false,
+				"editor.insertSpaces": false,
+				"files.insertFinalNewline": true
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -b",
+		"watch": "tsc -b -w",
+		"lint": "eslint ./src --ext .ts,.tsx"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^7.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "^12.12.0",
+		"@types/vscode": "^1.52.0",
+		"@typescript-eslint/eslint-plugin": "^4.23.0",
+		"@typescript-eslint/parser": "^4.23.0",
+		"@vscode/test-electron": "^1.6.1",
+		"eslint": "^7.26.0",
+		"typescript": "^4.3.5",
+        "vsce": "^1.81.1"
+	}
+}
