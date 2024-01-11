@@ -1,0 +1,43 @@
+{
+	"name": "EK",
+	"scopeName": "source.ek",
+	"patterns": [
+	  {
+		"name": "comment.line.double-slash.ek",
+		"match": "//.*",
+		"captures": {
+		  "0": { "name": "comment.line.ek" }
+		}
+	  },
+	  {
+		"name": "comment.block.ek",
+		"begin": "/\\*",
+		"end": "\\*/",
+		"captures": {
+		  "0": { "name": "comment.block.ek" }
+		}
+	  },
+	{
+		"name": "keyword.import.ek",
+		"match": "\\b(import)\\b",
+		"captures": {
+		  "1": { "name": "keyword.import.ek" }
+		}
+	}
+	],
+	"repository": {
+	  "comment": {
+		"patterns": [
+		  {
+			"name": "comment.line.ek",
+			"match": "//.*"
+		  },
+		  {
+			"name": "comment.block.ek",
+			"begin": "/\\*",
+			"end": "\\*/"
+		  }
+		]
+	  }
+	}
+}
