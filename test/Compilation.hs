@@ -279,4 +279,39 @@ tests = test
                                   ])
                                 ]
         compileToVM stmts @?= Right expected
+    , "Atoms" ~: do
+        let stmts = [AtomDef "foo"]
+        let expected = fromList [("foo",
+                                  [ Push $ AtomValue "foo"
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
+    , "Struct" ~: do
+        let stmts = [StructDef "foo" [ StructElem "a" (TypeName "int")
+                                     , StructElem "b" (TypeName "int")]]
+        let expected = fromList [("_ a",
+                                  [ LoadArg 0
+                                  , Extract 0
+                                  , Ret
+                                  ])
+                                , ("_ b",
+                                  [ LoadArg 0
+                                  , Extract 1
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
+    , "Construct" ~: do
+        let stmts = [FuncDef (FuncPattern [SymbolPattern "myfoo"] Nothing Nothing)
+                              (StructLit (TypeName "foo")
+                               [IntegerLit 1, IntegerLit 2])]
+        let expected = fromList [("myfoo",
+                                  [ Push $ IntegerValue 1
+                                  , Push $ IntegerValue 2
+                                  , Construct "foo" 2
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
   ]

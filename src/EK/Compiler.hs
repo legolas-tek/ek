@@ -50,6 +50,8 @@ patternArguments (FuncPattern items _ _) = concatMap patternToArgument (zip [0..
 compileStmt :: TotalStmt -> Result
 compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (zip (patternArguments pattern) (patternLazinesses pattern)) [] [] empty (show $ patternToName pattern) 0)
 compileStmt (AtomDef name) = fromList [(name, [Push $ AtomValue name, Ret])]
+compileStmt (StructDef _ items) = fromList $ zipWith fieldAccessor [0..] items
+  where fieldAccessor i (StructElem name _) = ("_ " ++ name, [LoadArg 0, Extract i, Ret])
 compileStmt _ = empty
 
 compileFn :: Expr -> State Env ()
@@ -102,7 +104,9 @@ compileExpr (Lambda name expr) = do
   put outsideEnv { result = result insideEnv, lambdaCount = lambdaCount insideEnv }
   captures <- mapM compileCapture (reverse $ captured insideEnv)
   return $ captures ++ [GetEnv lambdaName, Closure (length captures)]
-compileExpr _ = error "not implemented"
+compileExpr (StructLit name items) = do
+  items' <- concat <$> mapM compileExpr items
+  return $ items' ++ [Construct (show name) (length items)]
 
 createFn :: Expr -> State Env ()
 createFn expr = do
