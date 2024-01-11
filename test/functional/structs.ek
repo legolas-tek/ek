@@ -1,0 +1,17 @@
+//
+// RUN: ekrun %s | FileCheck -v %s
+//
+
+import std
+
+struct Person {
+    name: string,
+    age: int,
+}
+
+fn Emil = Person { "Emil", 20 }
+
+// CHECK: Emil
+fn main = print Emil name
+// CHECK: 20
+       >> print Emil age

@@ -128,7 +128,7 @@ exec env args (GetEnv value:insts) stack = case Data.Map.lookup value env of
   Nothing  -> fail $ "Could not find `" ++ value ++ "' in environment"
 exec env args (Closure count:insts) (FunctionValue fn:stack) = exec env args insts (ClosureValue fn (take count stack):drop count stack)
 exec _ _ (Closure _:_) _ = fail "Cannot create closure of non-function type"
-exec env args (Construct name count:insts) stack = exec env args insts (StructValue name (take count stack):drop count stack)
+exec env args (Construct name count:insts) stack = exec env args insts (StructValue name (reverse $ take count stack):drop count stack)
 exec env args (Extract offset:insts) (StructValue _ vs:stack) = exec env args insts (vs !! offset:stack)
 exec _ _ (Extract _:_) _ = fail "Cannot extract field from non-struct type"
 
