@@ -15,6 +15,8 @@ module Parser
   , parseAny
   , parseInt
   , parseUInt
+  , parseFloat
+  , parseUFloat
   , spaces
   , parseList
   , parseStringLit
@@ -106,6 +108,12 @@ parseUInt = read <$> some (parseAnyChar ['0'..'9'])
 
 parseInt :: Parser Char Integer
 parseInt = (parseChar '-' >> negate <$> parseUInt) <|> parseUInt
+
+parseUFloat :: Parser Char Float
+parseUFloat = read <$> some (parseAnyChar ['0'..'9'] <|> parseChar '.')
+
+parseFloat :: Parser Char Float
+parseFloat = (parseChar '-' >> negate <$> parseUFloat) <|> parseUFloat
 
 spaces :: Parser Char [Char]
 spaces = many $ parseAnyChar " \t\n"
