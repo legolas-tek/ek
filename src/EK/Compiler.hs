@@ -102,7 +102,9 @@ compileExpr (Lambda name expr) = do
   put outsideEnv { result = result insideEnv, lambdaCount = lambdaCount insideEnv }
   captures <- mapM compileCapture (reverse $ captured insideEnv)
   return $ captures ++ [GetEnv lambdaName, Closure (length captures)]
-compileExpr _ = error "not implemented"
+compileExpr (StructLit name items) = do
+  items' <- concat <$> mapM compileExpr items
+  return $ items' ++ [Construct (show name) (length items)]
 
 createFn :: Expr -> State Env ()
 createFn expr = do
