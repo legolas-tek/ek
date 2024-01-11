@@ -1,6 +1,6 @@
 {
 	"name": "eklsp",
-	"description": "GRPH Language Support",
+	"description": "EK Language Support",
 	"author": "Snowy_1803",
 	"license": "MPL",
 	"version": "1.0.0",
@@ -21,12 +21,12 @@
 	"contributes": {
 		"configuration": [
 			{
-				"title": "GRPH",
+				"title": "EK",
 				"properties": {
 					"ek.languageServerPath": {
 						"type": "string",
 						"default": "ek-lsp",
-						"description": "Location where the GRPH-LSP can be found."
+						"description": "Location where the EK-LSP can be found."
 					}
 				}
 			}
@@ -34,15 +34,15 @@
 		"languages": [{
 			"id": "ek",
 			"extensions": [".ek"],
-			"aliases": ["GRPH", "Graphism"],
-			"firstLine": "#requires GRPH 1.11",
+			"aliases": ["EK", "Graphism"],
+			"firstLine": "#requires EK 1.11",
 			"configuration": "./language-configuration.json"
 		}],
 		"semanticTokenTypes": [
 			{
 				"id": "command",
 				"superType": "keyword",
-				"description": "A GRPH #command"
+				"description": "A EK #command"
 			}
 		],
 		"semanticTokenScopes": [
