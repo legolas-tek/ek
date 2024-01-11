@@ -1,11 +1,11 @@
-# GRPH Visual Studio Code extension
+# EK Visual Studio Code extension
 
-Write GRPH in VSCode using LSP and this extension.
+Write EK in VSCode using LSP and this extension.
 
 ## Install
 
 Install the extension from source using `npm install`.
 
-To run, it needs the GRPH LSP server installed. Clone the compiler from [here](https://github.com/grph-lang/grph), and build it using `swift build --product LSP` (Swift needs to be installed).
+To run, it needs the EK LSP server installed.
 
-You must then set the VSCode setting `grph.languageServerPath` to `{directory where the GRPH compiler was cloned}/.build/debug/LSP` (append `.exe` to that on Windows)
+You must then set the VSCode setting `ek.languageServerPath` to `{directory where the EK compiler was cloned}/lsp` (append `.exe` to that on Windows)
