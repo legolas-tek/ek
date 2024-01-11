@@ -45,7 +45,7 @@ jobs:
               ${{ runner.os }}-stack-work-
 
       - name: "Build the GLaDOS project"
-        timeout-minutes: 20
+        timeout-minutes: 8
         run: make
 
       - name: "Run the GLaDOS unit tests"
