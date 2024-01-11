@@ -17,23 +17,23 @@ import qualified Data.Map as Map (lookup, filterWithKey)
 import qualified Data.Set as Set
 import Data.List (nub)
 
-searchFuncCall :: Insts -> [String]
-searchFuncCall [] = []
-searchFuncCall (GetEnv x : xs) = x : searchFuncCall xs
-searchFuncCall (_ : xs) = searchFuncCall xs
+getUsedFunctions :: Insts -> [String]
+getUsedFunctions [] = []
+getUsedFunctions (GetEnv x : xs) = x : getUsedFunctions xs
+getUsedFunctions (_ : xs) = getUsedFunctions xs
 
-getCalledFunctions' :: Result -> Set.Set String -> [String] -> [String]
-getCalledFunctions' _ _ [] = []
-getCalledFunctions' insts visited (x : xs)
-  | x `Set.member` visited = getCalledFunctions' insts visited xs
+visitCalledFunctions :: Result -> Set.Set String -> [String] -> [String]
+visitCalledFunctions _ _ [] = []
+visitCalledFunctions insts visited (x : xs)
+  | x `Set.member` visited = visitCalledFunctions insts visited xs
   | otherwise =
       case Map.lookup x insts of
-        Nothing -> getCalledFunctions' insts visited xs
-        Just insts' -> let calledFuncs = searchFuncCall insts'
-                       in nub $ calledFuncs ++ getCalledFunctions' insts (Set.insert x visited) (xs ++ calledFuncs)
+        Nothing -> visitCalledFunctions insts visited xs
+        Just insts' -> let calledFuncs = getUsedFunctions insts'
+                       in nub $ calledFuncs ++ visitCalledFunctions insts (Set.insert x visited) (xs ++ calledFuncs)
 
 getCalledFunctions :: Result -> String -> [String]
-getCalledFunctions insts func = getCalledFunctions' insts Set.empty [func]
+getCalledFunctions insts func = visitCalledFunctions insts Set.empty [func]
 
 getCalledFunctionsFromMain :: Result -> [String]
 getCalledFunctionsFromMain insts = "main" : getCalledFunctions insts "main"
