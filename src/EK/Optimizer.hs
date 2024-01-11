@@ -12,7 +12,9 @@ module EK.Optimizer
 
 import VirtualMachine
 import EK.Compiler
+
 import qualified Data.Map as Map (lookup, filterWithKey)
+import qualified Data.Set as Set
 import Data.List (nub)
 
 searchFuncCall :: Insts -> [String]
@@ -20,16 +22,18 @@ searchFuncCall [] = []
 searchFuncCall (GetEnv x : xs) = x : searchFuncCall xs
 searchFuncCall (_ : xs) = searchFuncCall xs
 
-getCalledFunctions' :: Result -> [String] -> [String]
-getCalledFunctions' _ [] = []
-getCalledFunctions' insts (x : xs) =
-  case Map.lookup x insts of
-    Nothing -> getCalledFunctions' insts xs
-    Just insts' -> let calledFuncs = searchFuncCall insts'
-                   in nub $ calledFuncs ++ getCalledFunctions' insts (xs ++ calledFuncs)
+getCalledFunctions' :: Result -> Set.Set String -> [String] -> [String]
+getCalledFunctions' _ _ [] = []
+getCalledFunctions' insts visited (x : xs)
+  | x `Set.member` visited = getCalledFunctions' insts visited xs
+  | otherwise =
+      case Map.lookup x insts of
+        Nothing -> getCalledFunctions' insts visited xs
+        Just insts' -> let calledFuncs = searchFuncCall insts'
+                       in nub $ calledFuncs ++ getCalledFunctions' insts (Set.insert x visited) (xs ++ calledFuncs)
 
 getCalledFunctions :: Result -> String -> [String]
-getCalledFunctions insts func = getCalledFunctions' insts [func]
+getCalledFunctions insts func = getCalledFunctions' insts Set.empty [func]
 
 getCalledFunctionsFromMain :: Result -> [String]
 getCalledFunctionsFromMain insts = "main" : getCalledFunctions insts "main"
