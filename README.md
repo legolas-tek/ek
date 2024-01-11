@@ -1,46 +1,16 @@
-# GLADOS
+# EK Programming Language (GLaDOS)
 
 <div align="center">
     <img src="https://static.wikia.nocookie.net/epicpixelbattles/images/5/5f/400px-GLaDOS_P2.png/revision/latest?cb=20191127181958">
 
-    ![Static Badge](https://img.shields.io/badge/glados-programming_language-blue)
+![Static Badge](https://img.shields.io/badge/EK-programming_language-blue)
 
 </div>
-    The goal of this project is to implement a programming language of our own design in Haskell.
+The goal of this project is to implement a programming language of our own design in Haskell.
 
 ## Needed Dependencies ⚙️
 
-This project will use various dependencies, some are basic, and others are more specific. You can install the specific ones with the following commands:
-
-### To compile, install ghcup
-
-For Linus, macOS:
-
-```sh
-curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
-```
-
-### To test the code, install lit and llvm
-
-For Ubuntu:
-
-```sh
-pip install lit
-```
-
-and you have to install FileCheck.
-
-For Fedora:
-
-```sh
-pip install lit && sudo dnf install llvm
-```
-
-For macOS:
-
-```sh
-pip install lit && brew install llvm
-```
+The best way to install Haskell, is using [GHCup](https://www.haskell.org/ghcup/).
 
 ## Build the Project 🛠️
 
@@ -49,13 +19,13 @@ After installing the necessary dependencies, in order to build the project, use 
 - Clone the project:
 
 ```sh
-git clone git@github.com:EpitechPromo2026/B-CPP-500-PAR-5-1-rtype-jeremy.elalouf.git
+git clone git@github.com:EpitechPromo2026/B-FUN-500-PAR-5-2-glados-jeremy.elalouf.git
 ```
 
 - Go to the project directory:
 
 ```sh
-cd B-CPP-500-PAR-5-1-rtype-jeremy.elalouf.git
+cd B-FUN-500-PAR-5-2-glados-jeremy.elalouf.git
 ```
 
 - Build using Makefile:
@@ -64,63 +34,34 @@ cd B-CPP-500-PAR-5-1-rtype-jeremy.elalouf.git
 make
 ```
 
+- To use the project globally, install it:
+
+```sh
+make install
+```
+
 ## How to Use? 🛠️
 
-- run:
+Run `./glados` to open the REPL.
+
+To use the standard library, run `cd stdlib; ../glados`. Then, you can type expressions:
 
 ```sh
-./glados
+glados> import std
+glados> 6 * 7
+42
 ```
 
-- And then you are gonna have:  
-  `glados>`
-
-- And you can use one of there symbols:  
-  `#t`: Represents true. It's used in LISP to denote a logically true value.  
-  `#f`: Represents false. It's used for denoting a logically false value.  
-  `+`: The addition operator. It's used to add multiple numbers together.  
-  `(+ 3 4)` would return 7.  
-  `*`: The multiplication operator. It's used for multiplying multiple numbers.  
-  `(* 2 3)` would return 6.  
-  `-`: The subtraction operator. It's used to calculate the difference between two numbers.  
-  `(- 10 4)` would return 6.  
-  `/`: The division operator. It's used to divide one number by another.  
-  `(/ 20 5)` would return 4.  
-  `max`: The maximum function. It's used to find the maximum value among a set of numbers.  
-  `(max 1 5 3)` would return 5.  
-  `min`: The minimum function. It's used to find the minimum value among a set of numbers.  
-  `(min 1 5 3)` would return 1.  
-  `not`: The logical negation operator. It returns the opposite of the given logical value.  
-  `(not #t)` would return `#f` (false).  
-  `and`: The logical AND operator. It returns true if all its arguments are true.  
-  `(and #t #f)` wound return `#f` (false).  
-  `or`: The logical OR operator. It returns true if any of its arguments is true.  
-  `(or #t #f)` would return `#t` (true).
-  `xor`: The logical XOR (exclusive OR) operator. It returns true if exactly one of its arguments is true.  
-  `(xor #t #f)` would return `#t` (true).  
-  `eq?`: The equality test function. It checks if two arguments refer to the exact same object.  
-  `<`: The less-than comparison operator. It returns true if the first argument is less than the second.  
-  `(< 2 5)` would return `#t` (true).  
-  `>`: The greater-than comparison operator. It returns true if the first argument is greater than the second.  
-  `(> 5 3)` would return `#t` (true),  
-  `<=`: The less-than-or-equal-to comparison operator. It returns true if the first argument is less than or equal to the second.  
-  `(<= 2 5)` would return `#t` (true),  
-  `>=`: The greater-than-or-equal-to comparison operator. It returns true if the first argument is greater than or equal to the second.  
-  `(>= 5 2)` would return `#t` (true).  
-  `=`: The numeric equality operator. It returns true if two numbers are equal.  
-  `(= 3 3)` would return `#t` (true).
-
-- And you can use like this:
+You can even define functions!
 
 ```sh
-glados> (+ 1 2)
-3
+glados> fn twice _ = 2 * _
+glados> twice 3
+6
 ```
 
-## Run Unit Tests 🛠️
+For more information about the language, check out [Getting started with EK](https://github.com/EpitechPromo2026/B-FUN-500-PAR-5-2-glados-jeremy.elalouf/wiki/Getting-Started-with-EK).
 
-After installing the necessary dependencies, in order to test the project, use the Makefile. Follow this command:
+## Editor Support
 
-```sh
-make tests_run
-```
+If you use Emacs, you can get Syntax Hightlighting using our plugin: [ek-mode](editor/ek-mode)
