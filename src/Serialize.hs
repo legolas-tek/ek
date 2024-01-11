@@ -65,6 +65,11 @@ instance Serializable Int where
 
   deserialize = (read . fmap BI.w2c) <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
 
+instance Serializable Float where
+  serialize float = fromString (show float) <> B.singleton 0
+
+  deserialize = (read . fmap BI.w2c) <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
+
 instance Serializable String where
   serialize str = fromString str <> B.singleton 0
 

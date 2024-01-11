@@ -20,6 +20,7 @@ import System.Exit (exitWith, ExitCode(..), exitSuccess)
 import System.IO (hPutStr, stderr)
 
 data VMValue = IntegerValue Integer
+             | FloatValue Float
              | AtomValue String
              | FunctionValue Insts
              | ClosureValue Insts [VMValue]
