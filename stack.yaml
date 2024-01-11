@@ -42,6 +42,8 @@ packages:
 #
 extra-deps:
   - HUnit-1.6.2.0
+  - lsp-2.3.0.0@sha256:b21f38d07a75db14fd72fd944238c76fc9fe40b8b11aee8940db520342475d96,3686
+  - lsp-types-2.1.0.0@sha256:271e80ad8a51c46a61e2ca18dd3454d4bd1a9b6e0f2aa15d6cbad9e2984da69b,29541
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
