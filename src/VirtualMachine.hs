@@ -128,6 +128,7 @@ exec env args (GetEnv value:insts) stack = case Data.Map.lookup value env of
 exec env args (Closure count:insts) (FunctionValue fn:stack) = exec env args insts (ClosureValue fn (take count stack):drop count stack)
 exec _ _ (Closure _:_) _ = fail "Cannot create closure of non-function type"
 
+-- int int
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)
   = Right $ IntegerValue $ a + b
@@ -142,4 +143,46 @@ applyOp Div (IntegerValue a) (IntegerValue b)
 applyOp Eq a b = Right $ AtomValue (if a == b then "true" else "false")
 applyOp Less (IntegerValue a) (IntegerValue b)
   = Right $ AtomValue (if a < b then "true" else "false")
+
+-- float float
+applyOp Add (FloatValue a) (FloatValue b)
+  = Right $ FloatValue $ a + b
+applyOp Sub (FloatValue a) (FloatValue b)
+  = Right $ FloatValue $ a - b
+applyOp Mul (FloatValue a) (FloatValue b)
+  = Right $ FloatValue $ a * b
+applyOp Div (FloatValue _) (FloatValue 0)
+  = Left "Division by zero"
+applyOp Div (FloatValue a) (FloatValue b)
+  = Right $ FloatValue $ a / b
+applyOp Less (FloatValue a) (FloatValue b)
+  = Right $ AtomValue (if a < b then "true" else "false")
+
+-- float int
+applyOp Add (FloatValue a) (IntegerValue b)
+  = Right $ FloatValue $ a + (fromIntegral b)
+applyOp Sub (FloatValue a) (IntegerValue b)
+  = Right $ FloatValue $ a - (fromIntegral b)
+applyOp Mul (FloatValue a) (IntegerValue b)
+  = Right $ FloatValue $ a * (fromIntegral b)
+applyOp Div (FloatValue _) (IntegerValue 0)
+  = Left "Division by zero"
+applyOp Div (FloatValue a) (IntegerValue b)
+  = Right $ FloatValue $ a / (fromIntegral b)
+applyOp Less (FloatValue a) (IntegerValue b)
+  = Right $ AtomValue (if a < (fromIntegral b) then "true" else "false")
+
+-- int float
+applyOp Add (IntegerValue a) (FloatValue b)
+  = Right $ FloatValue $ (fromIntegral a) + b
+applyOp Sub (IntegerValue a) (FloatValue b)
+  = Right $ FloatValue $ (fromIntegral a) - b
+applyOp Mul (IntegerValue a) (FloatValue b)
+  = Right $ FloatValue $ (fromIntegral a) * b
+applyOp Div (IntegerValue _) (FloatValue 0)
+  = Left "Division by zero"
+applyOp Div (IntegerValue a) (FloatValue b)
+  = Right $ FloatValue $ (fromIntegral a) / b
+applyOp Less (IntegerValue a) (FloatValue b)
+  = Right $ AtomValue (if (fromIntegral a) < b then "true" else "false")
 applyOp _ _ _ = Left "Invalid operands for operator"
