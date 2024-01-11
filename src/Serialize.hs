@@ -79,12 +79,14 @@ instance Serializable VMValue where
   serialize (IntegerValue integer) = B.singleton 1 <> serialize integer
   serialize (AtomValue atom) = B.singleton 2 <> serialize atom
   serialize (StringValue str) = B.singleton 3 <> serialize str
+  serialize (FloatValue float) = B.singleton 4 <> serialize float
   serialize (FunctionValue _) = B.singleton 0
   serialize (ClosureValue _ _) = B.singleton 0
 
   deserialize = parseOneIf (== 1) *> (IntegerValue <$> deserialize)
             <|> parseOneIf (== 2) *> (AtomValue <$> deserialize)
             <|> parseOneIf (== 3) *> (StringValue <$> deserialize)
+            <|> parseOneIf (== 4) *> (FloatValue <$> deserialize)
 
 instance Serializable Instruction where
   serialize (Push value) = B.singleton 1 <> serialize value

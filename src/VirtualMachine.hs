@@ -29,6 +29,7 @@ data VMValue = IntegerValue Integer
 
 instance Show VMValue where
   show (IntegerValue v) = show v
+  show (FloatValue v) = show v
   show (AtomValue v) = v
   show (FunctionValue _) = "(function)"
   show (ClosureValue _ _) = "(function)"
@@ -78,6 +79,7 @@ type Env = Map String VMValue
 
 instance Show Instruction where
   show (Push (IntegerValue v)) = "push " ++ show v
+  show (Push (FloatValue v)) = "push " ++ show v
   show (Push (AtomValue v)) = "push " ++ v
   show (Push (FunctionValue _)) = "push function" -- impossible
   show (Push (ClosureValue _ _)) = "push function" -- impossible

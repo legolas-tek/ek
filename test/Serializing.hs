@@ -79,12 +79,15 @@ tests = test
       let serializedVMInteger = B.unpack (serialize (IntegerValue $ 42))
       let serializedVMAtomValue = B.unpack (serialize (AtomValue $ "test"))
       let serializedVMStringValue = B.unpack (serialize (StringValue $ "test"))
+      let serializedVMFloatValue = B.unpack (serialize (FloatValue $ 42.5))
 
       runParser deserialize serializedVMInteger @?= Right ((IntegerValue $ 42), (stringToWord8 ""))
       runParser (deserialize :: Parser Word8 VMValue) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found 102" (SourcePos "" 1 1))
       runParser deserialize serializedVMAtomValue @?= Right ((AtomValue $ "test"), (stringToWord8 ""))
       runParser (deserialize :: Parser Word8 VMValue) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found 102" (SourcePos "" 1 1))
       runParser deserialize serializedVMStringValue @?= Right ((StringValue $ "test"), (stringToWord8 ""))
+      runParser (deserialize :: Parser Word8 VMValue) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found 102" (SourcePos "" 1 1))
+      runParser deserialize serializedVMFloatValue @?= Right ((FloatValue $ 42.5), (stringToWord8 ""))
       runParser (deserialize :: Parser Word8 VMValue) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found 102" (SourcePos "" 1 1))
 
    , "deserialize instruction" ~: do
