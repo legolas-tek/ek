@@ -61,11 +61,12 @@ tests = test
       isLeft (runParser parseInt "--42foobar") @?= True
   , "parseUFloat" ~: do
       runParser parseUFloat "42.55foobar" @?= Right (42.55 , "foobar")
-      runParser parseUFloat "42foobar" @?= Right (42, "foobar")
       isLeft (runParser parseUFloat "foobar42.5") @?= True
+      isLeft (runParser parseUFloat "42foobar") @?= True
   , "parseFloat" ~: do
       runParser parseFloat "42.5foobar" @?= Right (42.5, "foobar")
       runParser parseFloat "-42.5foobar" @?= Right (-42.5, "foobar")
+      runParser parseFloat "42.5.3.2foobar" @?= Right (42.5, ".3.2foobar")
       isLeft (runParser parseInt "foobar-42.5") @?= True
       isLeft (runParser parseInt "--42.5foobar") @?= True
   , "parseList" ~: do

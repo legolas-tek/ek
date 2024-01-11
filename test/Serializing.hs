@@ -42,7 +42,7 @@ tests = test
       serialize ("test" :: String) @?= "test\0"
       serialize (42 :: Integer) @?= "42\0"
       serialize (42 :: Int) @?= "42\0"
-      serialize (42.5 :: Float) @?= "42.5\0"
+      serialize (42.5 :: Double) @?= "42.5\0"
 
    , "string" ~: do
       let str = string (stringToWord8 "test")
@@ -70,10 +70,10 @@ tests = test
       runParser (deserialize :: Parser Word8 Integer) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found EOF" (SourcePos "" 1 12))
 
    , "deserialize float" ~: do
-      let serializedFloat = B.unpack (serialize (42.5 :: Float))
+      let serializedFloat = B.unpack (serialize (42.5 :: Double))
 
-      runParser deserialize serializedFloat @?= Right ((42.5 :: Float), (stringToWord8 ""))
-      runParser (deserialize :: Parser Word8 Float) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found EOF" (SourcePos "" 1 12))
+      runParser deserialize serializedFloat @?= Right ((42.5 :: Double), (stringToWord8 ""))
+      runParser (deserialize :: Parser Word8 Double) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found EOF" (SourcePos "" 1 12))
 
    , "deserialize VMValue" ~: do
       let serializedVMInteger = B.unpack (serialize (IntegerValue $ 42))

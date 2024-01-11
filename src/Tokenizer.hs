@@ -67,6 +67,9 @@ parseBracketClose = extractTokenType "]" BracketClose
 parseIntLiter :: Parser Char (String, TokenType)
 parseIntLiter = parseInt >>= \integer -> return (show integer, IntLiter)
 
+parseFloatLiter :: Parser Char (String, TokenType)
+parseFloatLiter = parseFloat >>= \float -> return (show float, FloatLiter)
+
 parseStringLiter :: Parser Char (String, TokenType)
 parseStringLiter = parseStringLit >>= \string -> return (string, StringLiter)
 
@@ -101,7 +104,7 @@ identifyOp _ = OperatorIdentifier
 findTokenType :: Parser Char (String, TokenType)
 findTokenType = parseCurlyOpen <|> parseCurlyClose <|> parseComma <|> parseBackslash <|> parseUnderscore <|> parseParenOpen
     <|> parseParenClose <|> parseColonColon <|> parseColon <|> parseBracketOpen
-    <|> parseBracketClose <|> parseIntLiter <|> parseStringLiter <|> parseTextIdentifer <|> parseOperatorId
+    <|> parseBracketClose <|> parseFloatLiter <|> parseIntLiter <|> parseStringLiter <|> parseTextIdentifer <|> parseOperatorId
 
 token :: Parser Char Token
 token = do

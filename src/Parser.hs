@@ -109,10 +109,15 @@ parseUInt = read <$> some (parseAnyChar ['0'..'9'])
 parseInt :: Parser Char Integer
 parseInt = (parseChar '-' >> negate <$> parseUInt) <|> parseUInt
 
-parseUFloat :: Parser Char Float
-parseUFloat = read <$> some (parseAnyChar ['0'..'9'] <|> parseChar '.')
+parseUFloat :: Parser Char Double
+parseUFloat = do
+  digitsBeforeDot <- some (parseAnyChar ['0'..'9'])
+  _ <- parseChar '.'
+  digitsAfterDot <- some (parseAnyChar ['0'..'9'])
+  let floatString = digitsBeforeDot ++ "." ++ digitsAfterDot
+  return (read floatString)
 
-parseFloat :: Parser Char Float
+parseFloat :: Parser Char Double
 parseFloat = (parseChar '-' >> negate <$> parseUFloat) <|> parseUFloat
 
 spaces :: Parser Char [Char]
