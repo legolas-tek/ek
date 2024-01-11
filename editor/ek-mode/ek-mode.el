@@ -6,7 +6,6 @@
 ;;   "Path of the EK LSP executable"
 ;;   :type 'file)
 
-;; Please add comment handling to this:
 (defvar ek-keywords
   (let* ((ek-keywords '("atom" "struct" "type" "fn" "extern" "lazy" "precedence" "import"))
          (ek-types '("bool" "int" "true" "false" "string" "void" "any" "never"))

@@ -61,3 +61,7 @@ glados> twice 3
 ```
 
 For more information about the language, check out [Getting started with EK](https://github.com/EpitechPromo2026/B-FUN-500-PAR-5-2-glados-jeremy.elalouf/wiki/Getting-Started-with-EK).
+
+## Editor Support
+
+If you use Emacs, you can get Syntax Hightlighting using our plugin: [ek-mode](editor/ek-mode)
