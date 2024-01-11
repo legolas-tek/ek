@@ -68,6 +68,8 @@ funcItems :: Stmt a b -> [FuncItem]
 funcItems (FuncDef pat _) = [patternToItem pat]
 funcItems (ExternDef pat) = [patternToItem pat]
 funcItems (AtomDef name) = [primaryFuncItem name]
+funcItems (StructDef _ items) = map accessorItem items
+  where accessorItem (StructElem name _) = FuncItem (FunctionName [Placeholder, Symbol name] primaryPrec) [False]
 funcItems _ = []
 
 patternToItem :: FuncPattern' a -> FuncItem

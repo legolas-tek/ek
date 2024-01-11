@@ -72,6 +72,7 @@ data Instruction = Push VMValue
                  | GetEnv String
                  | Closure Int
                  | Construct String Int
+                 | Extract Int
                  deriving (Eq)
 
 type Args = [VMValue]
@@ -91,6 +92,7 @@ instance Show Instruction where
   show (GetEnv value) = "getenv " ++ value
   show (Closure count) = "closure " ++ show count
   show (Construct name count) = "construct " ++ name ++ " " ++ show count
+  show (Extract offset) = "extract " ++ show offset
 
 exec :: Env -> Args -> Insts -> Stack -> IO VMValue
 exec _ _ [] (s:_) = return s
@@ -127,6 +129,8 @@ exec env args (GetEnv value:insts) stack = case Data.Map.lookup value env of
 exec env args (Closure count:insts) (FunctionValue fn:stack) = exec env args insts (ClosureValue fn (take count stack):drop count stack)
 exec _ _ (Closure _:_) _ = fail "Cannot create closure of non-function type"
 exec env args (Construct name count:insts) stack = exec env args insts (StructValue name (take count stack):drop count stack)
+exec env args (Extract offset:insts) (StructValue _ vs:stack) = exec env args insts (vs !! offset:stack)
+exec _ _ (Extract _:_) _ = fail "Cannot extract field from non-struct type"
 
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)

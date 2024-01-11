@@ -50,6 +50,8 @@ patternArguments (FuncPattern items _ _) = concatMap patternToArgument (zip [0..
 compileStmt :: TotalStmt -> Result
 compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (zip (patternArguments pattern) (patternLazinesses pattern)) [] [] empty (show $ patternToName pattern) 0)
 compileStmt (AtomDef name) = fromList [(name, [Push $ AtomValue name, Ret])]
+compileStmt (StructDef _ items) = fromList $ zipWith fieldAccessor [0..] items
+  where fieldAccessor i (StructElem name _) = ("_ " ++ name, [LoadArg 0, Extract i, Ret])
 compileStmt _ = empty
 
 compileFn :: Expr -> State Env ()
