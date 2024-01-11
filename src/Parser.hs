@@ -114,8 +114,7 @@ parseUFloat = do
   digitsBeforeDot <- some (parseAnyChar ['0'..'9'])
   _ <- parseChar '.'
   digitsAfterDot <- some (parseAnyChar ['0'..'9'])
-  let floatString = digitsBeforeDot ++ "." ++ digitsAfterDot
-  return (read floatString)
+  return (read (digitsBeforeDot ++ "." ++ digitsAfterDot))
 
 parseFloat :: Parser Char Double
 parseFloat = (parseChar '-' >> negate <$> parseUFloat) <|> parseUFloat
