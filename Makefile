@@ -13,7 +13,7 @@ NAME	=	glados ekc ek
 STACK	=	stack
 
 all:
-	$(STACK) build
+	$(STACK) build glados:ek glados:ekc glados:glados
 	cp "`$(STACK) path --local-install-root`/bin/"* .
 
 clean:
