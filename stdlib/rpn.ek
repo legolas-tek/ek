@@ -8,7 +8,7 @@
 import bool
 import builtins
 
-fn (f) $ _ = f
+fn (f) _ call = f
 
 fn _ _ + = builtin add
 fn _ _ - = builtin sub
@@ -27,7 +27,7 @@ fn (a) (lazy b) && = if a then b else false
 fn (a) (lazy b) || = if a then true else b
 
 fn if (cond) then (lazy truebr) else (lazy falsebr)
-    = builtin if $ cond $ (\v = truebr) $ (\v = falsebr)
+    = builtin if cond call (\v = truebr) call (\v = falsebr) call
 
 fn readLine = builtin readLine
 
@@ -47,4 +47,6 @@ fn _ toString = builtin toString
 fn (a) >> (b) = b
 
 fn _ print = builtin print
+fn (v) p = v print >> v
+
 fn _ eprint = builtin eprint
