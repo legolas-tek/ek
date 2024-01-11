@@ -33,9 +33,9 @@ fn readLine = builtin readLine
 
 fn _ exit = builtin exit
 
-fn (str) panic = str eprint exit >>
+fn (str) panic = str eprint >> 1 exit
 
-fn (cond) message assert = if cond then void else message panic
+fn (cond) (message) assert = if cond then void else message panic
 
 fn (val) (min) (max) clamp = if val min < then min else if val max > then max else val
 
