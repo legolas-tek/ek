@@ -1,0 +1,96 @@
+//
+// RUN: echo "test" | (ekrun %s) 2>%t | FileCheck -v %s && FileCheck --check-prefix ERROR -v %s < %t
+//
+
+import rpn
+
+fn main =
+
+// CHECK: 42
+    42 toString print
+// CHECK: test
+    >> readLine print
+
+// ERROR: caca
+    >> "caca" eprint
+
+// CHECK: 0
+    >> 42 -42 + print
+// CHECK: 42
+    >> 42 0 - print
+// CHECK: 42
+    >> 42 1 * print
+// CHECK: 42
+    >> 42 1 / print
+
+// CHECK: true
+    >> 42 42 == print
+// CHECK: false
+    >> 42 42 == not print
+// CHECK: false
+    >> 42 42 != print
+
+// CHECK: true
+    >> 43 42 >= print
+// CHECK: true
+    >> 42 42 >= print
+// CHECK: false
+    >> 42 43 >= print
+
+// CHECK: true
+    >> 41 42 <= print
+// CHECK: true
+    >> 42 42 <= print
+// CHECK: false
+    >> 42 41 <= print
+
+// CHECK: true
+    >> 43 42 > print
+// CHECK: false
+    >> 42 42 > print
+// CHECK: false
+    >> 42 43 > print
+
+// CHECK: true
+    >> 41 42 < print
+// CHECK: false
+    >> 42 42 < print
+// CHECK: false
+    >> 42 41 < print
+
+// CHECK: true
+    >> true true && print
+// CHECK: false
+    >> true false && print
+// CHECK: false
+    >> false true && print
+// CHECK: false
+    >> false false && print
+
+// CHECK: true
+    >> true true || print
+// CHECK: true
+    >> true false || print
+// CHECK: true
+    >> false true || print
+// CHECK: false
+    >> false false || print
+
+// CHECK: 42
+    >> 42 42 min print
+// CHECK: 42
+    >> 42 84 min print
+// CHECK: 42
+    >> 42 42 max print
+// CHECK: 84
+    >> 42 84 max print
+
+// CHECK: 42
+    >> -42 42 84 clamp print
+// CHECK: 42
+    >> 42 42 42 clamp print
+// CHECK: 42
+    >> 84 -42 42 clamp print
+
+// CHECK: true
+    >> 42 toString "42" == print
