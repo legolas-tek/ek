@@ -12,9 +12,36 @@ module EK.Optimizer
 
 import VirtualMachine
 import EK.Compiler
+import qualified Data.Map as Map (lookup, filterWithKey)
+import Data.List (nub)
+
+searchFuncCall :: Insts -> [String]
+searchFuncCall [] = []
+searchFuncCall (GetEnv x : xs) = x : searchFuncCall xs
+searchFuncCall (_ : xs) = searchFuncCall xs
+
+getCalledFunctions' :: Result -> [String] -> [String]
+getCalledFunctions' _ [] = []
+getCalledFunctions' insts (x : xs) =
+  case Map.lookup x insts of
+    Nothing -> getCalledFunctions' insts xs
+    Just insts' -> let calledFuncs = searchFuncCall insts'
+                   in nub $ calledFuncs ++ getCalledFunctions' insts (xs ++ calledFuncs)
+
+getCalledFunctions :: Result -> String -> [String]
+getCalledFunctions insts func = getCalledFunctions' insts [func]
+
+getCalledFunctionsFromMain :: Result -> [String]
+getCalledFunctionsFromMain insts = "main" : getCalledFunctions insts "main"
+
+deleteNotUsedFunc :: Result -> Result
+deleteNotUsedFunc insts = deleteNotUsedFunc' insts (getCalledFunctionsFromMain insts)
+
+deleteNotUsedFunc' :: Result -> [String] -> Result
+deleteNotUsedFunc' insts functionUsed = Map.filterWithKey (\k _ -> k `elem` functionUsed) insts
 
 optimizeBytecode :: Result -> Result
-optimizeBytecode = fmap optimizeInsts
+optimizeBytecode = fmap optimizeInsts . deleteNotUsedFunc
 
 optimizeInsts :: Insts -> Insts
 optimizeInsts [] = []
