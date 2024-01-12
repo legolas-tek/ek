@@ -59,6 +59,7 @@ mainLoop env rest = do
             mainLoop (env ++ stmts) rest
         Right (Right expr) -> do
             let (typedEnv, diags') = resolveTypes (FuncDef (FuncPattern [SymbolPattern "main"] Nothing Nothing) expr : env)
+            mapM_ print diags'
             insts <- either fail return $ compileToVM typedEnv
             (runVM insts >>= printRes) `catch` print @IOException
             mainLoop env rest

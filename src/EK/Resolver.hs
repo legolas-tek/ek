@@ -84,6 +84,7 @@ replaceType types t = do
 replaceExpr :: Map String Type -> Expr' Ast.Type -> State [Diagnostic] (Expr' Type)
 replaceExpr _ (IntegerLit i) = return $ IntegerLit i
 replaceExpr _ (StringLit s) = return $ StringLit s
+replaceExpr _ (FloatLit f) = return $ FloatLit f
 replaceExpr types (Call f args) = Call f <$> mapM (replaceExpr types) args
 replaceExpr types (Lambda name body) = Lambda name <$> replaceExpr types body
 replaceExpr types (StructLit ty fields) = StructLit <$> replaceType types ty <*> mapM (replaceExpr types) fields
