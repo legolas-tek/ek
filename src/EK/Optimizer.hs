@@ -8,6 +8,8 @@
 module EK.Optimizer
   ( optimizeBytecode
   , optimizeInsts
+  , deleteNotUsedFunc
+  , deleteSameInstsOfFunc
   ) where
 
 import VirtualMachine

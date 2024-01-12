@@ -15,6 +15,7 @@ import qualified EKTyping
 import qualified Compilation
 import qualified Tokenizing
 import qualified Serializing
+import qualified Optimizing
 
 tests :: Test
 tests = test
@@ -26,6 +27,7 @@ tests = test
   , "Compilation" ~: Compilation.tests
   , "Tokenize" ~: Tokenizing.tests
   , "Serializing" ~: Serializing.tests
+  , "Optimizing" ~: Optimizing.tests
   ]
 
 main :: IO ()
