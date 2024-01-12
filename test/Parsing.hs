@@ -59,6 +59,16 @@ tests = test
       runParser parseInt "-0a" @?= Right (0, "a")
       isLeft (runParser parseInt "foobar42") @?= True
       isLeft (runParser parseInt "--42foobar") @?= True
+  , "parseUFloat" ~: do
+      runParser parseUFloat "42.55foobar" @?= Right (42.55 , "foobar")
+      isLeft (runParser parseUFloat "foobar42.5") @?= True
+      isLeft (runParser parseUFloat "42foobar") @?= True
+  , "parseFloat" ~: do
+      runParser parseFloat "42.5foobar" @?= Right (42.5, "foobar")
+      runParser parseFloat "-42.5foobar" @?= Right (-42.5, "foobar")
+      runParser parseFloat "42.5.3.2foobar" @?= Right (42.5, ".3.2foobar")
+      isLeft (runParser parseInt "foobar-42.5") @?= True
+      isLeft (runParser parseInt "--42.5foobar") @?= True
   , "parseList" ~: do
       runParser (parseList parseInt) "(123 456)foo bar" @?= Right ([123, 456], "foo bar")
       runParser (parseList parseInt) "(1 2 3 5 7 11 13 17)" @?= Right ([1, 2, 3, 5, 7, 11, 13, 17], "")
