@@ -135,6 +135,37 @@ tests = test
                                   , Ret
                                   ])]
         compileToVM stmts @?= Right expected
+    , "calling function with 3 args including a float" ~: do
+        let stmts =
+              [ ExternDef
+                  (FuncPattern
+                     [ SymbolPattern "foo"
+                     , ArgPattern False "a" Nothing
+                     , ArgPattern False "b" Nothing
+                     , ArgPattern False "c" Nothing
+                     ]
+                     Nothing
+                     Nothing)
+              , FuncDef
+                  (FuncPattern [SymbolPattern "main"] Nothing Nothing)
+                  (EK.Ast.Call (FunctionName [Symbol "foo"] defaultPrec)
+                               [ FloatLit 1.5
+                               , StringLit "hello"
+                               , FloatLit 42.5
+                               ]
+                  )
+              ]
+        let expected = fromList [("main",
+                                  [ GetEnv "foo"
+                                  , Push (FloatValue 1.5)
+                                  , VirtualMachine.Call
+                                  , Push (StringValue "hello")
+                                  , VirtualMachine.Call
+                                  , Push (FloatValue 42.5)
+                                  , VirtualMachine.Call
+                                  , Ret
+                                  ])]
+        compileToVM stmts @?= Right expected
     , "identity function" ~: do
         let stmts =
               [ FuncDef

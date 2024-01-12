@@ -42,6 +42,7 @@ data FunctionName = FunctionName [Symbol] Prec
 
 data Expr' typeval
   = IntegerLit Integer
+  | FloatLit Double
   | StringLit String
   | Call FunctionName [Expr]
   | Lambda String Expr
@@ -129,6 +130,7 @@ instance Show Symbol where
 
 instance Show typeval => Show (Expr' typeval) where
   show (IntegerLit i) = show i
+  show (FloatLit i) = show i
   show (StringLit s) = show s
   show (Call (FunctionName name _) items) = "(" ++ unwords (showCall name items) ++ ")"
   show (Lambda arg expr) = "(\\" ++ arg ++ " = " ++ show expr ++ ")"
@@ -173,4 +175,3 @@ instance Show typeval => Show (FuncPatternItem' typeval) where
   show (ArgPattern lazy s Nothing) = "(" ++ (if lazy then "lazy " else "") ++ s ++ ")"
   show (SymbolPattern s) = s
   show PlaceholderPattern = "_"
-
