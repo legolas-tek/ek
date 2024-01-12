@@ -79,6 +79,7 @@ compileFn expr = do
 
 compileExpr :: Expr -> State Env Insts
 compileExpr (IntegerLit i) = return [Push (IntegerValue i)]
+compileExpr (FloatLit i) = return [Push (FloatValue i)]
 compileExpr (StringLit s) = return [Push (StringValue s)]
 compileExpr (EK.Ast.Call name callItems) = do
   call <- compileCall (show name)

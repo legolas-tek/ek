@@ -26,6 +26,7 @@ getSymbol _ = Left "Not a symbol"
 printTree :: SExpr -> Either SexprError String
 printTree (Symbol s) = Right ("a Symbol " ++ s)
 printTree (IntegerLit i) = Right ("a Number " ++ show i)
+printTree (FloatLit i) = Right ("a floating Number " ++ show i)
 printTree (StringLit str) = Right ("a String " ++ show str)
 printTree(List l) = mapM printTree l >>=
   \e -> Right ("a List with " ++ unwords e)
