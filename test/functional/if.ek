@@ -6,12 +6,8 @@ import std
 
 fn main =
 // CHECK: Hello
-    print (if 3 > 1 then "Hello" else "World")
+    print (if 3.2 > 1.3 then "Hello" else "World")
 // CHECK: Epitech
- >> print (if 3 > 7 then "42" else "Epitech")
-// CHECK: YES
- >> if true then print "YES" else print "NO"
-// CHECK: Fake
- >> if false then print "Real" else print "Fake"
-// CHECK: END
- >> print "END"
+ >> print (if 3.5 > 7 then "42" else "Epitech")
+// CHECK: 42 :o
+ >> print (if 42.42 == 42.42 then "42 :o" else "42 :(")

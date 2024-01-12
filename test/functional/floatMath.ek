@@ -5,7 +5,7 @@
 import std
 
 fn main =
-// CHECK: 6.6
+// CHECK: 4.6
     print (2.3 + 2.3)
 // CHECK: 5
  >> print (2.5 * 2)
