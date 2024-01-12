@@ -13,7 +13,7 @@ module EK.Optimizer
 import VirtualMachine
 import EK.Compiler
 
-import qualified Data.Map as Map (lookup, filterWithKey, foldrWithKey, mapWithKey, map, keys)
+import qualified Data.Map as Map (lookup, filterWithKey, foldrWithKey, mapWithKey, keys)
 import qualified Data.Set as Set
 import Data.List (nub)
 
