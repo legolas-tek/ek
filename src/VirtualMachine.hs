@@ -75,6 +75,18 @@ type Insts = [Instruction]
 type Stack = [VMValue]
 type Env = Map String VMValue
 
+-- instance Eq Instruction where
+--   Push a == Push b = a == b
+--   Call == Call = True
+--   CallOp a == CallOp b = a == b
+--   JmpFalse a == JmpFalse b = a == b
+--   Dup == Dup = True
+--   Ret == Ret = True
+--   LoadArg a == LoadArg b = a == b
+--   GetEnv a == GetEnv b = a == b
+--   Closure a == Closure b = a == b
+--   _ == _ = False
+
 instance Show Instruction where
   show (Push (IntegerValue v)) = "push " ++ show v
   show (Push (AtomValue v)) = "push " ++ v

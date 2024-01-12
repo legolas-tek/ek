@@ -1,0 +1,6 @@
+import std
+
+fn salut _ = builtin print
+
+fn main = salut "salut" >>
+    print "le monde"

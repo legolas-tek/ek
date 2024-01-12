@@ -13,9 +13,12 @@ module EK.Optimizer
 import VirtualMachine
 import EK.Compiler
 
-import qualified Data.Map as Map (lookup, filterWithKey)
+import qualified Data.Map as Map (lookup, filterWithKey, foldrWithKey, keys, filter)
+import qualified Data.Maybe as Maybe (fromMaybe)
 import qualified Data.Set as Set
 import Data.List (nub)
+import Debug.Trace
+import EK.Compiler (Result)
 
 getUsedFunctions :: Insts -> [String]
 getUsedFunctions [] = []
@@ -41,11 +44,25 @@ getCalledFunctionsFromMain insts = "main" : getCalledFunctions insts "main"
 deleteNotUsedFunc :: Result -> Result
 deleteNotUsedFunc insts = deleteNotUsedFunc' insts (getCalledFunctionsFromMain insts)
 
+detectSameInsts :: String -> Insts -> Result -> [String]
+detectSameInsts fname insts = Map.foldrWithKey (\k v acc -> if k /= fname && v == insts then k : acc else acc) []
+
+changeFuncNameInInsts :: String -> String -> Insts -> Insts
+changeFuncNameInInsts _ _ [] = []
+changeFuncNameInInsts oldName newName (GetEnv x : xs) = GetEnv (if x == oldName then newName else x) : changeFuncNameInInsts oldName newName xs
+changeFuncNameInInsts oldName newName (x :xs) = x : changeFuncNameInInsts oldName newName xs
+
+-- replaceFuncName :: String -> [String] -> Result -> Result
+-- replaceFuncName _ [] insts = insts
+-- replaceFuncName newName (oldName : xs) insts =
+
 deleteNotUsedFunc' :: Result -> [String] -> Result
 deleteNotUsedFunc' insts functionUsed = Map.filterWithKey (\k _ -> k `elem` functionUsed) insts
 
 optimizeBytecode :: Result -> Result
-optimizeBytecode = fmap optimizeInsts . deleteNotUsedFunc
+optimizeBytecode res =
+  let printInsts = Maybe.fromMaybe [] (Map.lookup "print _" res)
+  in trace (show $ detectSameInsts "print _" printInsts res) (fmap optimizeInsts (deleteNotUsedFunc res))
 
 optimizeInsts :: Insts -> Insts
 optimizeInsts [] = []
