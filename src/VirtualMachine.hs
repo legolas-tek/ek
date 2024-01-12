@@ -18,6 +18,7 @@ module VirtualMachine
 import Data.Map (Map, lookup)
 import System.Exit (exitWith, ExitCode(..), exitSuccess)
 import System.IO (hPutStr, stderr)
+import Data.List (intercalate)
 
 data VMValue = IntegerValue Integer
              | FloatValue Double
@@ -25,6 +26,7 @@ data VMValue = IntegerValue Integer
              | FunctionValue Insts
              | ClosureValue Insts [VMValue]
              | StringValue String
+             | StructValue String [VMValue]
              deriving (Eq)
 
 instance Show VMValue where
@@ -34,6 +36,7 @@ instance Show VMValue where
   show (FunctionValue _) = "(function)"
   show (ClosureValue _ _) = "(function)"
   show (StringValue v) = v
+  show (StructValue name vs) = name ++ "{" ++ intercalate ", " (map show vs) ++ "}"
 
 data Operator = Add
               | Sub
@@ -70,6 +73,8 @@ data Instruction = Push VMValue
                  | LoadArg Int
                  | GetEnv String
                  | Closure Int
+                 | Construct String Int
+                 | Extract Int
                  deriving (Eq)
 
 type Args = [VMValue]
@@ -78,12 +83,8 @@ type Stack = [VMValue]
 type Env = Map String VMValue
 
 instance Show Instruction where
-  show (Push (IntegerValue v)) = "push " ++ show v
-  show (Push (FloatValue v)) = "push " ++ show v
-  show (Push (AtomValue v)) = "push " ++ v
-  show (Push (FunctionValue _)) = "push function" -- impossible
-  show (Push (ClosureValue _ _)) = "push function" -- impossible
   show (Push (StringValue v)) = "push " ++ show v
+  show (Push v) = "push " ++ show v
   show Call = "call"
   show (CallOp op) = "call_op " ++ show op
   show (JmpFalse offset) = "jmp_false " ++ show offset
@@ -92,6 +93,8 @@ instance Show Instruction where
   show (LoadArg offset) = "load_arg " ++ show offset
   show (GetEnv value) = "getenv " ++ value
   show (Closure count) = "closure " ++ show count
+  show (Construct name count) = "construct " ++ name ++ " " ++ show count
+  show (Extract offset) = "extract " ++ show offset
 
 exec :: Env -> Args -> Insts -> Stack -> IO VMValue
 exec _ _ [] (s:_) = return s
@@ -127,6 +130,9 @@ exec env args (GetEnv value:insts) stack = case Data.Map.lookup value env of
   Nothing  -> fail $ "Could not find `" ++ value ++ "' in environment"
 exec env args (Closure count:insts) (FunctionValue fn:stack) = exec env args insts (ClosureValue fn (take count stack):drop count stack)
 exec _ _ (Closure _:_) _ = fail "Cannot create closure of non-function type"
+exec env args (Construct name count:insts) stack = exec env args insts (StructValue name (reverse $ take count stack):drop count stack)
+exec env args (Extract offset:insts) (StructValue _ vs:stack) = exec env args insts (vs !! offset:stack)
+exec _ _ (Extract _:_) _ = fail "Cannot extract field from non-struct type"
 
 -- int int
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue

@@ -15,7 +15,7 @@ module Tokenizer
 import Token
 import Parser
 
-import Data.Char (isLetter)
+import Data.Char (isLetter, isDigit)
 import Diagnostic
 
 type TokenizerError = Diagnostic
@@ -74,8 +74,10 @@ parseStringLiter :: Parser Char (String, TokenType)
 parseStringLiter = parseStringLit >>= \string -> return (string, StringLiter)
 
 parseTextIdentifer :: Parser Char (String, TokenType)
-parseTextIdentifer = some (parseOneIf isLetter) >>= tup
+parseTextIdentifer = (:) <$> identifierHead <*> many identifierChar >>= tup
   where tup identifier = return (identifier, identifyKw identifier)
+        identifierHead = parseOneIf isLetter
+        identifierChar = parseOneIf (\c -> isLetter c || isDigit c || c == '\'')
 
 identifyKw :: String -> TokenType
 identifyKw "atom" = AtomKw

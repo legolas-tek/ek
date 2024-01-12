@@ -11,6 +11,20 @@ packages:
       size: 878
   original:
     hackage: HUnit-1.6.2.0
+- completed:
+    hackage: lsp-2.3.0.0@sha256:b21f38d07a75db14fd72fd944238c76fc9fe40b8b11aee8940db520342475d96,3686
+    pantry-tree:
+      sha256: 4ceacfdb0fe66f4e1e63d1131dc1300c42c381a14e2b67a105836ca58939a84b
+      size: 1044
+  original:
+    hackage: lsp-2.3.0.0@sha256:b21f38d07a75db14fd72fd944238c76fc9fe40b8b11aee8940db520342475d96,3686
+- completed:
+    hackage: lsp-types-2.1.0.0@sha256:271e80ad8a51c46a61e2ca18dd3454d4bd1a9b6e0f2aa15d6cbad9e2984da69b,29541
+    pantry-tree:
+      sha256: df123e055ffc59a164a1c63cda165e6b3fc18eca7319d2e53419af41b331513e
+      size: 45529
+  original:
+    hackage: lsp-types-2.1.0.0@sha256:271e80ad8a51c46a61e2ca18dd3454d4bd1a9b6e0f2aa15d6cbad9e2984da69b,29541
 snapshots:
 - completed:
     sha256: 8017c7970c2a8a9510c60cc70ac245d59e0c34eb932b91d37af09fe59855d854

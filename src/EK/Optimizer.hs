@@ -13,8 +13,39 @@ module EK.Optimizer
 import VirtualMachine
 import EK.Compiler
 
+import qualified Data.Map as Map (lookup, filterWithKey)
+import qualified Data.Set as Set
+import Data.List (nub)
+
+getUsedFunctions :: Insts -> [String]
+getUsedFunctions [] = []
+getUsedFunctions (GetEnv x : xs) = x : getUsedFunctions xs
+getUsedFunctions (_ : xs) = getUsedFunctions xs
+
+visitCalledFunctions :: Result -> Set.Set String -> [String] -> [String]
+visitCalledFunctions _ _ [] = []
+visitCalledFunctions insts visited (x : xs)
+  | x `Set.member` visited = visitCalledFunctions insts visited xs
+  | otherwise =
+      case Map.lookup x insts of
+        Nothing -> visitCalledFunctions insts visited xs
+        Just insts' -> let calledFuncs = getUsedFunctions insts'
+                       in nub $ calledFuncs ++ visitCalledFunctions insts (Set.insert x visited) (xs ++ calledFuncs)
+
+getCalledFunctions :: Result -> String -> [String]
+getCalledFunctions insts func = visitCalledFunctions insts Set.empty [func]
+
+getCalledFunctionsFromMain :: Result -> [String]
+getCalledFunctionsFromMain insts = "main" : getCalledFunctions insts "main"
+
+deleteNotUsedFunc :: Result -> Result
+deleteNotUsedFunc insts = deleteNotUsedFunc' insts (getCalledFunctionsFromMain insts)
+
+deleteNotUsedFunc' :: Result -> [String] -> Result
+deleteNotUsedFunc' insts functionUsed = Map.filterWithKey (\k _ -> k `elem` functionUsed) insts
+
 optimizeBytecode :: Result -> Result
-optimizeBytecode = fmap optimizeInsts
+optimizeBytecode = fmap optimizeInsts . deleteNotUsedFunc
 
 optimizeInsts :: Insts -> Insts
 optimizeInsts [] = []

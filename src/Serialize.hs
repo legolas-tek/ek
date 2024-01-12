@@ -5,7 +5,6 @@
 --
 --}
 
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -29,6 +28,7 @@ import Parser
 import Data.String(IsString(..))
 import EK.Compiler(Result)
 import Data.Word (Word8)
+import Data.Functor (($>))
 import Control.Applicative (liftA2)
 import Text.Printf (printf)
 import System.Directory (getPermissions, setPermissions, setOwnerExecutable)
@@ -58,12 +58,12 @@ class Serializable a where
 instance Serializable Integer where
   serialize integer = fromString (show integer) <> B.singleton 0
 
-  deserialize = (read . fmap BI.w2c) <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
+  deserialize = read . fmap BI.w2c <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
 
 instance Serializable Int where
   serialize int = fromString (show int) <> B.singleton 0
 
-  deserialize = (read . fmap BI.w2c) <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
+  deserialize = read . fmap BI.w2c <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
 
 instance Serializable Double where
   serialize float = fromString (show float) <> B.singleton 0
@@ -82,6 +82,7 @@ instance Serializable VMValue where
   serialize (FloatValue float) = B.singleton 4 <> serialize float
   serialize (FunctionValue _) = B.singleton 0
   serialize (ClosureValue _ _) = B.singleton 0
+  serialize (StructValue _ _) = B.singleton 0
 
   deserialize = parseOneIf (== 1) *> (IntegerValue <$> deserialize)
             <|> parseOneIf (== 2) *> (AtomValue <$> deserialize)
@@ -108,26 +109,30 @@ instance Serializable Instruction where
   serialize (CallOp EPrint) = B.singleton 17
   serialize (CallOp ReadLine) = B.singleton 18
   serialize (CallOp ToString) = B.singleton 19
+  serialize (Construct name count) = B.singleton 20 <> serialize name <> serialize count
+  serialize (Extract count) = B.singleton 21 <> serialize count
 
   deserialize = parseOneIf (== 1) *> (Push <$> deserialize)
-            <|> parseOneIf (== 2) *> pure Call
-            <|> parseOneIf (== 3) *> pure (CallOp Add)
-            <|> parseOneIf (== 4) *> pure (CallOp Sub)
-            <|> parseOneIf (== 5) *> pure (CallOp Mul)
-            <|> parseOneIf (== 6) *> pure (CallOp Div)
-            <|> parseOneIf (== 7) *> pure (CallOp Eq)
-            <|> parseOneIf (== 8) *> pure (CallOp Less)
+            <|> parseOneIf (== 2) $> Call
+            <|> parseOneIf (== 3) $> CallOp Add
+            <|> parseOneIf (== 4) $> CallOp Sub
+            <|> parseOneIf (== 5) $> CallOp Mul
+            <|> parseOneIf (== 6) $> CallOp Div
+            <|> parseOneIf (== 7) $> CallOp Eq
+            <|> parseOneIf (== 8) $> CallOp Less
             <|> parseOneIf (== 9) *> (JmpFalse <$> (word8ToInt <$> parseOneIf (const True)))
-            <|> parseOneIf (== 10) *> pure Dup
-            <|> parseOneIf (== 11) *> pure Ret
+            <|> parseOneIf (== 10) $> Dup
+            <|> parseOneIf (== 11) $> Ret
             <|> parseOneIf (== 12) *> (LoadArg <$> (word8ToInt <$> parseOneIf (const True)))
             <|> parseOneIf (== 13) *> (GetEnv <$> deserialize)
-            <|> parseOneIf (== 14) *> pure (CallOp Print)
-            <|> parseOneIf (== 15) *> pure (CallOp Exit)
+            <|> parseOneIf (== 14) $> CallOp Print
+            <|> parseOneIf (== 15) $> CallOp Exit
             <|> parseOneIf (== 16) *> (Closure <$> (word8ToInt <$> parseOneIf (const True)))
-            <|> parseOneIf (== 17) *> pure (CallOp EPrint)
-            <|> parseOneIf (== 18) *> pure (CallOp ReadLine)
-            <|> parseOneIf (== 19) *> pure (CallOp ToString)
+            <|> parseOneIf (== 17) $> CallOp EPrint
+            <|> parseOneIf (== 18) $> CallOp ReadLine
+            <|> parseOneIf (== 19) $> CallOp ToString
+            <|> parseOneIf (== 20) *> (Construct <$> deserialize <*> deserialize)
+            <|> parseOneIf (== 21) *> (Extract <$> deserialize)
 
 instance Serializable [Instruction] where
   serialize insts = B.concat (fmap serialize insts) <> B.singleton 0
@@ -142,7 +147,7 @@ instance (Serializable a, Serializable b) => Serializable (a, b) where
 instance Serializable Result where
   serialize result = "#!/usr/bin/env ek\n" <> B.concat (fmap serialize (Map.toList result))
 
-  deserialize = string (stringToWord8 "#!/usr/bin/env ek\n") *> (Map.fromList <$> (many deserialize))
+  deserialize = string (stringToWord8 "#!/usr/bin/env ek\n") *> (Map.fromList <$> many deserialize)
 
 setFileExecutable :: String -> IO ()
 setFileExecutable path = getPermissions path >>= \perms ->
