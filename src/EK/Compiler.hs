@@ -79,17 +79,18 @@ compileFn expr = do
       captures <- mapM compileCapture (reverse $ captured insideEnv)
       modify $ \env -> env { result = result env <> fromList [(fnName env, captures ++ [GetEnv lambdaName, Closure (length $ captured insideEnv), Ret])] }
 
-compileTExpr :: TExpr -> State Env Insts
-compileTExpr (IntegerLit i) = return [Push (IntegerValue i)]
-compileTExpr (StringLit s) = return [Push (StringValue s)]
-compileTExpr (EK.Ast.Call name callItems) = do
+compileExpr :: TExpr -> State Env Insts
+compileExpr (IntegerLit i) = return [Push (IntegerValue i)]
+compileExpr (FloatLit i) = return [Push (FloatValue i)]
+compileExpr (StringLit s) = return [Push (StringValue s)]
+compileExpr (EK.Ast.Call name callItems) = do
   call <- compileCall (show name)
   items <- compileCallItems callItems
   let needsCallVoid = isFn call && null items
   return $ call ++ items ++ (if needsCallVoid then [Push $ AtomValue "void", VirtualMachine.Call] else [])
   where isFn [GetEnv _] = True
         isFn _ = False
-compileTExpr (Lambda name expr) = do
+compileExpr (Lambda name expr) = do
   outsideEnv <- get
   let lambdaName = fnName outsideEnv ++ "\\" ++ name ++ show (lambdaCount outsideEnv)
   put Env { args = [(name, False)]
@@ -104,15 +105,15 @@ compileTExpr (Lambda name expr) = do
   put outsideEnv { result = result insideEnv, lambdaCount = lambdaCount insideEnv }
   captures <- mapM compileCapture (reverse $ captured insideEnv)
   return $ captures ++ [GetEnv lambdaName, Closure (length captures)]
-compileTExpr (StructLit name items) = do
-  items' <- concat <$> mapM compileTExpr items
+compileExpr (StructLit name items) = do
+  items' <- concat <$> mapM compileExpr items
   return $ items' ++ [Construct (show name) (length items)]
 
 createFn :: TExpr -> State Env ()
 createFn expr = do
   args' <- gets args
   capturable' <- gets capturable
-  content <- compileTExpr expr
+  content <- compileExpr expr
   additional <- concat <$> mapM handleArg (reverse capturable' ++ args')
   env <- get
   put env { result = result env <> fromList [(fnName env, content ++ additional ++ [Ret])] }
@@ -151,4 +152,4 @@ compileCallItems :: [TExpr] -> State Env Insts
 compileCallItems items = concat <$> mapM compileCallItem items
 
 compileCallItem :: TExpr -> State Env Insts
-compileCallItem expr = compileTExpr expr <&> (++ [VirtualMachine.Call])
+compileCallItem expr = compileExpr expr <&> (++ [VirtualMachine.Call])

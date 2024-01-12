@@ -49,7 +49,7 @@ fn partial = print (inc $ 1)
 
 fn fLambda _ = \x = 2 * x + 1
 fn fArg (x) = 2 * x + 1
-fn fDot _ = (_ + 1) . (2 * _) 
+fn fDot _ = (_ + 1) . (2 * _)
 
 // CHECK: 42
 fn main = print (simple 42)

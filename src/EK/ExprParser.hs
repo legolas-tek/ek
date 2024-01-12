@@ -111,10 +111,13 @@ primItem :: [FuncItem] -> Parser Token CallItem
 primItem fi = ExprCall <$> prim fi <|> placeholder PlaceholderCall
 
 prim :: [FuncItem] -> Parser Token Expr
-prim funcItems = intExpr <|> stringExpr <|> parenExpr funcItems <|> structExpr funcItems <|> lambdaExpr funcItems
+prim funcItems = floatExpr <|> intExpr <|> stringExpr <|> parenExpr funcItems <|> structExpr funcItems <|> lambdaExpr funcItems
 
 intExpr :: Parser Token Expr
 intExpr = IntegerLit <$> intLiteral
+
+floatExpr :: Parser Token Expr
+floatExpr = FloatLit <$> floatLiteral
 
 stringExpr :: Parser Token Expr
 stringExpr = StringLit <$> stringLiteral

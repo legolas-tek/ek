@@ -21,6 +21,7 @@ import System.IO (hPutStr, stderr)
 import Data.List (intercalate)
 
 data VMValue = IntegerValue Integer
+             | FloatValue Double
              | AtomValue String
              | FunctionValue Insts
              | ClosureValue Insts [VMValue]
@@ -30,6 +31,7 @@ data VMValue = IntegerValue Integer
 
 instance Show VMValue where
   show (IntegerValue v) = show v
+  show (FloatValue v) = show v
   show (AtomValue v) = v
   show (FunctionValue _) = "(function)"
   show (ClosureValue _ _) = "(function)"
@@ -64,6 +66,7 @@ instance Show Operator where
 
 data Instruction = Push VMValue
                  | Call
+                 | TailCall
                  | CallOp Operator
                  | JmpFalse Int
                  | Dup
@@ -84,6 +87,7 @@ instance Show Instruction where
   show (Push (StringValue v)) = "push " ++ show v
   show (Push v) = "push " ++ show v
   show Call = "call"
+  show TailCall = "tail_call"
   show (CallOp op) = "call_op " ++ show op
   show (JmpFalse offset) = "jmp_false " ++ show offset
   show Dup = "dup"
@@ -115,6 +119,10 @@ exec env args (Call:insts) (arg:ClosureValue fn captures:stack) = exec env (arg:
   >>= \result -> exec env args insts (result:stack)
 exec _ _ (Call:_) (v:f:_) = error $ "Cannot call value of non-function type: " ++ show f ++ " " ++ show v
 exec _ _ (Call:_) _ = fail "Not enough values for call"
+exec env _ (TailCall:_) (arg:FunctionValue fn:_) = exec env [arg] fn []
+exec env _ (TailCall:_) (arg:ClosureValue fn captures:_) = exec env (arg:captures) fn []
+exec _ _ (TailCall:_) (v:f:_) = error $ "Cannot tail_call value of non-function type: " ++ show f ++ " " ++ show v
+exec _ _ (TailCall:_) _ = fail "Not enough values for tail_call"
 exec env args (JmpFalse offset:insts) (AtomValue "false":stack)
   = exec env args (drop offset insts) stack
 exec env args (JmpFalse _:insts) (AtomValue "true":stack) = exec env args insts stack
@@ -132,6 +140,7 @@ exec env args (Construct name count:insts) stack = exec env args insts (StructVa
 exec env args (Extract offset:insts) (StructValue _ vs:stack) = exec env args insts (vs !! offset:stack)
 exec _ _ (Extract _:_) _ = fail "Cannot extract field from non-struct type"
 
+-- int int
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
 applyOp Add (IntegerValue a) (IntegerValue b)
   = Right $ IntegerValue $ a + b
@@ -146,4 +155,46 @@ applyOp Div (IntegerValue a) (IntegerValue b)
 applyOp Eq a b = Right $ AtomValue (if a == b then "true" else "false")
 applyOp Less (IntegerValue a) (IntegerValue b)
   = Right $ AtomValue (if a < b then "true" else "false")
+
+-- float float
+applyOp Add (FloatValue a) (FloatValue b)
+  = Right $ FloatValue $ a + b
+applyOp Sub (FloatValue a) (FloatValue b)
+  = Right $ FloatValue $ a - b
+applyOp Mul (FloatValue a) (FloatValue b)
+  = Right $ FloatValue $ a * b
+applyOp Div (FloatValue _) (FloatValue 0)
+  = Left "Division by zero"
+applyOp Div (FloatValue a) (FloatValue b)
+  = Right $ FloatValue $ a / b
+applyOp Less (FloatValue a) (FloatValue b)
+  = Right $ AtomValue (if a < b then "true" else "false")
+
+-- float int
+applyOp Add (FloatValue a) (IntegerValue b)
+  = Right $ FloatValue $ a + (fromIntegral b)
+applyOp Sub (FloatValue a) (IntegerValue b)
+  = Right $ FloatValue $ a - (fromIntegral b)
+applyOp Mul (FloatValue a) (IntegerValue b)
+  = Right $ FloatValue $ a * (fromIntegral b)
+applyOp Div (FloatValue _) (IntegerValue 0)
+  = Left "Division by zero"
+applyOp Div (FloatValue a) (IntegerValue b)
+  = Right $ FloatValue $ a / (fromIntegral b)
+applyOp Less (FloatValue a) (IntegerValue b)
+  = Right $ AtomValue (if a < (fromIntegral b) then "true" else "false")
+
+-- int float
+applyOp Add (IntegerValue a) (FloatValue b)
+  = Right $ FloatValue $ (fromIntegral a) + b
+applyOp Sub (IntegerValue a) (FloatValue b)
+  = Right $ FloatValue $ (fromIntegral a) - b
+applyOp Mul (IntegerValue a) (FloatValue b)
+  = Right $ FloatValue $ (fromIntegral a) * b
+applyOp Div (IntegerValue _) (FloatValue 0)
+  = Left "Division by zero"
+applyOp Div (IntegerValue a) (FloatValue b)
+  = Right $ FloatValue $ (fromIntegral a) / b
+applyOp Less (IntegerValue a) (FloatValue b)
+  = Right $ AtomValue (if (fromIntegral a) < b then "true" else "false")
 applyOp _ _ _ = Left "Invalid operands for operator"

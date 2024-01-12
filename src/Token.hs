@@ -34,6 +34,7 @@ data TokenType = AtomKw
                | BracketClose
                | DotDot
                | IntLiter
+               | FloatLiter
                | StringLiter
                | TextIdentifier
                | OperatorIdentifier

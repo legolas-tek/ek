@@ -65,6 +65,11 @@ instance Serializable Int where
 
   deserialize = read . fmap BI.w2c <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
 
+instance Serializable Double where
+  serialize float = fromString (show float) <> B.singleton 0
+
+  deserialize = (read . fmap BI.w2c) <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
+
 instance Serializable String where
   serialize str = fromString str <> B.singleton 0
 
@@ -74,6 +79,7 @@ instance Serializable VMValue where
   serialize (IntegerValue integer) = B.singleton 1 <> serialize integer
   serialize (AtomValue atom) = B.singleton 2 <> serialize atom
   serialize (StringValue str) = B.singleton 3 <> serialize str
+  serialize (FloatValue float) = B.singleton 4 <> serialize float
   serialize (FunctionValue _) = B.singleton 0
   serialize (ClosureValue _ _) = B.singleton 0
   serialize (StructValue _ _) = B.singleton 0
@@ -81,6 +87,7 @@ instance Serializable VMValue where
   deserialize = parseOneIf (== 1) *> (IntegerValue <$> deserialize)
             <|> parseOneIf (== 2) *> (AtomValue <$> deserialize)
             <|> parseOneIf (== 3) *> (StringValue <$> deserialize)
+            <|> parseOneIf (== 4) *> (FloatValue <$> deserialize)
 
 instance Serializable Instruction where
   serialize (Push value) = B.singleton 1 <> serialize value
@@ -104,6 +111,7 @@ instance Serializable Instruction where
   serialize (CallOp ToString) = B.singleton 19
   serialize (Construct name count) = B.singleton 20 <> serialize name <> serialize count
   serialize (Extract count) = B.singleton 21 <> serialize count
+  serialize TailCall = B.singleton 22
 
   deserialize = parseOneIf (== 1) *> (Push <$> deserialize)
             <|> parseOneIf (== 2) $> Call
@@ -126,6 +134,7 @@ instance Serializable Instruction where
             <|> parseOneIf (== 19) $> CallOp ToString
             <|> parseOneIf (== 20) *> (Construct <$> deserialize <*> deserialize)
             <|> parseOneIf (== 21) *> (Extract <$> deserialize)
+            <|> parseOneIf (== 22) $> TailCall
 
 instance Serializable [Instruction] where
   serialize insts = B.concat (fmap serialize insts) <> B.singleton 0
