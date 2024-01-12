@@ -8,6 +8,7 @@
 module EK.TokenParser
   ( textIdentifier
   , intLiteral
+  , floatLiteral
   , stringLiteral
   , placeholder
   , operatorIdentifier
@@ -26,6 +27,9 @@ textIdentifier = lexeme <$> parseTokenType TextIdentifier
 
 intLiteral :: Parser Token Integer
 intLiteral = read . lexeme <$> parseTokenType IntLiter
+
+floatLiteral :: Parser Token Double
+floatLiteral = read . lexeme <$> parseTokenType FloatLiter
 
 stringLiteral :: Parser Token String
 stringLiteral = lexeme <$> parseTokenType StringLiter

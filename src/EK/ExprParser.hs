@@ -68,6 +68,8 @@ funcItems :: Stmt a b -> [FuncItem]
 funcItems (FuncDef pat _) = [patternToItem pat]
 funcItems (ExternDef pat) = [patternToItem pat]
 funcItems (AtomDef name) = [primaryFuncItem name]
+funcItems (StructDef _ items) = map accessorItem items
+  where accessorItem (StructElem name _) = FuncItem (FunctionName [Placeholder, Symbol name] primaryPrec) [False]
 funcItems _ = []
 
 patternToItem :: FuncPattern' a -> FuncItem
@@ -109,10 +111,13 @@ primItem :: [FuncItem] -> Parser Token CallItem
 primItem fi = ExprCall <$> prim fi <|> placeholder PlaceholderCall
 
 prim :: [FuncItem] -> Parser Token Expr
-prim funcItems = intExpr <|> stringExpr <|> parenExpr funcItems <|> structExpr funcItems <|> lambdaExpr funcItems
+prim funcItems = floatExpr <|> intExpr <|> stringExpr <|> parenExpr funcItems <|> structExpr funcItems <|> lambdaExpr funcItems
 
 intExpr :: Parser Token Expr
 intExpr = IntegerLit <$> intLiteral
+
+floatExpr :: Parser Token Expr
+floatExpr = FloatLit <$> floatLiteral
 
 stringExpr :: Parser Token Expr
 stringExpr = StringLit <$> stringLiteral

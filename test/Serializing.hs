@@ -42,6 +42,7 @@ tests = test
       serialize ("test" :: String) @?= "test\0"
       serialize (42 :: Integer) @?= "42\0"
       serialize (42 :: Int) @?= "42\0"
+      serialize (42.5 :: Double) @?= "42.5\0"
 
    , "string" ~: do
       let str = string (stringToWord8 "test")
@@ -68,16 +69,25 @@ tests = test
       runParser deserialize serializedInteger @?= Right ((42 :: Integer), (stringToWord8 ""))
       runParser (deserialize :: Parser Word8 Integer) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found EOF" (SourcePos "" 1 12))
 
+   , "deserialize float" ~: do
+      let serializedFloat = B.unpack (serialize (42.5 :: Double))
+
+      runParser deserialize serializedFloat @?= Right ((42.5 :: Double), (stringToWord8 ""))
+      runParser (deserialize :: Parser Word8 Double) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found EOF" (SourcePos "" 1 12))
+
    , "deserialize VMValue" ~: do
       let serializedVMInteger = B.unpack (serialize (IntegerValue $ 42))
       let serializedVMAtomValue = B.unpack (serialize (AtomValue $ "test"))
       let serializedVMStringValue = B.unpack (serialize (StringValue $ "test"))
+      let serializedVMFloatValue = B.unpack (serialize (FloatValue $ 42.5))
 
       runParser deserialize serializedVMInteger @?= Right ((IntegerValue $ 42), (stringToWord8 ""))
       runParser (deserialize :: Parser Word8 VMValue) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found 102" (SourcePos "" 1 1))
       runParser deserialize serializedVMAtomValue @?= Right ((AtomValue $ "test"), (stringToWord8 ""))
       runParser (deserialize :: Parser Word8 VMValue) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found 102" (SourcePos "" 1 1))
       runParser deserialize serializedVMStringValue @?= Right ((StringValue $ "test"), (stringToWord8 ""))
+      runParser (deserialize :: Parser Word8 VMValue) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found 102" (SourcePos "" 1 1))
+      runParser deserialize serializedVMFloatValue @?= Right ((FloatValue $ 42.5), (stringToWord8 ""))
       runParser (deserialize :: Parser Word8 VMValue) (stringToWord8 "failurecase") @?= Left (Diagnostic Error "found 102" (SourcePos "" 1 1))
 
    , "deserialize instruction" ~: do

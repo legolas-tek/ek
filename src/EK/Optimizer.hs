@@ -23,6 +23,7 @@ optimizeBytecode = fmap optimizeInsts . deleteNotUsedFunc .  deleteSameInstsOfFu
 optimizeInsts :: Insts -> Insts
 optimizeInsts [] = []
 optimizeInsts (Closure 0: rest) = optimizeInsts rest
+optimizeInsts (Call : Ret : rest) = TailCall : optimizeInsts rest
 optimizeInsts (Push (IntegerValue x) : Push (IntegerValue y) : CallOp Add : rest) = Push (IntegerValue (x + y)) : optimizeInsts rest
 optimizeInsts (Push (IntegerValue x) : Push (IntegerValue y) : CallOp Sub : rest) = Push (IntegerValue (x - y)) : optimizeInsts rest
 optimizeInsts (Push (IntegerValue x) : Push (IntegerValue y) : CallOp Mul : rest) = Push (IntegerValue (x * y)) : optimizeInsts rest

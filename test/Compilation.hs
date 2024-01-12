@@ -135,6 +135,37 @@ tests = test
                                   , Ret
                                   ])]
         compileToVM stmts @?= Right expected
+    , "calling function with 3 args including a float" ~: do
+        let stmts =
+              [ ExternDef
+                  (FuncPattern
+                     [ SymbolPattern "foo"
+                     , ArgPattern False "a" Nothing
+                     , ArgPattern False "b" Nothing
+                     , ArgPattern False "c" Nothing
+                     ]
+                     Nothing
+                     Nothing)
+              , FuncDef
+                  (FuncPattern [SymbolPattern "main"] Nothing Nothing)
+                  (EK.Ast.Call (FunctionName [Symbol "foo"] defaultPrec)
+                               [ FloatLit 1.5
+                               , StringLit "hello"
+                               , FloatLit 42.5
+                               ]
+                  )
+              ]
+        let expected = fromList [("main",
+                                  [ GetEnv "foo"
+                                  , Push (FloatValue 1.5)
+                                  , VirtualMachine.Call
+                                  , Push (StringValue "hello")
+                                  , VirtualMachine.Call
+                                  , Push (FloatValue 42.5)
+                                  , VirtualMachine.Call
+                                  , Ret
+                                  ])]
+        compileToVM stmts @?= Right expected
     , "identity function" ~: do
         let stmts =
               [ FuncDef
@@ -275,6 +306,41 @@ tests = test
                                   [ LoadArg 0
                                   , Push $ AtomValue "void"
                                   , VirtualMachine.Call
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
+    , "Atoms" ~: do
+        let stmts = [AtomDef "foo"]
+        let expected = fromList [("foo",
+                                  [ Push $ AtomValue "foo"
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
+    , "Struct" ~: do
+        let stmts = [StructDef "foo" [ StructElem "a" (TypeName "int")
+                                     , StructElem "b" (TypeName "int")]]
+        let expected = fromList [("_ a",
+                                  [ LoadArg 0
+                                  , Extract 0
+                                  , Ret
+                                  ])
+                                , ("_ b",
+                                  [ LoadArg 0
+                                  , Extract 1
+                                  , Ret
+                                  ])
+                                ]
+        compileToVM stmts @?= Right expected
+    , "Construct" ~: do
+        let stmts = [FuncDef (FuncPattern [SymbolPattern "myfoo"] Nothing Nothing)
+                              (StructLit (TypeName "foo")
+                               [IntegerLit 1, IntegerLit 2])]
+        let expected = fromList [("myfoo",
+                                  [ Push $ IntegerValue 1
+                                  , Push $ IntegerValue 2
+                                  , Construct "foo" 2
                                   , Ret
                                   ])
                                 ]
