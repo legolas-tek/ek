@@ -111,6 +111,7 @@ instance Serializable Instruction where
   serialize (CallOp ToString) = B.singleton 19
   serialize (Construct name count) = B.singleton 20 <> serialize name <> serialize count
   serialize (Extract count) = B.singleton 21 <> serialize count
+  serialize TailCall = B.singleton 22
 
   deserialize = parseOneIf (== 1) *> (Push <$> deserialize)
             <|> parseOneIf (== 2) $> Call
@@ -133,6 +134,7 @@ instance Serializable Instruction where
             <|> parseOneIf (== 19) $> CallOp ToString
             <|> parseOneIf (== 20) *> (Construct <$> deserialize <*> deserialize)
             <|> parseOneIf (== 21) *> (Extract <$> deserialize)
+            <|> parseOneIf (== 22) $> TailCall
 
 instance Serializable [Instruction] where
   serialize insts = B.concat (fmap serialize insts) <> B.singleton 0

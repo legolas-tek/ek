@@ -66,6 +66,7 @@ instance Show Operator where
 
 data Instruction = Push VMValue
                  | Call
+                 | TailCall
                  | CallOp Operator
                  | JmpFalse Int
                  | Dup
@@ -86,6 +87,7 @@ instance Show Instruction where
   show (Push (StringValue v)) = "push " ++ show v
   show (Push v) = "push " ++ show v
   show Call = "call"
+  show TailCall = "tail_call"
   show (CallOp op) = "call_op " ++ show op
   show (JmpFalse offset) = "jmp_false " ++ show offset
   show Dup = "dup"
@@ -117,6 +119,10 @@ exec env args (Call:insts) (arg:ClosureValue fn captures:stack) = exec env (arg:
   >>= \result -> exec env args insts (result:stack)
 exec _ _ (Call:_) (v:f:_) = error $ "Cannot call value of non-function type: " ++ show f ++ " " ++ show v
 exec _ _ (Call:_) _ = fail "Not enough values for call"
+exec env _ (TailCall:_) (arg:FunctionValue fn:_) = exec env [arg] fn []
+exec env _ (TailCall:_) (arg:ClosureValue fn captures:_) = exec env (arg:captures) fn []
+exec _ _ (TailCall:_) (v:f:_) = error $ "Cannot tail_call value of non-function type: " ++ show f ++ " " ++ show v
+exec _ _ (TailCall:_) _ = fail "Not enough values for tail_call"
 exec env args (JmpFalse offset:insts) (AtomValue "false":stack)
   = exec env args (drop offset insts) stack
 exec env args (JmpFalse _:insts) (AtomValue "true":stack) = exec env args insts stack
