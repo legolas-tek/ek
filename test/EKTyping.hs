@@ -24,9 +24,9 @@ tests = test
       show false @?= "false"
       show true @?= "true"
   , "any" ~: do
-      show AnyTy @?= "Any"
-      show (AnyTy <> atomTy "false") @?= "Any"
-      show (atomTy "false" <> AnyTy) @?= "Any"
+      show AnyTy @?= "any"
+      show (AnyTy <> atomTy "false") @?= "any"
+      show (atomTy "false" <> AnyTy) @?= "any"
   , "function" ~: do
       let f = functionTy (atomTy "false") (atomTy "true")
       show f @?= "(false -> true)"
