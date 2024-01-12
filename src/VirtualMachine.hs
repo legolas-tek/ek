@@ -64,6 +64,7 @@ instance Show Operator where
 
 data Instruction = Push VMValue
                  | Call
+                 | TailCall
                  | CallOp Operator
                  | JmpFalse Int
                  | Dup
