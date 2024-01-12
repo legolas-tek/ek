@@ -22,6 +22,7 @@ import EK.TokenParser
 import Data.Maybe (isJust)
 import Control.Monad (liftM2, liftM3)
 import Diagnostic
+import System.Environment (getEnv)
 
 parseDocument :: [Token] -> IO ([TotalStmt], [Diagnostic])
 parseDocument = parseDocumentAdding []
@@ -164,7 +165,8 @@ getImportedTokens stmts = do
 
 handleImportDef :: PartialStmt -> IO ([PartialStmt], [Diagnostic])
 handleImportDef (ImportDef x) = do
-    content <- readFile (x ++ ".ek")
+    importPath <- getEnv "EK_LIBRARY_PATH"
+    content <- readFile (importPath ++ x ++ ".ek")
     case parseImportedTokens x content of
         Left diag -> return ([], [diag])
         Right (tokens, diagnostics) -> do
