@@ -47,7 +47,7 @@ main = do
   let (typedAst, diags'') = resolveTypes ast
   mapM_ print (diags ++ diags' ++ diags'')
   when (argOutputType arg == Just OutputTypedAst) $ output $ unlines $ show <$> typedAst
-  insts' <- either fail return $ compileToVM ast
+  insts' <- either fail return $ compileToVM typedAst
   let insts = if argOptimize arg then optimizeBytecode insts' else insts'
   when (argOutputType arg == Just OutputBytecode) $ output $ showBytecode insts
   when (argOutputType arg == Just OutputResult) $ void $ runVM insts

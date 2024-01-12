@@ -33,28 +33,28 @@ showBytecode :: Result -> String
 showBytecode = concatMap showEntry . toList
     where showEntry (key, value) = key ++ ":\n" ++ unlines (map (("\t" ++) . show) value)
 
-compileToVM :: [TotalStmt] -> Either String Result
+compileToVM :: [TypedStmt] -> Either String Result
 compileToVM stmts = Right $ compileStmts stmts
 
-compileStmts :: [TotalStmt] -> Result
+compileStmts :: [TypedStmt] -> Result
 compileStmts = foldr (union . compileStmt) empty
 
-patternToArgument :: (Int, FuncPatternItem) -> [String]
+patternToArgument :: (Int, TFuncPatternItem) -> [String]
 patternToArgument (_, ArgPattern _ name _) = [name]
 patternToArgument (_, SymbolPattern _) = []
 patternToArgument (i, PlaceholderPattern) = ["_" ++ show i]
 
-patternArguments :: FuncPattern -> [String]
+patternArguments :: TFuncPattern -> [String]
 patternArguments (FuncPattern items _ _) = concatMap patternToArgument (zip [0..] items)
 
-compileStmt :: TotalStmt -> Result
+compileStmt :: TypedStmt -> Result
 compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (zip (patternArguments pattern) (patternLazinesses pattern)) [] [] empty (show $ patternToName pattern) 0)
 compileStmt (AtomDef name) = fromList [(name, [Push $ AtomValue name, Ret])]
 compileStmt (StructDef _ items) = fromList $ zipWith fieldAccessor [0..] items
   where fieldAccessor i (StructElem name _) = ("_ " ++ name, [LoadArg 0, Extract i, Ret])
 compileStmt _ = empty
 
-compileFn :: Expr -> State Env ()
+compileFn :: TExpr -> State Env ()
 compileFn expr = do
   args' <- gets args
   case args' of
@@ -79,17 +79,17 @@ compileFn expr = do
       captures <- mapM compileCapture (reverse $ captured insideEnv)
       modify $ \env -> env { result = result env <> fromList [(fnName env, captures ++ [GetEnv lambdaName, Closure (length $ captured insideEnv), Ret])] }
 
-compileExpr :: Expr -> State Env Insts
-compileExpr (IntegerLit i) = return [Push (IntegerValue i)]
-compileExpr (StringLit s) = return [Push (StringValue s)]
-compileExpr (EK.Ast.Call name callItems) = do
+compileTExpr :: TExpr -> State Env Insts
+compileTExpr (IntegerLit i) = return [Push (IntegerValue i)]
+compileTExpr (StringLit s) = return [Push (StringValue s)]
+compileTExpr (EK.Ast.Call name callItems) = do
   call <- compileCall (show name)
   items <- compileCallItems callItems
   let needsCallVoid = isFn call && null items
   return $ call ++ items ++ (if needsCallVoid then [Push $ AtomValue "void", VirtualMachine.Call] else [])
   where isFn [GetEnv _] = True
         isFn _ = False
-compileExpr (Lambda name expr) = do
+compileTExpr (Lambda name expr) = do
   outsideEnv <- get
   let lambdaName = fnName outsideEnv ++ "\\" ++ name ++ show (lambdaCount outsideEnv)
   put Env { args = [(name, False)]
@@ -104,15 +104,15 @@ compileExpr (Lambda name expr) = do
   put outsideEnv { result = result insideEnv, lambdaCount = lambdaCount insideEnv }
   captures <- mapM compileCapture (reverse $ captured insideEnv)
   return $ captures ++ [GetEnv lambdaName, Closure (length captures)]
-compileExpr (StructLit name items) = do
-  items' <- concat <$> mapM compileExpr items
+compileTExpr (StructLit name items) = do
+  items' <- concat <$> mapM compileTExpr items
   return $ items' ++ [Construct (show name) (length items)]
 
-createFn :: Expr -> State Env ()
+createFn :: TExpr -> State Env ()
 createFn expr = do
   args' <- gets args
   capturable' <- gets capturable
-  content <- compileExpr expr
+  content <- compileTExpr expr
   additional <- concat <$> mapM handleArg (reverse capturable' ++ args')
   env <- get
   put env { result = result env <> fromList [(fnName env, content ++ additional ++ [Ret])] }
@@ -147,8 +147,8 @@ capture arg = do
   put env { args = args env ++ [arg], captured = captured env ++ [fst arg] }
   return ret
 
-compileCallItems :: [Expr] -> State Env Insts
+compileCallItems :: [TExpr] -> State Env Insts
 compileCallItems items = concat <$> mapM compileCallItem items
 
-compileCallItem :: Expr -> State Env Insts
-compileCallItem expr = compileExpr expr <&> (++ [VirtualMachine.Call])
+compileCallItem :: TExpr -> State Env Insts
+compileCallItem expr = compileTExpr expr <&> (++ [VirtualMachine.Call])

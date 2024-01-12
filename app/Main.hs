@@ -21,6 +21,7 @@ import EK.Builtins
 import EK.Compiler
 import Diagnostic
 import VirtualMachine
+import EK.Resolver
 
 import Control.Exception (try, catch, IOException)
 import Control.Monad (when)
@@ -57,7 +58,8 @@ mainLoop env rest = do
         Right (Left stmts) -> do
             mainLoop (env ++ stmts) rest
         Right (Right expr) -> do
-            insts <- either fail return $ compileToVM (FuncDef (FuncPattern [SymbolPattern "main"] Nothing Nothing) expr : env)
+            let (typedEnv, diags') = resolveTypes (FuncDef (FuncPattern [SymbolPattern "main"] Nothing Nothing) expr : env)
+            insts <- either fail return $ compileToVM typedEnv
             (runVM insts >>= printRes) `catch` print @IOException
             mainLoop env rest
 

@@ -15,6 +15,7 @@ import EK.Ast
 import EK.Compiler
 import VirtualMachine
 import Data.Map (fromList)
+import EK.Types
 
 tests :: Test
 tests = test
@@ -288,8 +289,9 @@ tests = test
                                 ]
         compileToVM stmts @?= Right expected
     , "Struct" ~: do
-        let stmts = [StructDef "foo" [ StructElem "a" (TypeName "int")
-                                     , StructElem "b" (TypeName "int")]]
+        let stmts = [StructDef "foo" [ StructElem "a" (intRangeInfTy)
+                                     , StructElem "b" (intRangeInfTy)
+                                     ]]
         let expected = fromList [("_ a",
                                   [ LoadArg 0
                                   , Extract 0
@@ -304,7 +306,7 @@ tests = test
         compileToVM stmts @?= Right expected
     , "Construct" ~: do
         let stmts = [FuncDef (FuncPattern [SymbolPattern "myfoo"] Nothing Nothing)
-                              (StructLit (TypeName "foo")
+                              (StructLit (structTy "foo" [])
                                [IntegerLit 1, IntegerLit 2])]
         let expected = fromList [("myfoo",
                                   [ Push $ IntegerValue 1

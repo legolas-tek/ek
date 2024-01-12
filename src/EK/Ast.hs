@@ -8,6 +8,7 @@
 module EK.Ast
   ( Expr
   , Expr'(..)
+  , TExpr
   , Stmt(..)
   , Symbol(..)
   , FunctionName(..)
@@ -17,8 +18,10 @@ module EK.Ast
   , Type(..)
   , FuncPattern
   , FuncPattern'(..)
+  , TFuncPattern
   , FuncPatternItem
   , FuncPatternItem'(..)
+  , TFuncPatternItem
   , Prec
   , PartialStmt
   , TotalStmt
@@ -52,6 +55,7 @@ data Expr' typeval
   deriving (Eq)
 
 type Expr = Expr' Type
+type TExpr = Expr' EK.Types.Type
 
 data CallItem
   = ExprCall Expr
@@ -99,6 +103,9 @@ data FuncPatternItem' typeval
 
 type FuncPattern = FuncPattern' Type
 type FuncPatternItem = FuncPatternItem' Type
+
+type TFuncPattern = FuncPattern' EK.Types.Type
+type TFuncPatternItem = FuncPatternItem' EK.Types.Type
 
 patternToName :: FuncPattern' typeval -> FunctionName
 patternToName (FuncPattern items _ prec) = FunctionName (map patternToName' items) (defaultPrec `fromMaybe` prec)
