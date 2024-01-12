@@ -15,10 +15,11 @@ module ArgParser
 
 import Parser
 import Diagnostic
+import Data.Functor (($>))
 
 type ArgParser a = Parser String a
 
-data OutputType = OutputTokens | OutputAst | OutputBytecode | OutputResult
+data OutputType = OutputTokens | OutputAst | OutputTypedAst | OutputBytecode | OutputResult
   deriving (Eq)
 
 data Arguments = Arguments
@@ -60,10 +61,11 @@ outputTypeFlag :: ArgParser String
 outputTypeFlag = parseExact "-t" <|> parseExact "--emit"
 
 outputType :: ArgParser OutputType
-outputType = outputTypeFlag *> parseOneIf (== "tokens") *> pure OutputTokens
-         <|> outputTypeFlag *> parseOneIf (== "ast") *> pure OutputAst
-         <|> outputTypeFlag *> parseOneIf (== "bytecode") *> pure OutputBytecode
-         <|> outputTypeFlag *> parseOneIf (== "result") *> pure OutputResult
+outputType = (outputTypeFlag *> parseOneIf (== "tokens") $> OutputTokens)
+         <|> (outputTypeFlag *> parseOneIf (== "ast") $> OutputAst)
+         <|> (outputTypeFlag *> parseOneIf (== "typed-ast") $> OutputTypedAst)
+         <|> (outputTypeFlag *> parseOneIf (== "bytecode") $> OutputBytecode)
+         <|> (outputTypeFlag *> parseOneIf (== "result") $> OutputResult)
 
 withArgOutput :: String -> Arguments
 withArgOutput o = mempty { argOutput = Just o }
