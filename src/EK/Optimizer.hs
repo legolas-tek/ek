@@ -8,6 +8,7 @@
 module EK.Optimizer
   ( optimizeBytecode
   , optimizeInsts
+  , inlineInsts
   ) where
 
 import VirtualMachine
@@ -54,3 +55,13 @@ optimizeInsts (Push (IntegerValue x) : Push (IntegerValue y) : CallOp Add : rest
 optimizeInsts (Push (IntegerValue x) : Push (IntegerValue y) : CallOp Sub : rest) = Push (IntegerValue (x - y)) : optimizeInsts rest
 optimizeInsts (Push (IntegerValue x) : Push (IntegerValue y) : CallOp Mul : rest) = Push (IntegerValue (x * y)) : optimizeInsts rest
 optimizeInsts (inst : rest) = inst : optimizeInsts rest
+
+
+
+inlineInsts :: Insts -> Env -> Insts
+inlineInsts [] _ = []
+inlineInsts (GetEnv variable: Push _: Call:xs) env = case Map.lookup variable env of
+        Nothing -> inlineInsts xs env
+        Just (FunctionValue insts) -> xs ++ insts ++ (inlineInsts xs env)
+        Just _ -> inlineInsts xs env
+inlineInsts (x: xs) env = (x: xs) ++ inlineInsts xs env
