@@ -19,7 +19,6 @@ import qualified EK.Ast as Ast
 import Data.Maybe (fromMaybe)
 import Control.Monad.State
 import SourcePos
-import Debug.Trace (trace)
 
 resolveTypes :: [TotalStmt] -> ([TypedStmt], [Diagnostic])
 resolveTypes stmts = replaceTypes stmts $ resolveIncrementally stmts $ collectTypes stmts
@@ -80,8 +79,7 @@ replaceType :: Map String Type -> Ast.Type -> State [Diagnostic] Type
 replaceType types t = do
   let t' = resolveASTType types t
   when (t' == UnresolvedTy) $ diag $ Diagnostic Error ("Unresolved type " ++ show t) (SourcePos "" 1 1)
-  l <- gets length
-  return $ trace ("From " ++ show t ++ " to " ++ show t' ++ "=" ++ show l) t'
+  return t'
 
 replaceExpr :: Map String Type -> Expr' Ast.Type -> State [Diagnostic] (Expr' Type)
 replaceExpr _ (IntegerLit i) = return $ IntegerLit i
