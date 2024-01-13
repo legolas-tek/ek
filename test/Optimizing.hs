@@ -26,4 +26,6 @@ tests = test
     inlineResult res env @?=
       Map.fromList [("first fn", [Push $ (IntegerValue 5), Push $ (IntegerValue 5), Ret])
       , ("second fn", [Push $ (IntegerValue 5), Push $ (IntegerValue 5), Ret])]
+    inlineResult res (Map.fromList []) @?=
+      Map.fromList [("first fn", insts), ("second fn", insts)]
   ]
