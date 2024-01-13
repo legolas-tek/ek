@@ -15,7 +15,7 @@ module EK.Optimizer
 import VirtualMachine
 import EK.Compiler
 
-import qualified Data.Map as Map (lookup, filterWithKey, foldrWithKey, mapWithKey, keys)
+import qualified Data.Map as Map (lookup, filterWithKey, keys, map)
 import qualified Data.Set as Set
 import Data.List (nub)
 
@@ -59,21 +59,18 @@ getUsedFunctions (GetEnv x : xs) = x : getUsedFunctions xs
 getUsedFunctions (_ : xs) = getUsedFunctions xs
 
 deleteSameInstsOfFunc :: Result -> Result
-deleteSameInstsOfFunc insts = deleteSameInstsOfFunc' insts (Map.keys insts)
+deleteSameInstsOfFunc insts = foldr deleteIfSame insts (Map.keys insts)
 
-deleteSameInstsOfFunc' :: Result -> [String] -> Result
-deleteSameInstsOfFunc' insts [] = insts
-deleteSameInstsOfFunc' insts (x : xs) =
-  case Map.lookup x insts of
-    Nothing -> deleteSameInstsOfFunc' insts xs
-    Just insts' ->
+deleteIfSame :: String -> Result -> Result
+deleteIfSame x insts = maybe insts (deleteIfSame' x insts) (Map.lookup x insts)
+
+deleteIfSame' :: String -> Result -> Insts -> Result
+deleteIfSame' x insts insts' = 
       let sameInsts = detectSameInsts x insts' insts
-      in if null sameInsts
-         then deleteSameInstsOfFunc' insts xs
-         else deleteSameInstsOfFunc' (changeFuncNameInInsts x sameInsts insts) xs
+      in if null sameInsts then insts else changeFuncNameInInsts x sameInsts insts
 
 detectSameInsts :: String -> Insts -> Result -> [String]
-detectSameInsts fname insts = Map.foldrWithKey (\k v acc -> if k /= fname && k /= "main" && v == insts then k : acc else acc) []
+detectSameInsts fname insts = Map.keys . Map.filterWithKey (\k v -> k /= fname && k /= "main" && v == insts)
 
 updateFuncName :: String -> [String] -> Insts -> Insts
 updateFuncName _ _ [] = []
@@ -81,4 +78,4 @@ updateFuncName name namesToChange (GetEnv x : xs) = GetEnv (if x `elem` namesToC
 updateFuncName name namesToChange (x : xs) = x : updateFuncName name namesToChange xs
 
 changeFuncNameInInsts :: String -> [String] -> Result -> Result
-changeFuncNameInInsts name namesToChange = Map.mapWithKey (\_ v -> updateFuncName name namesToChange v)
+changeFuncNameInInsts name namesToChange = Map.map (updateFuncName name namesToChange)
