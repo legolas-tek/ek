@@ -7,7 +7,7 @@
 
 module Optimizing (tests) where
 
-import qualified Data.Map as Map
+import qualified Data.Map as Map (fromList)
 import VirtualMachine
 import EK.Optimizer
 import Test.HUnit
