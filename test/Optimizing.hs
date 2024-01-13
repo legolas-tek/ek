@@ -2,7 +2,7 @@
 -- EPITECH PROJECT, 2024
 -- glados
 -- File description:
--- Optimizer
+-- Optimizing
 --}
 
 module Optimizing (tests) where
