@@ -73,7 +73,7 @@ deleteSameInstsOfFunc' insts (x : xs) =
          else deleteSameInstsOfFunc' (changeFuncNameInInsts x sameInsts insts) xs
 
 detectSameInsts :: String -> Insts -> Result -> [String]
-detectSameInsts fname insts = Map.foldrWithKey (\k v acc -> if k /= fname && v == insts then k : acc else acc) []
+detectSameInsts fname insts = Map.foldrWithKey (\k v acc -> if k /= fname && k /= "main" && v == insts then k : acc else acc) []
 
 updateFuncName :: String -> [String] -> Insts -> Insts
 updateFuncName _ _ [] = []
