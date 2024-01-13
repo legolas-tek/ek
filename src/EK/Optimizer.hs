@@ -74,6 +74,14 @@ deleteIfSame' x insts insts' =
 detectSameInsts :: String -> Insts -> Result -> [String]
 detectSameInsts fname insts = Map.keys . Map.filterWithKey (\k v -> k /= fname && k /= "main" && v == insts)
 
+updateFuncName :: String -> [String] -> Insts -> Insts
+updateFuncName _ _ [] = []
+updateFuncName name namesToChange (GetEnv x : xs) = GetEnv (if x `elem` namesToChange then name else x) : updateFuncName name namesToChange xs
+updateFuncName name namesToChange (x : xs) = x : updateFuncName name namesToChange xs
+
+changeFuncNameInInsts :: String -> [String] -> Result -> Result
+changeFuncNameInInsts name namesToChange = Map.map (updateFuncName name namesToChange)
+
 inlineResult :: Result -> Env -> Result
 inlineResult res env = Map.map (\insts -> inlineInsts insts env) res
 
@@ -85,10 +93,3 @@ inlineInsts (GetEnv variable : Push value : Call : xs) env =
     Just (FunctionValue insts) -> insts ++ inlineInsts xs env
     Just _ -> inlineInsts xs env
 inlineInsts (x:xs) env = x : inlineInsts xs env
-updateFuncName :: String -> [String] -> Insts -> Insts
-updateFuncName _ _ [] = []
-updateFuncName name namesToChange (GetEnv x : xs) = GetEnv (if x `elem` namesToChange then name else x) : updateFuncName name namesToChange xs
-updateFuncName name namesToChange (x : xs) = x : updateFuncName name namesToChange xs
-
-changeFuncNameInInsts :: String -> [String] -> Result -> Result
-changeFuncNameInInsts name namesToChange = Map.map (updateFuncName name namesToChange)
