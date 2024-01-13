@@ -30,6 +30,7 @@ import Data.Range ((+=*), (+=+), Bound (boundValue))
 -- | A type is a list of concrete types
 data Type = AnyTy -- ^ The Any type, which can be anything
           | UnionTy UnionType -- ^ A union type, which can be any of the types in the list
+          | UnresolvedTy
           deriving (Eq)
 
 -- | A union type is a list of atoms, functions, integer ranges, and structs
@@ -44,8 +45,9 @@ data UnionType = UnionType
 data Field = Field String Type
 
 instance Show Type where
-    show AnyTy = "Any"
+    show AnyTy = "any"
     show (UnionTy ts) = show ts
+    show UnresolvedTy = "(unresolved)"
 
 instance Show UnionType where
     show (UnionType atoms functions ints structs) =
@@ -89,6 +91,8 @@ instance Semigroup Type where
     AnyTy <> _ = AnyTy
     _ <> AnyTy = AnyTy
     UnionTy t1 <> UnionTy t2 = UnionTy (t1 <> t2)
+    UnresolvedTy <> _ = UnresolvedTy
+    _ <> UnresolvedTy = UnresolvedTy
     stimes = stimesIdempotentMonoid
 
 instance Monoid Type where
@@ -145,6 +149,8 @@ convertible :: Type -> Type -> Bool
 convertible _ AnyTy = True
 convertible AnyTy _ = False
 convertible (UnionTy t1) (UnionTy t2) = convertibleUnion t1 t2
+convertible UnresolvedTy _ = False
+convertible _ UnresolvedTy = False
 
 convertibleUnion :: UnionType -> UnionType -> Bool
 convertibleUnion (UnionType a1 f1 i1 s1) (UnionType a2 f2 i2 s2)

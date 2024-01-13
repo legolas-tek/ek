@@ -33,28 +33,28 @@ showBytecode :: Result -> String
 showBytecode = concatMap showEntry . toList
     where showEntry (key, value) = key ++ ":\n" ++ unlines (map (("\t" ++) . show) value)
 
-compileToVM :: [TotalStmt] -> Either String Result
+compileToVM :: [TypedStmt] -> Either String Result
 compileToVM stmts = Right $ compileStmts stmts
 
-compileStmts :: [TotalStmt] -> Result
+compileStmts :: [TypedStmt] -> Result
 compileStmts = foldr (union . compileStmt) empty
 
-patternToArgument :: (Int, FuncPatternItem) -> [String]
+patternToArgument :: (Int, TFuncPatternItem) -> [String]
 patternToArgument (_, ArgPattern _ name _) = [name]
 patternToArgument (_, SymbolPattern _) = []
 patternToArgument (i, PlaceholderPattern) = ["_" ++ show i]
 
-patternArguments :: FuncPattern -> [String]
+patternArguments :: TFuncPattern -> [String]
 patternArguments (FuncPattern items _ _) = concatMap patternToArgument (zip [0..] items)
 
-compileStmt :: TotalStmt -> Result
+compileStmt :: TypedStmt -> Result
 compileStmt (FuncDef pattern expr) = result $ execState (compileFn expr) (Env (zip (patternArguments pattern) (patternLazinesses pattern)) [] [] empty (show $ patternToName pattern) 0)
 compileStmt (AtomDef name) = fromList [(name, [Push $ AtomValue name, Ret])]
 compileStmt (StructDef _ items) = fromList $ zipWith fieldAccessor [0..] items
   where fieldAccessor i (StructElem name _) = ("_ " ++ name, [LoadArg 0, Extract i, Ret])
 compileStmt _ = empty
 
-compileFn :: Expr -> State Env ()
+compileFn :: TExpr -> State Env ()
 compileFn expr = do
   args' <- gets args
   case args' of
@@ -79,7 +79,7 @@ compileFn expr = do
       captures <- mapM compileCapture (reverse $ captured insideEnv)
       modify $ \env -> env { result = result env <> fromList [(fnName env, captures ++ [GetEnv lambdaName, Closure (length $ captured insideEnv), Ret])] }
 
-compileExpr :: Expr -> State Env Insts
+compileExpr :: TExpr -> State Env Insts
 compileExpr (IntegerLit i) = return [Push (IntegerValue i)]
 compileExpr (FloatLit i) = return [Push (FloatValue i)]
 compileExpr (StringLit s) = return [Push (StringValue s)]
@@ -109,7 +109,7 @@ compileExpr (StructLit name items) = do
   items' <- concat <$> mapM compileExpr items
   return $ items' ++ [Construct (show name) (length items)]
 
-createFn :: Expr -> State Env ()
+createFn :: TExpr -> State Env ()
 createFn expr = do
   args' <- gets args
   capturable' <- gets capturable
@@ -148,8 +148,8 @@ capture arg = do
   put env { args = args env ++ [arg], captured = captured env ++ [fst arg] }
   return ret
 
-compileCallItems :: [Expr] -> State Env Insts
+compileCallItems :: [TExpr] -> State Env Insts
 compileCallItems items = concat <$> mapM compileCallItem items
 
-compileCallItem :: Expr -> State Env Insts
+compileCallItem :: TExpr -> State Env Insts
 compileCallItem expr = compileExpr expr <&> (++ [VirtualMachine.Call])
