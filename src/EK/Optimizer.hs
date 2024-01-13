@@ -83,7 +83,7 @@ changeFuncNameInInsts :: String -> [String] -> Result -> Result
 changeFuncNameInInsts name namesToChange = Map.map (updateFuncName name namesToChange)
 
 inlineResult :: Result -> Env -> Result
-inlineResult res env = Map.map (\insts -> inlineInsts insts env) res
+inlineResult res env = Map.map (`inlineInsts` env) res
 
 inlineInsts :: Insts -> Env -> Insts
 inlineInsts [] _ = []

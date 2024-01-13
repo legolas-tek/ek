@@ -7,7 +7,7 @@
 
 module Optimizing (tests) where
 
-import qualified Data.Map as Map (fromList)
+import qualified Data.Map as Map (fromList, empty)
 import VirtualMachine
 import EK.Optimizer
 import Test.HUnit
@@ -21,12 +21,12 @@ tests = test
 
     inlineInsts insts env @?=
       [Push $ (IntegerValue 5), Push $ (IntegerValue 5), Ret]
-    inlineInsts insts (Map.fromList []) @?=
+    inlineInsts insts Map.empty @?=
       insts
     inlineResult res env @?=
       Map.fromList [("first fn", [Push $ (IntegerValue 5), Push $ (IntegerValue 5), Ret])
       , ("second fn", [Push $ (IntegerValue 5), Push $ (IntegerValue 5), Ret])]
-    inlineResult res (Map.fromList []) @?=
+    inlineResult res Map.empty @?=
       Map.fromList [("first fn", insts), ("second fn", insts)]
 
   , "delete useless functions" ~: do
