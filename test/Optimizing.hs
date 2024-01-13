@@ -28,6 +28,7 @@ tests = test
       , ("second fn", [Push $ (IntegerValue 5), Push $ (IntegerValue 5), Ret])]
     inlineResult res (Map.fromList []) @?=
       Map.fromList [("first fn", insts), ("second fn", insts)]
+
   , "delete useless functions" ~: do
       let result = Map.fromList
             [ ("main", [Push (IntegerValue 1), Push (IntegerValue 2), CallOp Add, Ret])
@@ -37,6 +38,7 @@ tests = test
       let expected = Map.fromList
             [ ("main", [Push (IntegerValue 1), Push (IntegerValue 2), CallOp Add, Ret]) ]
       expected @?= deleteNotUsedFunc result
+
   , "merge functions with same instructions" ~: do
       let result = Map.fromList
             [ ("add_first", [Push (IntegerValue 1), Push (IntegerValue 2), CallOp Add, Ret])
@@ -49,6 +51,7 @@ tests = test
             , ("main", [GetEnv "add_first", GetEnv "add_first"])
             ]
       expected @?= deleteSameInstsOfFunc result
+
   , "optimize Insts" ~: do
       let instsAdd = [Push (IntegerValue 1), Push (IntegerValue 2), CallOp Add, Ret]
       let expectedAdd = [Push (IntegerValue 3), Ret]
@@ -59,6 +62,7 @@ tests = test
       let instsMul = [Push (IntegerValue 1), Push (IntegerValue 2), CallOp Mul, Ret]
       let expectedMul = [Push (IntegerValue 2), Ret]
       expectedMul @?= optimizeInsts instsMul
+
    , "optimize bytecode" ~: do
       let result = Map.fromList
             [ ("add_first", [Push (IntegerValue 1), Push (IntegerValue 2), CallOp Add, Ret])
