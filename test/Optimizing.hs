@@ -45,4 +45,15 @@ tests = test
       let instsMul = [Push (IntegerValue 1), Push (IntegerValue 2), CallOp Mul, Ret]
       let expectedMul = [Push (IntegerValue 2), Ret]
       expectedMul @?= optimizeInsts instsMul
+   , "optimize bytecode" ~: do
+      let result = Map.fromList
+            [ ("add_first", [Push (IntegerValue 1), Push (IntegerValue 2), CallOp Add, Ret])
+            , ("add_second", [Push (IntegerValue 1), Push (IntegerValue 2), CallOp Add, Ret])
+            , ("main", [GetEnv "add_first", GetEnv "add_second"])
+            ]
+      let expected = Map.fromList
+            [ ("add_first", [Push (IntegerValue 3), Ret])
+            , ("main", [GetEnv "add_first", GetEnv "add_first"])
+            ]
+      expected @?= optimizeBytecode result
   ]
