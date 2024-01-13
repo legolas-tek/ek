@@ -7,6 +7,7 @@
 
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Serialize
     ( saveResult
@@ -32,6 +33,8 @@ import Data.Functor (($>))
 import Control.Applicative (liftA2)
 import Text.Printf (printf)
 import System.Directory (getPermissions, setPermissions, setOwnerExecutable)
+import EK.Types
+import qualified Data.Range as Range
 
 type DeserializerError = Diagnostic
 
@@ -68,7 +71,7 @@ instance Serializable Int where
 instance Serializable Double where
   serialize float = fromString (show float) <> B.singleton 0
 
-  deserialize = (read . fmap BI.w2c) <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
+  deserialize = read . fmap BI.w2c <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
 
 instance Serializable String where
   serialize str = fromString str <> B.singleton 0
@@ -112,6 +115,7 @@ instance Serializable Instruction where
   serialize (Construct name count) = B.singleton 20 <> serialize name <> serialize count
   serialize (Extract count) = B.singleton 21 <> serialize count
   serialize TailCall = B.singleton 22
+  serialize (CheckConvertible ty) = B.singleton 23 <> serialize ty
 
   deserialize = parseOneIf (== 1) *> (Push <$> deserialize)
             <|> parseOneIf (== 2) $> Call
@@ -135,6 +139,50 @@ instance Serializable Instruction where
             <|> parseOneIf (== 20) *> (Construct <$> deserialize <*> deserialize)
             <|> parseOneIf (== 21) *> (Extract <$> deserialize)
             <|> parseOneIf (== 22) $> TailCall
+            <|> parseOneIf (== 23) *> (CheckConvertible <$> deserialize)
+
+instance Serializable Type where
+  serialize AnyTy = B.singleton 0
+  serialize (UnionTy tys) = B.singleton 1 <> serialize tys
+  serialize UnresolvedTy = B.singleton 2
+
+  deserialize = parseOneIf (== 0) $> AnyTy
+            <|> parseOneIf (== 1) *> (UnionTy <$> deserialize)
+            <|> parseOneIf (== 2) $> UnresolvedTy
+
+instance Serializable UnionType where
+  serialize (UnionType {..}) = serialize atoms <> serialize functions <> serialize ints <> serialize structs
+
+  deserialize = UnionType <$> deserialize <*> deserialize <*> deserialize <*> deserialize
+
+instance Serializable [String] where
+  serialize strs = B.concat (fmap ((B.singleton 1 <>) . serialize) strs) <> B.singleton 0
+
+  deserialize = many (parseOneIf (== 1) *> deserialize) <* parseOneIf (== 0)
+
+instance (Serializable a, Serializable b) => Serializable [(a, b)] where
+  serialize pairs = B.concat (fmap ((B.singleton 1 <>) . serialize) pairs) <> B.singleton 0
+
+  deserialize = many (parseOneIf (== 1) *> deserialize) <* parseOneIf (== 0)
+
+instance Serializable (Range.Range Integer) where
+  serialize (Range.SingletonRange value) = B.singleton 1 <> serialize value
+  serialize (Range.SpanRange from to) = B.singleton 2 <> serialize (normalizeLBound from) <> serialize (normalizeUBound to)
+  serialize (Range.LowerBoundRange l) = B.singleton 3 <> serialize (normalizeLBound l)
+  serialize (Range.UpperBoundRange u) = B.singleton 4 <> serialize (normalizeUBound u)
+  serialize Range.InfiniteRange = B.singleton 5
+
+  deserialize = parseOneIf (== 1) *> (Range.SingletonRange <$> deserialize)
+            <|> parseOneIf (== 2) *> (Range.SpanRange . inc <$> deserialize <*> (inc <$> deserialize))
+            <|> parseOneIf (== 3) *> (Range.LowerBoundRange . inc <$> deserialize)
+            <|> parseOneIf (== 4) *> (Range.UpperBoundRange . inc <$> deserialize)
+            <|> parseOneIf (== 5) $> Range.InfiniteRange
+                where inc b = Range.Bound b Range.Inclusive
+
+instance Serializable [Range.Range Integer] where
+  serialize bounds = B.concat (fmap serialize bounds) <> B.singleton 0
+
+  deserialize = many deserialize <* parseOneIf (== 0)
 
 instance Serializable [Instruction] where
   serialize insts = B.concat (fmap serialize insts) <> B.singleton 0

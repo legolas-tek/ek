@@ -10,6 +10,9 @@
 module EK.Types
   ( Type(..)
   , Field(..)
+  , UnionType(..) -- internal but needed for serialize
+  , normalizeLBound
+  , normalizeUBound
   , atomTy
   , functionTy
   , intTy
