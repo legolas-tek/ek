@@ -10,7 +10,7 @@ module EKResolving (tests) where
 import Test.HUnit
 
 import EK.Resolver
-import EK.Types
+import EK.Types hiding (UnionType)
 import EK.Ast
 
 tests :: Test

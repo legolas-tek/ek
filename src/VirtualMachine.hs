@@ -148,12 +148,12 @@ exec _ _ (CheckConvertible _:_) [] = fail "No value to check convertible"
 
 runtimeType :: VMValue -> Type
 runtimeType (IntegerValue i) = intTy i
-runtimeType (FloatValue _) = structTy "float" []
-runtimeType (StringValue _) = structTy "string" []
+runtimeType (FloatValue _) = structTy "float"
+runtimeType (StringValue _) = structTy "string"
 runtimeType (AtomValue a) = atomTy a
 runtimeType (FunctionValue _) = functionTy AnyTy AnyTy
 runtimeType (ClosureValue _ _) = functionTy AnyTy AnyTy
-runtimeType (StructValue name _) = structTy name []
+runtimeType (StructValue name _) = structTy name
 
 atomicBool :: Bool -> VMValue
 atomicBool True = AtomValue "true"

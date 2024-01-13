@@ -34,14 +34,14 @@ defaultTypes :: Map String Type
 defaultTypes = Map.fromList
   [ ("any", AnyTy)
   , ("never", mempty)
-  , ("string", structTy "string" [])
-  , ("float", structTy "float" [])
+  , ("string", structTy "string")
+  , ("float", structTy "float")
   ]
 
 collectType :: TotalStmt -> Map String Type
 collectType (AtomDef name) = Map.fromList [(name, atomTy name)]
 collectType (TypeDef name _) = Map.fromList [(name, UnresolvedTy)]
-collectType (StructDef name _) = Map.fromList [(name, structTy name [])]
+collectType (StructDef name _) = Map.fromList [(name, structTy name)]
 collectType _ = Map.empty
 
 resolveType :: Map String Type -> TotalStmt -> Map String Type
