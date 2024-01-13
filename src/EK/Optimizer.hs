@@ -22,7 +22,7 @@ import qualified Data.Set as Set
 import Data.List (nub)
 
 optimizeBytecode :: Result -> Result
-optimizeBytecode = fmap optimizeInsts . deleteNotUsedFunc .  deleteSameInstsOfFunc . deleteNotUsedFunc
+optimizeBytecode = fmap optimizeInsts . deleteNotUsedFunc . inlineResult . deleteSameInstsOfFunc . deleteNotUsedFunc
 
 optimizeInsts :: Insts -> Insts
 optimizeInsts [] = []
@@ -82,14 +82,13 @@ updateFuncName name namesToChange (x : xs) = x : updateFuncName name namesToChan
 changeFuncNameInInsts :: String -> [String] -> Result -> Result
 changeFuncNameInInsts name namesToChange = Map.map (updateFuncName name namesToChange)
 
-inlineResult :: Result -> Env -> Result
-inlineResult res env = Map.map (`inlineInsts` env) res
+inlineResult :: Result -> Result
+inlineResult res = Map.map (`inlineInsts` res) res
 
-inlineInsts :: Insts -> Env -> Insts
+inlineInsts :: Insts -> Result -> Insts
 inlineInsts [] _ = []
 inlineInsts (GetEnv variable : Push value : Call : xs) env =
   case Map.lookup variable env of
     Nothing -> [GetEnv variable, Push value, Call] ++ inlineInsts xs env
-    Just (FunctionValue insts) -> insts ++ inlineInsts xs env
-    Just _ -> inlineInsts xs env
+    Just insts -> insts ++ inlineInsts xs env
 inlineInsts (x:xs) env = x : inlineInsts xs env
