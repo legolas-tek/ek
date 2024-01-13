@@ -26,9 +26,9 @@ optimizeInsts :: Insts -> Insts
 optimizeInsts [] = []
 optimizeInsts (Closure 0: rest) = optimizeInsts rest
 optimizeInsts (Call : Ret : rest) = TailCall : optimizeInsts rest
-optimizeInsts (Push (IntegerValue x) : Push (IntegerValue y) : CallOp Add : rest) = Push (IntegerValue (x + y)) : optimizeInsts rest
-optimizeInsts (Push (IntegerValue x) : Push (IntegerValue y) : CallOp Sub : rest) = Push (IntegerValue (x - y)) : optimizeInsts rest
-optimizeInsts (Push (IntegerValue x) : Push (IntegerValue y) : CallOp Mul : rest) = Push (IntegerValue (x * y)) : optimizeInsts rest
+optimizeInsts (Push x : Push y : CallOp op : rest) = case applyOp op x y of
+    Right v  -> Push v : optimizeInsts rest
+    Left _ -> Push x : Push y : CallOp op : optimizeInsts rest
 optimizeInsts (inst : rest) = inst : optimizeInsts rest
 
 deleteNotUsedFunc :: Result -> Result
