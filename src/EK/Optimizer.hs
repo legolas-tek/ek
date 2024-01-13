@@ -9,12 +9,13 @@ module EK.Optimizer
   ( optimizeBytecode
   , optimizeInsts
   , inlineInsts
+  , inlineResult
   ) where
 
 import VirtualMachine
 import EK.Compiler
 
-import qualified Data.Map as Map (lookup, filterWithKey)
+import qualified Data.Map as Map (lookup, filterWithKey, map)
 import qualified Data.Set as Set
 import Data.List (nub)
 
@@ -57,12 +58,14 @@ optimizeInsts (Push (IntegerValue x) : Push (IntegerValue y) : CallOp Sub : rest
 optimizeInsts (Push (IntegerValue x) : Push (IntegerValue y) : CallOp Mul : rest) = Push (IntegerValue (x * y)) : optimizeInsts rest
 optimizeInsts (inst : rest) = inst : optimizeInsts rest
 
-
+inlineResult :: Result -> Env -> Result
+inlineResult res env = Map.map (\insts -> inlineInsts insts env) res
 
 inlineInsts :: Insts -> Env -> Insts
 inlineInsts [] _ = []
-inlineInsts (GetEnv variable: Push _: Call:xs) env = case Map.lookup variable env of
-        Nothing -> inlineInsts xs env
-        Just (FunctionValue insts) -> xs ++ insts ++ (inlineInsts xs env)
-        Just _ -> inlineInsts xs env
-inlineInsts (x: xs) env = (x: xs) ++ inlineInsts xs env
+inlineInsts (GetEnv variable : Push value : Call : xs) env =
+  case Map.lookup variable env of
+    Nothing -> [GetEnv variable, Push value, Call] ++ inlineInsts xs env
+    Just (FunctionValue insts) -> insts ++ inlineInsts xs env
+    Just _ -> inlineInsts xs env
+inlineInsts (x:xs) env = x : inlineInsts xs env
