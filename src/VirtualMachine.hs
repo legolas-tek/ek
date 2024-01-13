@@ -13,6 +13,7 @@ module VirtualMachine
     , Stack
     , Insts
     , Env
+    , applyOp
     ) where
 
 import Data.Map (Map, lookup)
@@ -172,29 +173,29 @@ applyOp Less (FloatValue a) (FloatValue b)
 
 -- float int
 applyOp Add (FloatValue a) (IntegerValue b)
-  = Right $ FloatValue $ a + (fromIntegral b)
+  = Right $ FloatValue $ a + fromIntegral b
 applyOp Sub (FloatValue a) (IntegerValue b)
-  = Right $ FloatValue $ a - (fromIntegral b)
+  = Right $ FloatValue $ a - fromIntegral b
 applyOp Mul (FloatValue a) (IntegerValue b)
-  = Right $ FloatValue $ a * (fromIntegral b)
+  = Right $ FloatValue $ a * fromIntegral b
 applyOp Div (FloatValue _) (IntegerValue 0)
   = Left "Division by zero"
 applyOp Div (FloatValue a) (IntegerValue b)
-  = Right $ FloatValue $ a / (fromIntegral b)
+  = Right $ FloatValue $ a / fromIntegral b
 applyOp Less (FloatValue a) (IntegerValue b)
-  = Right $ AtomValue (if a < (fromIntegral b) then "true" else "false")
+  = Right $ AtomValue (if a < fromIntegral b then "true" else "false")
 
 -- int float
 applyOp Add (IntegerValue a) (FloatValue b)
-  = Right $ FloatValue $ (fromIntegral a) + b
+  = Right $ FloatValue $ fromIntegral a + b
 applyOp Sub (IntegerValue a) (FloatValue b)
-  = Right $ FloatValue $ (fromIntegral a) - b
+  = Right $ FloatValue $ fromIntegral a - b
 applyOp Mul (IntegerValue a) (FloatValue b)
-  = Right $ FloatValue $ (fromIntegral a) * b
+  = Right $ FloatValue $ fromIntegral a * b
 applyOp Div (IntegerValue _) (FloatValue 0)
   = Left "Division by zero"
 applyOp Div (IntegerValue a) (FloatValue b)
-  = Right $ FloatValue $ (fromIntegral a) / b
+  = Right $ FloatValue $ fromIntegral a / b
 applyOp Less (IntegerValue a) (FloatValue b)
-  = Right $ AtomValue (if (fromIntegral a) < b then "true" else "false")
+  = Right $ AtomValue (if fromIntegral a < b then "true" else "false")
 applyOp _ _ _ = Left "Invalid operands for operator"
