@@ -16,6 +16,7 @@ import qualified Compilation
 import qualified Tokenizing
 import qualified Serializing
 import qualified Optimizing
+
 tests :: Test
 tests = test
   [ "Parsing tests" ~: Parsing.tests
