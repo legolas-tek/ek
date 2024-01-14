@@ -17,13 +17,10 @@
 		  "0": { "name": "comment.block.ek" }
 		}
 	  },
-	{
-		"name": "keyword.import.ek",
-		"match": "\\b(import)\\b",
-		"captures": {
-		  "1": { "name": "keyword.import.ek" }
-		}
-	}
+	  {
+		"name": "keyword.control.ek",
+		"match": "\\b(atom|struct|type|fn|lazy|precedence|import|is)\\b"
+	  }
 	],
 	"repository": {
 	  "comment": {
@@ -36,6 +33,14 @@
 			"name": "comment.block.ek",
 			"begin": "/\\*",
 			"end": "\\*/"
+		  }
+		]
+	  },
+	  "keywords": {
+		"patterns": [
+		  {
+			"name": "keyword.control.ek",
+			"match": "\\b(atom|struct|type|fn|lazy|precedence|import|is)\\b"
 		  }
 		]
 	  }
