@@ -15,18 +15,18 @@ import Test.HUnit
 tests :: Test
 tests = test
   [ "inline" ~: do
-    let env = Map.fromList [("test", [Push $ (IntegerValue 5), Ret])]
-    let insts = [Push $ (IntegerValue 5), GetEnv $ "test", Push $ (AtomValue "void"), Call]
-    let res = Map.fromList [("first fn", insts), ("second fn", insts), ("test", [Push $ (IntegerValue 5), Ret])]
+    let env = Map.fromList [("test", [Push $ IntegerValue 5, Ret])]
+    let insts = [Push $ IntegerValue 5, GetEnv $ "test", Push $ AtomValue "void", Call]
+    let res = Map.fromList [("first fn", insts), ("second fn", insts), ("test", [Push $ IntegerValue 5, Ret])]
 
     inlineInsts insts env @?=
-      [Push $ (IntegerValue 5), Push $ (IntegerValue 5), Ret]
+      [Push $ IntegerValue 5, Push $ IntegerValue 5, Ret]
     inlineInsts insts Map.empty @?=
       insts
     inlineResult res @?=
-      Map.fromList [("first fn", [Push $ (IntegerValue 5), Push $ (IntegerValue 5), Ret])
-      , ("second fn", [Push $ (IntegerValue 5), Push $ (IntegerValue 5), Ret])
-      , ("test", [Push $ (IntegerValue 5), Ret])]
+      Map.fromList [("first fn", [Push $ IntegerValue 5, Push $ IntegerValue 5, Ret])
+      , ("second fn", [Push $ IntegerValue 5, Push $ IntegerValue 5, Ret])
+      , ("test", [Push $ IntegerValue 5, Ret])]
 
   , "delete useless functions" ~: do
       let result = Map.fromList
