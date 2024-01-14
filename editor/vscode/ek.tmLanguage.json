@@ -27,7 +27,7 @@
         },
         {
             "name": "storage.type.ek",
-            "match": "\\b(bool|int|true|false|string|void|any|never|float|list|empty|const)\\b"
+            "match": "\\b(bool|int|true|false|string|void|any|never|float|list|empty|cons|null)\\b"
         },
 		{
 		  "name": "constant.numeric.ek",
@@ -43,7 +43,7 @@
         },
         {
             "name": "keyword.function.ek",
-            "match": "\\b(head|tail|dmf)\\b"
+            "match": "\\b(head|tail)\\b"
         }
     ],
     "repository": {
@@ -104,7 +104,7 @@
             "patterns": [
                 {
                     "name": "keyword.function.ek",
-                    "match": "\\b(head|tail|dmf|print|eprint|readLine|exit|panic|assert|clamp|min|max|toString|not|drop|take|length|map|filter|foldl|foldr|reverse|head|tail)\\b"
+                    "match": "\\b(head|tail|print|eprint|readLine|exit|panic|assert|clamp|min|max|toString|not|drop|take|length|map|filter|foldl|foldr|reverse|head|tail)\\b"
                 }
             ]
         }
