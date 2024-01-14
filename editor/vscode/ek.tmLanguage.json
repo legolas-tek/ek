@@ -20,6 +20,10 @@
 	  {
 		"name": "keyword.control.ek",
 		"match": "\\b(atom|struct|type|fn|lazy|precedence|import|is)\\b"
+	  },
+	  {
+		"name": "storage.type.ek",
+		"match": "\\b(bool|int|true|false|string|void|any|never|float)\\b"
 	  }
 	],
 	"repository": {
@@ -41,6 +45,14 @@
 		  {
 			"name": "keyword.control.ek",
 			"match": "\\b(atom|struct|type|fn|lazy|precedence|import|is)\\b"
+		  }
+		]
+	  },
+	  "types": {
+		"patterns": [
+		  {
+			"name": "storage.type.ek",
+			"match": "\\b(bool|int|true|false|string|void|any|never|float)\\b"
 		  }
 		]
 	  }
