@@ -118,6 +118,7 @@ instance Serializable Instruction where
   serialize (CheckConvertible ty) = B.singleton 23 <> serialize ty
   serialize (CallOp Concat) = B.singleton 24
   serialize (CallOp ToInt) = B.singleton 25
+  serialize (CallOp ToFloat) = B.singleton 26
 
   deserialize = exact 1 *> (Push <$> deserialize)
             <|> exact 2 $> Call
@@ -144,6 +145,7 @@ instance Serializable Instruction where
             <|> exact 23 *> (CheckConvertible <$> deserialize)
             <|> exact 24 $> CallOp Concat
             <|> exact 25 $> CallOp ToInt
+            <|> exact 26 $> CallOp ToFloat
 
 instance Serializable Type where
   serialize AnyTy = B.singleton 0

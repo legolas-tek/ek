@@ -54,6 +54,7 @@ data Operator = Add
               | ToString
               | Concat
               | ToInt
+              | ToFloat
               deriving (Eq)
 
 instance Show Operator where
@@ -70,6 +71,7 @@ instance Show Operator where
   show ToString = "toString"
   show Concat = "concat"
   show ToInt = "toInt"
+  show ToFloat = "toFloat"
 
 data Instruction = Push VMValue
                  | Call
@@ -124,6 +126,13 @@ exec env args (CallOp ToInt:insts) (v:stack) = case v of
     Just i -> exec env args insts (IntegerValue i:stack)
     Nothing -> fail $ "Cannot convert string " ++ s ++ " to int"
   _ -> fail $ "Cannot convert value of type " ++ show v ++ " to int"
+exec env args (CallOp ToFloat:insts) (v:stack) = case v of
+  IntegerValue i -> exec env args insts (FloatValue (fromIntegral i):stack)
+  FloatValue _ -> exec env args insts (v:stack)
+  StringValue s -> case readMaybe s of
+    Just f -> exec env args insts (FloatValue f:stack)
+    Nothing -> fail $ "Cannot convert string " ++ s ++ " to float"
+  _ -> fail $ "Cannot convert value of type " ++ show v ++ " to float"
 exec _ _ (CallOp Exit:_) ((IntegerValue 0):_) = exitSuccess
 exec _ _ (CallOp Exit:_) ((IntegerValue v):_) = exitWith $ ExitFailure $ fromIntegral v
 exec env args (CallOp op:insts) (v1:v2:stack) =

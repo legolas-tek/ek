@@ -54,5 +54,6 @@ fn concat _ _ = builtin concat
 fn _ ++ _ = builtin concat
 fn _ toString = builtin toString
 fn _ toInt = builtin toInt
+fn _ toFloat = builtin toFloat
 
 fn (f) . (g) = \x = (f $ (g $ x))
