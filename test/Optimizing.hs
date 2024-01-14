@@ -14,13 +14,13 @@ import Test.HUnit
 
 tests :: Test
 tests = test
-  [ "convertLoadArg" ~: do
+  [ "convertInlinedInsts" ~: do
     let insts = [LoadArg 0, Push $ IntegerValue 5, CallOp Add, LoadArg 0, CallOp Sub, Ret]
     let insts' = [LoadArg 1, Push $ IntegerValue 5, CallOp Add, LoadArg 1, CallOp Sub, Ret]
 
-    convertLoadArgs insts (IntegerValue 10) @?=
+    convertInlinedInsts insts (IntegerValue 10) @?=
       [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Add, Push $ IntegerValue 10, CallOp Sub]
-    convertLoadArgs insts' (IntegerValue 10) @?=
+    convertInlinedInsts insts' (IntegerValue 10) @?=
       [LoadArg 1, Push $ IntegerValue 5, CallOp Add, LoadArg 1, CallOp Sub]
 
   , "inline" ~: do
