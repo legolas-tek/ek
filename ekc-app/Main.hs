@@ -17,12 +17,11 @@ import Serialize
 import Data.Maybe (fromMaybe)
 
 import System.Environment (getArgs, setEnv, lookupEnv)
+import System.Directory (getCurrentDirectory)
 import System.Exit (exitSuccess)
-import Control.Monad (when)
+import Control.Monad (when, void)
 import EK.Optimizer (optimizeBytecode)
 import Data.List (intercalate)
-
-import Control.Monad (void)
 
 readFileOrStdIn :: Maybe String -> IO String
 readFileOrStdIn Nothing = getContents
@@ -37,7 +36,7 @@ save result Nothing = saveResult result "a.out"
 save result (Just file) = saveResult result file
 
 addImportsPath :: Maybe [String] -> IO ()
-addImportsPath Nothing = setEnv "EK_LIBRARY_PATH" "./"
+addImportsPath Nothing = getCurrentDirectory >>= \curDir -> setEnv "EK_LIBRARY_PATH" ("./:" ++ curDir ++ "../lib/ek/stdlib/:")
 addImportsPath (Just paths) = do
   oldPath <- fromMaybe "" <$> lookupEnv "EK_LIBRARY_PATH"
   setEnv "EK_LIBRARY_PATH" $ intercalate ":" $ paths ++ [oldPath]
