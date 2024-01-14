@@ -83,12 +83,12 @@ changeFuncNameInInsts :: String -> [String] -> Result -> Result
 changeFuncNameInInsts name namesToChange = Map.map (updateFuncName name namesToChange)
 
 inlineResult :: Result -> Result
-inlineResult res = Map.map (`inlineInsts` res) res
+inlineResult res = fmap (`inlineInsts` res) res
 
 inlineInsts :: Insts -> Result -> Insts
 inlineInsts [] _ = []
-inlineInsts (GetEnv variable : Push value : Call : xs) env =
-  case Map.lookup variable env of
-    Nothing -> [GetEnv variable, Push value, Call] ++ inlineInsts xs env
+inlineInsts (GetEnv fn : Push value : Call : xs) env =
+  case Map.lookup fn env of
+    Nothing -> [GetEnv fn, Push value, Call] ++ inlineInsts xs env
     Just insts -> insts ++ inlineInsts xs env
 inlineInsts (x:xs) env = x : inlineInsts xs env
