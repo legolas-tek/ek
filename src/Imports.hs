@@ -12,12 +12,10 @@ module Imports
 
 import System.Environment (setEnv, lookupEnv, getExecutablePath)
 import System.FilePath (takeDirectory)
+import Data.Maybe (fromMaybe)
 
 
 setDefaultImportsPath :: IO ()
 setDefaultImportsPath = do
-    curEnv <- lookupEnv "EK_LIBRARY_PATH"
-    case curEnv of
-        Nothing -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" ("./:" ++ curDir ++ "/../lib/ek/:")) . takeDirectory
-        Just current -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" (current ++ ":./:" ++ curDir ++ "/../lib/ek/:")) . takeDirectory
-
+    curEnv <- fromMaybe "" <$> lookupEnv "EK_LIBRARY_PATH"
+    getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" (curEnv ++ ":./:" ++ curDir ++ "/../lib/ek/:")) . takeDirectory
