@@ -37,7 +37,7 @@ save result Nothing = saveResult result "a.out"
 save result (Just file) = saveResult result file
 
 addImportsPath :: Maybe [String] -> IO ()
-addImportsPath Nothing = return ()
+addImportsPath Nothing = setEnv "EK_LIBRARY_PATH" "./"
 addImportsPath (Just paths) = do
   oldPath <- fromMaybe "" <$> lookupEnv "EK_LIBRARY_PATH"
   setEnv "EK_LIBRARY_PATH" $ intercalate ":" $ paths ++ [oldPath]
