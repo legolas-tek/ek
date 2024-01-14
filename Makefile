@@ -30,7 +30,7 @@ tests_run:
 	$(STACK) test --coverage
 	$(STACK) hpc report --all --destdir test/coverage
 
-functional_test:
+functional_test: all
 	lit -v ./test/functional
 
 install:
