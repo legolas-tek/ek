@@ -36,7 +36,11 @@
 		{
 		  "name": "keyword.operator.ek",
 		  "match": "[.=/+*!?%<>&|^~$,_\\-]"
-		}
+		},
+        {
+          "name": "punctuation.bracket.ek",
+          "match": "[][(){}]"
+        }
     ],
     "repository": {
         "comment": {
@@ -83,6 +87,14 @@
 			  "match": "[.=/+*!?%<>&|^~$,_\\-]"
 			}
 		  ]
-		}
+		},
+        "brackets": {
+          "patterns": [
+            {
+              "name": "punctuation.bracket.ek",
+              "match": "[][(){}]"
+            }
+          ]
+        }
     }
 }
