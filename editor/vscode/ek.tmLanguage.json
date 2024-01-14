@@ -38,8 +38,8 @@
 		  "match": "[.=/+*!?%<>&|^~$,_\\-]"
 		},
         {
-          "name": "punctuation.bracket.ek",
-          "match": "[][(){}]"
+          "name": "punctuation.delimiter.ek",
+          "match": "[,:]"
         }
     ],
     "repository": {
@@ -88,11 +88,11 @@
 			}
 		  ]
 		},
-        "brackets": {
+        "delimiters": {
           "patterns": [
             {
-              "name": "punctuation.bracket.ek",
-              "match": "[][(){}]"
+              "name": "punctuation.delimiter.ek",
+              "match": "[,:]"
             }
           ]
         }
