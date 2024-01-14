@@ -126,15 +126,15 @@ exec env args (CallOp ToInt:insts) (v:stack) = case v of
   FloatValue f -> exec env args insts (IntegerValue (floor f):stack)
   StringValue s -> case readMaybe s of
     Just i -> exec env args insts (IntegerValue i:stack)
-    Nothing -> fail $ "Cannot convert string " ++ s ++ " to int"
-  _ -> fail $ "Cannot convert value of type " ++ show v ++ " to int"
+    Nothing -> exec env args insts (AtomValue "null":stack)
+  _ -> exec env args insts (AtomValue "null":stack)
 exec env args (CallOp ToFloat:insts) (v:stack) = case v of
   IntegerValue i -> exec env args insts (FloatValue (fromIntegral i):stack)
   FloatValue _ -> exec env args insts (v:stack)
   StringValue s -> case readMaybe s of
     Just f -> exec env args insts (FloatValue f:stack)
-    Nothing -> fail $ "Cannot convert string " ++ s ++ " to float"
-  _ -> fail $ "Cannot convert value of type " ++ show v ++ " to float"
+    Nothing -> exec env args insts (AtomValue "null":stack)
+  _ -> exec env args insts (AtomValue "null":stack)
 exec _ _ (CallOp Exit:_) ((IntegerValue 0):_) = exitSuccess
 exec _ _ (CallOp Exit:_) ((IntegerValue v):_) = exitWith $ ExitFailure $ fromIntegral v
 exec env args (CallOp op:insts) (v1:v2:stack) =
@@ -213,8 +213,6 @@ applyOp Div (FloatValue a) (FloatValue b)
   = Right $ FloatValue $ a / b
 applyOp Less (FloatValue a) (FloatValue b)
   = Right $ atomicBool $ a < b
-applyOp Concat (FloatValue a) (FloatValue b)
-  = Right $ FloatValue $ read $ show a ++ show b
 
 -- float int
 applyOp Add (FloatValue a) (IntegerValue b)
@@ -278,7 +276,7 @@ applyOp Sub (StringValue a) (IntegerValue b)
 applyOp Sub (IntegerValue a) (StringValue b)
   = Right $ StringValue $ drop (fromIntegral a) b
 applyOp CharAt (StringValue a) (IntegerValue b)
-  = Right $ StringValue [a !! fromIntegral b]
+  = Right $ if b < fromIntegral (length a) then StringValue [a !! fromIntegral b] else AtomValue "null"
 applyOp CharAt (IntegerValue a) (StringValue b)
-  = Right $ StringValue [b !! fromIntegral a]
+  = Right $ if a < fromIntegral (length b) then StringValue [b !! fromIntegral a] else AtomValue "null"
 applyOp _ _ _ = Left "Invalid operands for operator"
