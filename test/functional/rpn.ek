@@ -94,3 +94,9 @@ fn main =
 
 // CHECK: true
     >> 42 toString "42" == print
+// CHECK: 4242
+    >> 42 42 concat print
+// CHECK: zouzoulindon
+    >> "zouzou" "lindon" ++ print
+// CHECK: 42
+    >> "42" toInt print

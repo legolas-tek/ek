@@ -23,6 +23,8 @@ extern fn builtin print: any -> void
 extern fn builtin eprint: any -> void
 
 extern fn builtin toString: any -> string
+extern fn builtin toInt: any -> int
+extern fn builtin concat: any -> any -> any
 
 extern fn builtin readLine: string
 

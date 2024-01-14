@@ -5,6 +5,24 @@
 import std
 
 // CHECK: 42
+fn main = print (42 toString)
 // CHECK: test
+    >> print readLine
 // ERROR: hello
-fn main = print (42 toString) >> print readLine >> eprint "hello"
+    >> eprint "hello"
+// CHECK: testtest
+    >> print concat "test" "test"
+// CHECK: bahencore
+    >> print "bah" ++ "encore"
+// CHECK: 42
+    >> print ("42" toInt)
+// CHECK: lindo
+    >> print ("lindon" - 1)
+// CHECK: ouzou
+    >> print (1 - "zouzou")
+// CHECK: 42
+    >> print (42.42 toInt)
+// CHECK: 4242
+    >> print (42 ++ 42)
+// CHECK: 42.015
+    >> print (concat 42.0 15)

@@ -218,6 +218,8 @@ applyOp Div (FloatValue a) (IntegerValue b)
   = Right $ FloatValue $ a / fromIntegral b
 applyOp Less (FloatValue a) (IntegerValue b)
   = Right $ atomicBool $ a < fromIntegral b
+applyOp Concat (FloatValue a) (IntegerValue b)
+  = Right $ FloatValue $ read $ show a ++ show b
 
 -- int float
 applyOp Add (IntegerValue a) (FloatValue b)
