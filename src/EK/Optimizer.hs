@@ -5,8 +5,6 @@
 -- Optimizer
 --}
 
-{-# LANGUAGE LambdaCase #-}
-
 module EK.Optimizer
   ( optimizeBytecode,
     optimizeInsts,
