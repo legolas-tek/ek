@@ -252,8 +252,6 @@ applyOp Less (IntegerValue a) (FloatValue b)
   = Right $ atomicBool $ fromIntegral a < b
 
 -- string
-applyOp Concat (FloatValue _) (FloatValue _)
-  = Left "Cannot concatenate float"
 applyOp Concat a b
   = Right $ StringValue $ show a ++ show b
 applyOp Mul (StringValue a) (IntegerValue b)
