@@ -6,15 +6,14 @@
 --}
 
 module EK.Optimizer
-  ( optimizeBytecode,
-    optimizeInsts,
-    inlineInsts,
-    inlineResult,
-    deleteNotUsedFunc,
-    deleteSameInstsOfFunc,
-    convertInlinedInsts,
-  )
-where
+  ( optimizeBytecode
+  , optimizeInsts
+  , inlineInsts
+  , inlineResult
+  , deleteNotUsedFunc
+  , deleteSameInstsOfFunc
+  , convertInlinedInsts
+  ) where
 
 import Data.List (nub)
 import qualified Data.Map as Map (filterWithKey, keys, lookup, map, mapWithKey)
