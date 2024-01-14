@@ -22,18 +22,10 @@ import EK.Compiler
 import Diagnostic
 import VirtualMachine
 import EK.Resolver
-import System.Environment (setEnv, lookupEnv, getExecutablePath)
-import System.FilePath (takeDirectory)
+import Imports
 
 import Control.Exception (try, catch, IOException)
 import Control.Monad (when)
-
-setDefaultImportsPath :: IO ()
-setDefaultImportsPath = do
-    curEnv <- lookupEnv "EK_LIBRARY_PATH"
-    case curEnv of
-        Nothing -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" ("./:" ++ curDir ++ "../lib/ek/:")) . takeDirectory
-        Just current -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" (current ++ ":./:" ++ curDir ++ "../lib/ek/:")) . takeDirectory
 
 
 printPrompt :: Bool -> IO ()

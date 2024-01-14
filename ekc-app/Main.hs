@@ -13,15 +13,16 @@ import EK.Parser
 import EK.Compiler
 import EK.Builtins
 import Serialize
+import Imports
 
 import Data.Maybe (fromMaybe)
 
-import System.Environment (getArgs, setEnv, lookupEnv, getExecutablePath)
+import System.Environment (getArgs, setEnv, lookupEnv)
 import System.Exit (exitSuccess)
 import Control.Monad (when, void)
 import EK.Optimizer (optimizeBytecode)
 import Data.List (intercalate)
-import System.FilePath (takeDirectory)
+import System.FilePath ()
 import EK.Resolver
 
 readFileOrStdIn :: Maybe String -> IO String
@@ -35,13 +36,6 @@ writeFileOrStdOut (Just file) content = writeFile file content
 save :: Result -> Maybe String -> IO ()
 save result Nothing = saveResult result "a.out"
 save result (Just file) = saveResult result file
-
-setDefaultImportsPath :: IO ()
-setDefaultImportsPath = do
-    curEnv <- lookupEnv "EK_LIBRARY_PATH"
-    case curEnv of
-        Nothing -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" (".:" ++ curDir ++ "/../lib/ek/:")) . takeDirectory
-        Just current -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" (current ++ ":.:" ++ curDir ++ "/../lib/ek/:")) . takeDirectory
 
 addImportsPath :: [String] -> IO ()
 addImportsPath [] = return ()
