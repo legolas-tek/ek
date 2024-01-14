@@ -20,6 +20,7 @@ import Data.Map (Map, lookup)
 import System.Exit (exitWith, ExitCode(..), exitSuccess)
 import System.IO (hPutStr, stderr)
 import Data.List (intercalate)
+import EK.Types
 
 data VMValue = IntegerValue Integer
              | FloatValue Double
@@ -77,6 +78,7 @@ data Instruction = Push VMValue
                  | Closure Int
                  | Construct String Int
                  | Extract Int
+                 | CheckConvertible Type
                  deriving (Eq)
 
 type Args = [VMValue]
@@ -98,6 +100,7 @@ instance Show Instruction where
   show (Closure count) = "closure " ++ show count
   show (Construct name count) = "construct " ++ name ++ " " ++ show count
   show (Extract offset) = "extract " ++ show offset
+  show (CheckConvertible t) = "check_convertible " ++ show t
 
 exec :: Env -> Args -> Insts -> Stack -> IO VMValue
 exec _ _ [] (s:_) = return s
@@ -140,6 +143,21 @@ exec _ _ (Closure _:_) _ = fail "Cannot create closure of non-function type"
 exec env args (Construct name count:insts) stack = exec env args insts (StructValue name (reverse $ take count stack):drop count stack)
 exec env args (Extract offset:insts) (StructValue _ vs:stack) = exec env args insts (vs !! offset:stack)
 exec _ _ (Extract _:_) _ = fail "Cannot extract field from non-struct type"
+exec env args (CheckConvertible t:insts) (v:stack) = exec env args insts (atomicBool (convertible (runtimeType v) t):stack)
+exec _ _ (CheckConvertible _:_) [] = fail "No value to check convertible"
+
+runtimeType :: VMValue -> Type
+runtimeType (IntegerValue i) = intTy i
+runtimeType (FloatValue _) = structTy "float"
+runtimeType (StringValue _) = structTy "string"
+runtimeType (AtomValue a) = atomTy a
+runtimeType (FunctionValue _) = functionTy AnyTy AnyTy
+runtimeType (ClosureValue _ _) = functionTy AnyTy AnyTy
+runtimeType (StructValue name _) = structTy name
+
+atomicBool :: Bool -> VMValue
+atomicBool True = AtomValue "true"
+atomicBool False = AtomValue "false"
 
 -- int int
 applyOp :: Operator -> VMValue -> VMValue -> Either String VMValue
@@ -153,9 +171,9 @@ applyOp Div (IntegerValue _) (IntegerValue 0)
   = Left "Division by zero"
 applyOp Div (IntegerValue a) (IntegerValue b)
   = Right $ IntegerValue $ a `div` b
-applyOp Eq a b = Right $ AtomValue (if a == b then "true" else "false")
+applyOp Eq a b = Right $ atomicBool $ a == b
 applyOp Less (IntegerValue a) (IntegerValue b)
-  = Right $ AtomValue (if a < b then "true" else "false")
+  = Right $ atomicBool $ a < b
 
 -- float float
 applyOp Add (FloatValue a) (FloatValue b)
@@ -169,7 +187,7 @@ applyOp Div (FloatValue _) (FloatValue 0)
 applyOp Div (FloatValue a) (FloatValue b)
   = Right $ FloatValue $ a / b
 applyOp Less (FloatValue a) (FloatValue b)
-  = Right $ AtomValue (if a < b then "true" else "false")
+  = Right $ atomicBool $ a < b
 
 -- float int
 applyOp Add (FloatValue a) (IntegerValue b)
@@ -183,7 +201,7 @@ applyOp Div (FloatValue _) (IntegerValue 0)
 applyOp Div (FloatValue a) (IntegerValue b)
   = Right $ FloatValue $ a / fromIntegral b
 applyOp Less (FloatValue a) (IntegerValue b)
-  = Right $ AtomValue (if a < fromIntegral b then "true" else "false")
+  = Right $ atomicBool $ a < fromIntegral b
 
 -- int float
 applyOp Add (IntegerValue a) (FloatValue b)
@@ -197,5 +215,5 @@ applyOp Div (IntegerValue _) (FloatValue 0)
 applyOp Div (IntegerValue a) (FloatValue b)
   = Right $ FloatValue $ fromIntegral a / b
 applyOp Less (IntegerValue a) (FloatValue b)
-  = Right $ AtomValue (if fromIntegral a < b then "true" else "false")
+  = Right $ atomicBool $ fromIntegral a < b
 applyOp _ _ _ = Left "Invalid operands for operator"

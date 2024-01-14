@@ -34,14 +34,14 @@ defaultTypes :: Map String Type
 defaultTypes = Map.fromList
   [ ("any", AnyTy)
   , ("never", mempty)
-  , ("string", structTy "string" [])
-  , ("float", structTy "float" [])
+  , ("string", structTy "string")
+  , ("float", structTy "float")
   ]
 
 collectType :: TotalStmt -> Map String Type
 collectType (AtomDef name) = Map.fromList [(name, atomTy name)]
 collectType (TypeDef name _) = Map.fromList [(name, UnresolvedTy)]
-collectType (StructDef name _) = Map.fromList [(name, structTy name [])]
+collectType (StructDef name _) = Map.fromList [(name, structTy name)]
 collectType _ = Map.empty
 
 resolveType :: Map String Type -> TotalStmt -> Map String Type
@@ -88,6 +88,7 @@ replaceExpr _ (FloatLit f) = return $ FloatLit f
 replaceExpr types (Call f args) = Call f <$> mapM (replaceExpr types) args
 replaceExpr types (Lambda name body) = Lambda name <$> replaceExpr types body
 replaceExpr types (StructLit ty fields) = StructLit <$> replaceType types ty <*> mapM (replaceExpr types) fields
+replaceExpr types (TypeCheck expr ty) = TypeCheck <$> replaceExpr types expr <*> replaceType types ty
 
 diag :: Diagnostic -> State [Diagnostic] ()
 diag d = modify (d:)

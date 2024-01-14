@@ -31,7 +31,7 @@ tests = test
       let f = functionTy (atomTy "false") (atomTy "true")
       show f @?= "(false -> true)"
   , "struct" ~: do
-      let s = structTy "foo" [Field "bar" (atomTy "false")]
+      let s = structTy "foo"
       show s @?= "foo"
   , "merge" ~: do
       let tribool = bool <> atomTy "undefined"
@@ -92,8 +92,8 @@ tests = test
       convertible ftob btob @?= False
       convertible btob btob @?= True
   , "struct convertibility" ~: do
-      let s1 = structTy "BoolWrapper" [Field "bool" bool]
-      let s2 = structTy "Flag" [Field "bool" bool]
+      let s1 = structTy "BoolWrapper"
+      let s2 = structTy "Flag"
       convertible s1 s1 @?= True
       convertible s1 s2 @?= False
       convertible s2 s1 @?= False

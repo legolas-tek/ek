@@ -1,0 +1,51 @@
+//
+// RUN: ekrun %s | FileCheck -v %s
+//
+
+import std
+
+fn main =
+// CHECK: true
+    print 3 is int
+// CHECK: true
+ >> print 3 is [0..9]
+// CHECK: true
+ >> print 3 is [0..]
+// CHECK: false
+ >> print 3 is [4..]
+// CHECK: false
+ >> print 3 is [0..2]
+// CHECK: true
+ >> print 1 is 0 | 1
+// CHECK: false
+ >> print 3 is string
+// CHECK: true
+ >> print "foo" is string
+// CHECK: true
+ >> print true is bool
+// CHECK: true
+ >> print false is bool
+// CHECK: true
+ >> print true is true
+// CHECK: false
+ >> print true is false
+// CHECK: false
+ >> print void is bool
+// CHECK: true
+ >> print void is void
+// CHECK: false
+ >> print void is int
+// CHECK: false
+ >> print 0 is never
+// CHECK: true
+ >> print 0 is any
+// CHECK: true
+ >> print "hello" is any
+// CHECK: true
+ >> print 3.14 is float
+// CHECK: false
+ >> print 3.14 is int
+// CHECK: true
+ >> print 3.14 is float | int
+// CHECK: false
+ >> print 3 is float

@@ -108,6 +108,9 @@ compileExpr (Lambda name expr) = do
 compileExpr (StructLit name items) = do
   items' <- concat <$> mapM compileExpr items
   return $ items' ++ [Construct (show name) (length items)]
+compileExpr (TypeCheck expr typ) = do
+  expr' <- compileExpr expr
+  return $ expr' ++ [CheckConvertible typ]
 
 createFn :: TExpr -> State Env ()
 createFn expr = do

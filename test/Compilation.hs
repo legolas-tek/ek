@@ -337,7 +337,7 @@ tests = test
         compileToVM stmts @?= Right expected
     , "Construct" ~: do
         let stmts = [FuncDef (FuncPattern [SymbolPattern "myfoo"] Nothing Nothing)
-                              (StructLit (structTy "foo" [])
+                              (StructLit (structTy "foo")
                                [IntegerLit 1, IntegerLit 2])]
         let expected = fromList [("myfoo",
                                   [ Push $ IntegerValue 1

@@ -25,6 +25,8 @@ import Control.Applicative (Alternative(empty))
 import Data.Monoid (Alt(..))
 import Data.List (findIndex)
 
+import EK.TypeParser
+
 data FuncItem = FuncItem
   { funcName :: FunctionName
   , lazynesses :: [Bool]
@@ -87,7 +89,7 @@ parsePrefix' fi prec fname@(FuncItem (FunctionName (Symbol s:ss) fnprec) _)
 parsePrefix' _ _ _ = empty
 
 parseInfix :: [FuncItem] -> Prec -> CallItem -> Parser Token Expr
-parseInfix fi prec initial = getAlt (foldMap (Alt . parseInfix' fi prec initial) fi) <|> noInfix initial
+parseInfix fi prec initial = typeCheck fi prec initial <|> getAlt (foldMap (Alt . parseInfix' fi prec initial) fi) <|> noInfix initial
   where noInfix (ExprCall i) = return i
         noInfix PlaceholderCall = fail "Invalid placeholder"
 
@@ -106,6 +108,10 @@ parseFollowUp fi (Placeholder:ss) prec = do
   e <- placeholder PlaceholderCall <|> (ExprCall <$> parsePrec fi prec)
   (e:) <$> parseFollowUp fi ss prec
 parseFollowUp _ [] _ = return []
+
+typeCheck :: [FuncItem] -> Prec -> CallItem -> Parser Token Expr
+typeCheck fi prec (ExprCall a) = parseTokenType IsKw >> ExprCall . TypeCheck a <$> typeId >>= parseInfix fi prec
+typeCheck _ _ _ = empty
 
 primItem :: [FuncItem] -> Parser Token CallItem
 primItem fi = ExprCall <$> prim fi <|> placeholder PlaceholderCall

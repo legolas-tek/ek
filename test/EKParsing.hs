@@ -378,4 +378,11 @@ tests = test
         @?= Right [ FuncDef (pat [SymbolPattern "k"])
                     (FloatLit 42.42)
                   ]
+  , "is" ~: do
+      doc [
+            tkt FnKw, idt "k", tkt Equal, int 42, tkt IsKw, idt "int"
+          ]
+        @?= Right [ FuncDef (pat [SymbolPattern "k"])
+                    (TypeCheck (IntegerLit 42) (TypeName "int"))
+                  ]
   ]

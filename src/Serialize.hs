@@ -7,6 +7,7 @@
 
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Serialize
     ( saveResult
@@ -32,6 +33,8 @@ import Data.Functor (($>))
 import Control.Applicative (liftA2)
 import Text.Printf (printf)
 import System.Directory (getPermissions, setPermissions, setOwnerExecutable)
+import EK.Types
+import qualified Data.Range as Range
 
 type DeserializerError = Diagnostic
 
@@ -58,22 +61,22 @@ class Serializable a where
 instance Serializable Integer where
   serialize integer = fromString (show integer) <> B.singleton 0
 
-  deserialize = read . fmap BI.w2c <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
+  deserialize = read . fmap BI.w2c <$> many (parseOneIf (/= 0)) <* exact 0
 
 instance Serializable Int where
   serialize int = fromString (show int) <> B.singleton 0
 
-  deserialize = read . fmap BI.w2c <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
+  deserialize = read . fmap BI.w2c <$> many (parseOneIf (/= 0)) <* exact 0
 
 instance Serializable Double where
   serialize float = fromString (show float) <> B.singleton 0
 
-  deserialize = (read . fmap BI.w2c) <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
+  deserialize = read . fmap BI.w2c <$> many (parseOneIf (/= 0)) <* exact 0
 
 instance Serializable String where
   serialize str = fromString str <> B.singleton 0
 
-  deserialize = fmap BI.w2c <$> many (parseOneIf (/= 0)) <* parseOneIf (== 0)
+  deserialize = fmap BI.w2c <$> many (parseOneIf (/= 0)) <* exact 0
 
 instance Serializable VMValue where
   serialize (IntegerValue integer) = B.singleton 1 <> serialize integer
@@ -84,10 +87,10 @@ instance Serializable VMValue where
   serialize (ClosureValue _ _) = B.singleton 0
   serialize (StructValue _ _) = B.singleton 0
 
-  deserialize = parseOneIf (== 1) *> (IntegerValue <$> deserialize)
-            <|> parseOneIf (== 2) *> (AtomValue <$> deserialize)
-            <|> parseOneIf (== 3) *> (StringValue <$> deserialize)
-            <|> parseOneIf (== 4) *> (FloatValue <$> deserialize)
+  deserialize = exact 1 *> (IntegerValue <$> deserialize)
+            <|> exact 2 *> (AtomValue <$> deserialize)
+            <|> exact 3 *> (StringValue <$> deserialize)
+            <|> exact 4 *> (FloatValue <$> deserialize)
 
 instance Serializable Instruction where
   serialize (Push value) = B.singleton 1 <> serialize value
@@ -112,34 +115,79 @@ instance Serializable Instruction where
   serialize (Construct name count) = B.singleton 20 <> serialize name <> serialize count
   serialize (Extract count) = B.singleton 21 <> serialize count
   serialize TailCall = B.singleton 22
+  serialize (CheckConvertible ty) = B.singleton 23 <> serialize ty
 
-  deserialize = parseOneIf (== 1) *> (Push <$> deserialize)
-            <|> parseOneIf (== 2) $> Call
-            <|> parseOneIf (== 3) $> CallOp Add
-            <|> parseOneIf (== 4) $> CallOp Sub
-            <|> parseOneIf (== 5) $> CallOp Mul
-            <|> parseOneIf (== 6) $> CallOp Div
-            <|> parseOneIf (== 7) $> CallOp Eq
-            <|> parseOneIf (== 8) $> CallOp Less
-            <|> parseOneIf (== 9) *> (JmpFalse <$> (word8ToInt <$> parseOneIf (const True)))
-            <|> parseOneIf (== 10) $> Dup
-            <|> parseOneIf (== 11) $> Ret
-            <|> parseOneIf (== 12) *> (LoadArg <$> (word8ToInt <$> parseOneIf (const True)))
-            <|> parseOneIf (== 13) *> (GetEnv <$> deserialize)
-            <|> parseOneIf (== 14) $> CallOp Print
-            <|> parseOneIf (== 15) $> CallOp Exit
-            <|> parseOneIf (== 16) *> (Closure <$> (word8ToInt <$> parseOneIf (const True)))
-            <|> parseOneIf (== 17) $> CallOp EPrint
-            <|> parseOneIf (== 18) $> CallOp ReadLine
-            <|> parseOneIf (== 19) $> CallOp ToString
-            <|> parseOneIf (== 20) *> (Construct <$> deserialize <*> deserialize)
-            <|> parseOneIf (== 21) *> (Extract <$> deserialize)
-            <|> parseOneIf (== 22) $> TailCall
+  deserialize = exact 1 *> (Push <$> deserialize)
+            <|> exact 2 $> Call
+            <|> exact 3 $> CallOp Add
+            <|> exact 4 $> CallOp Sub
+            <|> exact 5 $> CallOp Mul
+            <|> exact 6 $> CallOp Div
+            <|> exact 7 $> CallOp Eq
+            <|> exact 8 $> CallOp Less
+            <|> exact 9 *> (JmpFalse <$> (word8ToInt <$> parseOneIf (const True)))
+            <|> exact 10 $> Dup
+            <|> exact 11 $> Ret
+            <|> exact 12 *> (LoadArg <$> (word8ToInt <$> parseOneIf (const True)))
+            <|> exact 13 *> (GetEnv <$> deserialize)
+            <|> exact 14 $> CallOp Print
+            <|> exact 15 $> CallOp Exit
+            <|> exact 16 *> (Closure <$> (word8ToInt <$> parseOneIf (const True)))
+            <|> exact 17 $> CallOp EPrint
+            <|> exact 18 $> CallOp ReadLine
+            <|> exact 19 $> CallOp ToString
+            <|> exact 20 *> (Construct <$> deserialize <*> deserialize)
+            <|> exact 21 *> (Extract <$> deserialize)
+            <|> exact 22 $> TailCall
+            <|> exact 23 *> (CheckConvertible <$> deserialize)
+
+instance Serializable Type where
+  serialize AnyTy = B.singleton 0
+  serialize (UnionTy tys) = B.singleton 1 <> serialize tys
+  serialize UnresolvedTy = B.singleton 2
+
+  deserialize = exact 0 $> AnyTy
+            <|> exact 1 *> (UnionTy <$> deserialize)
+            <|> exact 2 $> UnresolvedTy
+
+instance Serializable UnionType where
+  serialize (UnionType {..}) = serialize atoms <> serialize functions <> serialize ints <> serialize structs
+
+  deserialize = UnionType <$> deserialize <*> deserialize <*> deserialize <*> deserialize
+
+instance Serializable [String] where
+  serialize strs = B.concat (fmap ((B.singleton 1 <>) . serialize) strs) <> B.singleton 0
+
+  deserialize = many (exact 1 *> deserialize) <* exact 0
+
+instance (Serializable a, Serializable b) => Serializable [(a, b)] where
+  serialize pairs = B.concat (fmap ((B.singleton 1 <>) . serialize) pairs) <> B.singleton 0
+
+  deserialize = many (exact 1 *> deserialize) <* exact 0
+
+instance Serializable (Range.Range Integer) where
+  serialize (Range.SingletonRange value) = B.singleton 1 <> serialize value
+  serialize (Range.SpanRange from to) = B.singleton 2 <> serialize (normalizeLBound from) <> serialize (normalizeUBound to)
+  serialize (Range.LowerBoundRange l) = B.singleton 3 <> serialize (normalizeLBound l)
+  serialize (Range.UpperBoundRange u) = B.singleton 4 <> serialize (normalizeUBound u)
+  serialize Range.InfiniteRange = B.singleton 5
+
+  deserialize = exact 1 *> (Range.SingletonRange <$> deserialize)
+            <|> exact 2 *> (Range.SpanRange . inc <$> deserialize <*> (inc <$> deserialize))
+            <|> exact 3 *> (Range.LowerBoundRange . inc <$> deserialize)
+            <|> exact 4 *> (Range.UpperBoundRange . inc <$> deserialize)
+            <|> exact 5 $> Range.InfiniteRange
+                where inc b = Range.Bound b Range.Inclusive
+
+instance Serializable [Range.Range Integer] where
+  serialize bounds = B.concat (fmap serialize bounds) <> B.singleton 0
+
+  deserialize = many deserialize <* exact 0
 
 instance Serializable [Instruction] where
   serialize insts = B.concat (fmap serialize insts) <> B.singleton 0
 
-  deserialize = many deserialize <* parseOneIf (== 0)
+  deserialize = many deserialize <* exact 0
 
 instance (Serializable a, Serializable b) => Serializable (a, b) where
   serialize (key, insts) = serialize key <> serialize insts
