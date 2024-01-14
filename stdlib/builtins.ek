@@ -8,6 +8,7 @@
 import bool
 
 atom void
+atom null
 
 type int = [..]
 
@@ -23,6 +24,14 @@ extern fn builtin print: any -> void
 extern fn builtin eprint: any -> void
 
 extern fn builtin toString: any -> string
+extern fn builtin toInt: any -> int | null
+extern fn builtin toFloat: any -> float | null
+extern fn builtin toChar: int -> string
+extern fn builtin toCodePoint: string -> int
+
+extern fn builtin charAt: string -> int -> string
+extern fn builtin concat: any -> any -> string
+extern fn builtin length: any -> int
 
 extern fn builtin readLine: string
 

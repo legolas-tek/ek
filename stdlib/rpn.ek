@@ -43,6 +43,14 @@ fn (a) (b) min = if a b < then a else b
 fn (a) (b) max = if a b > then a else b
 
 fn _ toString = builtin toString
+fn _ _ ++ = builtin concat
+fn _ toInt = builtin toInt
+fn _ toFloat = builtin toFloat
+
+fn [_]_ = builtin charAt
+fn _ _ at = builtin charAt
+
+fn _ len = builtin length
 
 fn (a) >> (b) = b
 

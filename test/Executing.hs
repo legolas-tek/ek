@@ -148,6 +148,14 @@ tests = test
         lessIntsTrue @?= AtomValue "true"
         lessFloatsTrue <- ex [Push $ FloatValue 5.5, Push $ FloatValue 5.3, CallOp Less, Ret] []
         lessFloatsTrue @?= AtomValue "true"
+        concatOp <- ex [Push $ StringValue "World", Push $ StringValue "Hello", CallOp Concat, Ret] []
+        concatOp @?= StringValue "HelloWorld"
+        concatIntOp <- ex [Push $ IntegerValue 5, Push $ IntegerValue 5, CallOp Concat, Ret] []
+        concatIntOp @?= StringValue "55"
+        concatFloatOp <- ex [Push $ FloatValue 5.5, Push $ IntegerValue 5, CallOp Concat, Ret] []
+        concatFloatOp @?= StringValue "55.5"
+        concatFloatOp2 <- ex [Push $ IntegerValue 5, Push $ FloatValue 5.5, CallOp Concat, Ret] []
+        concatFloatOp2 @?= StringValue "5.55"
     , "closures" ~: do
         let addition = [ LoadArg 0
                        , LoadArg 1

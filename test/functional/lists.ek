@@ -33,6 +33,9 @@ fn main =
 >> assert (test1 reverse == 3 cons (2 cons (1 cons empty))) message "reverse test1"
 >> assert (test1 <> (7 cons empty) == 1 cons (2 cons (3 cons (7 cons empty)))) message "concat one test1"
 >> assert (test1 <> (7 cons (8 cons empty)) == 1 cons (2 cons (3 cons (7 cons (8 cons empty))))) message "concat two test1"
+>> assert (test1[1] == 2) message "test [] in normal usage"
+>> assert (test1[42] == null) message "test [] with too large index"
+>> assert (empty[4] == null) message "test [] with empty list"
 
 // empty list tests
 

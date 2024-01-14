@@ -116,6 +116,13 @@ instance Serializable Instruction where
   serialize (Extract count) = B.singleton 21 <> serialize count
   serialize TailCall = B.singleton 22
   serialize (CheckConvertible ty) = B.singleton 23 <> serialize ty
+  serialize (CallOp Concat) = B.singleton 24
+  serialize (CallOp ToInt) = B.singleton 25
+  serialize (CallOp ToFloat) = B.singleton 26
+  serialize (CallOp CharAt) = B.singleton 27
+  serialize (CallOp ToChar) = B.singleton 28
+  serialize (CallOp ToCodePoint) = B.singleton 29
+  serialize (CallOp Length) = B.singleton 30
 
   deserialize = exact 1 *> (Push <$> deserialize)
             <|> exact 2 $> Call
@@ -140,6 +147,13 @@ instance Serializable Instruction where
             <|> exact 21 *> (Extract <$> deserialize)
             <|> exact 22 $> TailCall
             <|> exact 23 *> (CheckConvertible <$> deserialize)
+            <|> exact 24 $> CallOp Concat
+            <|> exact 25 $> CallOp ToInt
+            <|> exact 26 $> CallOp ToFloat
+            <|> exact 27 $> CallOp CharAt
+            <|> exact 28 $> CallOp ToChar
+            <|> exact 29 $> CallOp ToCodePoint
+            <|> exact 30 $> CallOp Length
 
 instance Serializable Type where
   serialize AnyTy = B.singleton 0

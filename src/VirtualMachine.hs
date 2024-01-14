@@ -16,11 +16,14 @@ module VirtualMachine
     , applyOp
     ) where
 
+import EK.Types
+
 import Data.Map (Map, lookup)
 import System.Exit (exitWith, ExitCode(..), exitSuccess)
 import System.IO (hPutStr, stderr)
 import Data.List (intercalate)
-import EK.Types
+import Text.Read (readMaybe)
+import Data.Char (ord)
 
 data VMValue = IntegerValue Integer
              | FloatValue Double
@@ -51,6 +54,13 @@ data Operator = Add
               | Exit
               | ReadLine
               | ToString
+              | Concat
+              | ToInt
+              | ToFloat
+              | CharAt
+              | ToChar
+              | ToCodePoint
+              | Length
               deriving (Eq)
 
 instance Show Operator where
@@ -65,6 +75,13 @@ instance Show Operator where
   show EPrint = "eprint"
   show ReadLine = "readLine"
   show ToString = "toString"
+  show Concat = "concat"
+  show ToInt = "toInt"
+  show ToFloat = "toFloat"
+  show CharAt = "charAt"
+  show ToChar = "toChar"
+  show ToCodePoint = "toCodePoint"
+  show Length = "length"
 
 data Instruction = Push VMValue
                  | Call
@@ -112,6 +129,23 @@ exec env args (CallOp Print:insts) (v:stack) = print v >> exec env args insts st
 exec env args (CallOp EPrint:insts) (v:stack) = hPutStr stderr (show v) >> exec env args insts stack
 exec env args (CallOp ReadLine:insts) stack = getLine >>= \line -> exec env args insts (StringValue line:stack)
 exec env args (CallOp ToString:insts) (v:stack) = exec env args insts (StringValue (show v):stack)
+exec env args (CallOp ToChar:insts) (IntegerValue v:stack) = exec env args insts (StringValue [toEnum $ fromIntegral v]:stack)
+exec env args (CallOp ToCodePoint:insts) (StringValue v:stack) = exec env args insts (IntegerValue (if null v then 0 else toInteger $ ord $ head v):stack)
+exec env args (CallOp Length:insts) (v:stack) = exec env args insts (IntegerValue (toInteger $ length $ show v):stack)
+exec env args (CallOp ToInt:insts) (IntegerValue v:stack) = exec env args insts (IntegerValue v:stack)
+exec env args (CallOp ToInt:insts) (FloatValue f:stack) = exec env args insts (IntegerValue (floor f):stack)
+exec env args (CallOp ToInt:insts) (StringValue s:stack) = case readMaybe s of
+  Just i -> exec env args insts (IntegerValue i:stack)
+  Nothing -> exec env args insts (AtomValue "null":stack)
+exec env args (CallOp ToInt:insts) (AtomValue "true":stack) = exec env args insts (IntegerValue 1:stack)
+exec env args (CallOp ToInt:insts) (AtomValue "false":stack) = exec env args insts (IntegerValue 0:stack)
+exec env args (CallOp ToInt:insts) (_:stack) = exec env args insts (AtomValue "null":stack)
+exec env args (CallOp ToFloat:insts) (FloatValue v:stack) = exec env args insts (FloatValue v:stack)
+exec env args (CallOp ToFloat:insts) (IntegerValue i:stack) = exec env args insts (FloatValue (fromIntegral i):stack)
+exec env args (CallOp ToFloat:insts) (StringValue s:stack) = case readMaybe s of
+  Just f -> exec env args insts (FloatValue f:stack)
+  Nothing -> exec env args insts (AtomValue "null":stack)
+exec env args (CallOp ToFloat:insts) (_:stack) = exec env args insts (AtomValue "null":stack)
 exec _ _ (CallOp Exit:_) ((IntegerValue 0):_) = exitSuccess
 exec _ _ (CallOp Exit:_) ((IntegerValue v):_) = exitWith $ ExitFailure $ fromIntegral v
 exec env args (CallOp op:insts) (v1:v2:stack) =
@@ -216,4 +250,18 @@ applyOp Div (IntegerValue a) (FloatValue b)
   = Right $ FloatValue $ fromIntegral a / b
 applyOp Less (IntegerValue a) (FloatValue b)
   = Right $ atomicBool $ fromIntegral a < b
+
+-- string
+applyOp Concat a b
+  = Right $ StringValue $ show a ++ show b
+applyOp Mul (StringValue a) (IntegerValue b)
+  = Right $ StringValue $ concat $ replicate (fromIntegral b) a
+applyOp Mul (IntegerValue a) (StringValue b)
+  = Right $ StringValue $ concat $ replicate (fromIntegral a) b
+applyOp Sub (StringValue a) (IntegerValue b)
+  = Right $ StringValue $ take (length a - fromIntegral b) a
+applyOp Sub (IntegerValue a) (StringValue b)
+  = Right $ StringValue $ drop (fromIntegral a) b
+applyOp CharAt (StringValue a) (IntegerValue b)
+  = Right $ if b < fromIntegral (length a) then StringValue [a !! fromIntegral b] else AtomValue "null"
 applyOp _ _ _ = Left "Invalid operands for operator"
