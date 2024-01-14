@@ -42,8 +42,8 @@
           "match": "[,:]"
         },
         {
-            "name": "keyword.function.ek",
-            "match": "\\b(head|tail)\\b"
+            "name": "entity.name.function.ek",
+            "match": "\\b(head|tail|print|eprint|readLine|exit|panic|assert|clamp|min|max|toString|not|drop|take|length|map|filter|foldl|foldr|reverse|head|tail)\\b"
         }
     ],
     "repository": {
@@ -103,7 +103,7 @@
         "functions": {
             "patterns": [
                 {
-                    "name": "keyword.function.ek",
+                    "name": "entity.name.function.ek",
                     "match": "\\b(head|tail|print|eprint|readLine|exit|panic|assert|clamp|min|max|toString|not|drop|take|length|map|filter|foldl|foldr|reverse|head|tail)\\b"
                 }
             ]
