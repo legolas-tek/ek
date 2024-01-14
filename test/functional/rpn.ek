@@ -102,3 +102,7 @@ fn main =
     >> "42" toInt print
 // CHECK: 42.18
     >> "42.18" toFloat print
+// CHECK: i
+    >> "miss" 1 at print
+// CHECK: s
+    >> [2]"miss" print

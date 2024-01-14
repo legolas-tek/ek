@@ -56,4 +56,7 @@ fn _ toString = builtin toString
 fn _ toInt = builtin toInt
 fn _ toFloat = builtin toFloat
 
+fn _[_] = builtin charAt
+fn _ at _ = builtin charAt
+
 fn (f) . (g) = \x = (f $ (g $ x))

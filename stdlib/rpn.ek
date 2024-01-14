@@ -48,6 +48,9 @@ fn _ _ ++ = builtin concat
 fn _ toInt = builtin toInt
 fn _ toFloat = builtin toFloat
 
+fn [_]_ = builtin charAt
+fn _ _ at = builtin charAt
+
 fn (a) >> (b) = b
 
 fn _ print = builtin print

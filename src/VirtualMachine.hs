@@ -55,6 +55,7 @@ data Operator = Add
               | Concat
               | ToInt
               | ToFloat
+              | CharAt
               deriving (Eq)
 
 instance Show Operator where
@@ -72,6 +73,7 @@ instance Show Operator where
   show Concat = "concat"
   show ToInt = "toInt"
   show ToFloat = "toFloat"
+  show CharAt = "charAt"
 
 data Instruction = Push VMValue
                  | Call
@@ -259,4 +261,8 @@ applyOp Sub (StringValue a) (IntegerValue b)
   = Right $ StringValue $ take (length a - fromIntegral b) a
 applyOp Sub (IntegerValue a) (StringValue b)
   = Right $ StringValue $ drop (fromIntegral a) b
+applyOp CharAt (StringValue a) (IntegerValue b)
+  = Right $ StringValue [a !! fromIntegral b]
+applyOp CharAt (IntegerValue a) (StringValue b)
+  = Right $ StringValue [b !! fromIntegral a]
 applyOp _ _ _ = Left "Invalid operands for operator"

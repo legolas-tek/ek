@@ -28,3 +28,9 @@ fn main = print (42 toString)
     >> print (concat 42.0 15)
 // CHECK: 42.015
     >> print ("42.015" toFloat)
+// CHECK: o
+    >> print ("zoe"[1])
+// CHECK: y
+    >> print (2["hey"])
+// CHECK: l
+    >> print "love" at 0
