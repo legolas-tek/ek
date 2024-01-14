@@ -21,6 +21,7 @@ import System.Exit (exitWith, ExitCode(..), exitSuccess)
 import System.IO (hPutStr, stderr)
 import Data.List (intercalate)
 import EK.Types
+import Text.Read (readMaybe)
 
 data VMValue = IntegerValue Integer
              | FloatValue Double
@@ -51,6 +52,8 @@ data Operator = Add
               | Exit
               | ReadLine
               | ToString
+              | Concat
+              | ToInt
               deriving (Eq)
 
 instance Show Operator where
@@ -65,6 +68,8 @@ instance Show Operator where
   show EPrint = "eprint"
   show ReadLine = "readLine"
   show ToString = "toString"
+  show Concat = "concat"
+  show ToInt = "toInt"
 
 data Instruction = Push VMValue
                  | Call
@@ -112,6 +117,13 @@ exec env args (CallOp Print:insts) (v:stack) = print v >> exec env args insts st
 exec env args (CallOp EPrint:insts) (v:stack) = hPutStr stderr (show v) >> exec env args insts stack
 exec env args (CallOp ReadLine:insts) stack = getLine >>= \line -> exec env args insts (StringValue line:stack)
 exec env args (CallOp ToString:insts) (v:stack) = exec env args insts (StringValue (show v):stack)
+exec env args (CallOp ToInt:insts) (v:stack) = case v of
+  IntegerValue _ -> exec env args insts (v:stack)
+  FloatValue f -> exec env args insts (IntegerValue (floor f):stack)
+  StringValue s -> case readMaybe s of
+    Just i -> exec env args insts (IntegerValue i:stack)
+    Nothing -> fail $ "Cannot convert string " ++ s ++ " to int"
+  _ -> fail $ "Cannot convert value of type " ++ show v ++ " to int"
 exec _ _ (CallOp Exit:_) ((IntegerValue 0):_) = exitSuccess
 exec _ _ (CallOp Exit:_) ((IntegerValue v):_) = exitWith $ ExitFailure $ fromIntegral v
 exec env args (CallOp op:insts) (v1:v2:stack) =
@@ -174,6 +186,8 @@ applyOp Div (IntegerValue a) (IntegerValue b)
 applyOp Eq a b = Right $ atomicBool $ a == b
 applyOp Less (IntegerValue a) (IntegerValue b)
   = Right $ atomicBool $ a < b
+applyOp Concat (IntegerValue a) (IntegerValue b)
+  = Right $ IntegerValue $ read $ show a ++ show b
 
 -- float float
 applyOp Add (FloatValue a) (FloatValue b)
@@ -188,6 +202,8 @@ applyOp Div (FloatValue a) (FloatValue b)
   = Right $ FloatValue $ a / b
 applyOp Less (FloatValue a) (FloatValue b)
   = Right $ atomicBool $ a < b
+applyOp Concat (FloatValue a) (FloatValue b)
+  = Right $ FloatValue $ read $ show a ++ show b
 
 -- float int
 applyOp Add (FloatValue a) (IntegerValue b)
@@ -216,4 +232,20 @@ applyOp Div (IntegerValue a) (FloatValue b)
   = Right $ FloatValue $ fromIntegral a / b
 applyOp Less (IntegerValue a) (FloatValue b)
   = Right $ atomicBool $ fromIntegral a < b
+applyOp Concat (IntegerValue a) (FloatValue b)
+  = Right $ FloatValue $ read $ show a ++ show b
+
+-- string
+applyOp Concat (StringValue a) (StringValue b)
+  = Right $ StringValue $ a ++ b
+applyOp Add (StringValue a) (StringValue b)
+  = Right $ StringValue $ a ++ b
+applyOp Mul (StringValue a) (IntegerValue b)
+  = Right $ StringValue $ concat $ replicate (fromIntegral b) a
+applyOp Mul (IntegerValue a) (StringValue b)
+  = Right $ StringValue $ concat $ replicate (fromIntegral a) b
+applyOp Sub (StringValue a) (IntegerValue b)
+  = Right $ StringValue $ take (length a - fromIntegral b) a
+applyOp Sub (IntegerValue a) (StringValue b)
+  = Right $ StringValue $ drop (fromIntegral a) b
 applyOp _ _ _ = Left "Invalid operands for operator"
