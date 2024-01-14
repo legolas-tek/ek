@@ -23,6 +23,7 @@ import Data.Maybe (isJust)
 import Control.Monad (liftM2, liftM3)
 import Diagnostic
 import System.Environment (getEnv)
+import Control.Exception (try)
 
 parseDocument :: [Token] -> IO ([TotalStmt], [Diagnostic])
 parseDocument = parseDocumentAdding []
@@ -163,11 +164,25 @@ getImportedTokens stmts = do
     let (stmts', diags) = unzip results
     return (concat stmts', concat diags)
 
+
+parseImportedPaths :: Parser Char String
+parseImportedPaths = many (parseOneIf (/= ':')) <* parseOneIf (== ':') <|> many (parseOneIf (/= ';'))
+
+findImportPath :: String -> IO String -> IO String
+findImportPath fileName paths = do
+    paths' <- paths
+    case runParser parseImportedPaths paths' of
+        Left _ -> return ""
+        Right parsed -> do
+            res <- try $ readFile (fst parsed ++ fileName ++ ".ek") :: IO (Either IOError String)
+            case res of
+                Right content -> return content
+                Left _ -> findImportPath fileName (return $ snd parsed)
+
 handleImportDef :: PartialStmt -> IO ([PartialStmt], [Diagnostic])
 handleImportDef (ImportDef x) = do
-    importPath <- getEnv "EK_LIBRARY_PATH"
-    content <- readFile (importPath ++ x ++ ".ek")
-    case parseImportedTokens x content of
+    imports <- findImportPath x $ getEnv "EK_LIBRARY_PATH"
+    case parseImportedTokens x imports of
         Left diag -> return ([], [diag])
         Right (tokens, diagnostics) -> do
             (importedTokens, diagnostics') <- getImportedTokens tokens
