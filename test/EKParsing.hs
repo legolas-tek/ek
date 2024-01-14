@@ -31,6 +31,9 @@ idt s = tk s TextIdentifier
 int :: Int -> Token
 int i = tk (show i) IntLiter
 
+float :: Double -> Token
+float f = tk (show f) FloatLiter
+
 doc :: [Token] -> Either Diagnostic [TotalStmt]
 doc = parseSimpleDocument
 
@@ -367,5 +370,19 @@ tests = test
         @?= Right [ TypeDef "integer" (TypeName "int")
                   , FuncDef (pat [PlaceholderPattern, SymbolPattern "one"])
                     (IntegerLit 1)
+                  ]
+  , "fn + float" ~: do
+      doc [
+            tkt FnKw, idt "k", tkt Equal, float 42.42
+          ]
+        @?= Right [ FuncDef (pat [SymbolPattern "k"])
+                    (FloatLit 42.42)
+                  ]
+  , "is" ~: do
+      doc [
+            tkt FnKw, idt "k", tkt Equal, int 42, tkt IsKw, idt "int"
+          ]
+        @?= Right [ FuncDef (pat [SymbolPattern "k"])
+                    (TypeCheck (IntegerLit 42) (TypeName "int"))
                   ]
   ]

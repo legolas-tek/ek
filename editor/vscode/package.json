@@ -41,7 +41,14 @@
 			"[ek]": {
 				"files.insertFinalNewline": true
 			}
-		}
+		},
+		"grammars": [
+			{
+			  "language": "ek",
+			  "scopeName": "source.ek",
+			  "path": "./ek.tmLanguage.json"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

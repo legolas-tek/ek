@@ -20,6 +20,7 @@ data TokenType = AtomKw
                | LazyKw
                | PrecedenceKw
                | ImportKw
+               | IsKw
                | Equal
                | CurlyOpen
                | CurlyClose
@@ -34,6 +35,7 @@ data TokenType = AtomKw
                | BracketClose
                | DotDot
                | IntLiter
+               | FloatLiter
                | StringLiter
                | TextIdentifier
                | OperatorIdentifier

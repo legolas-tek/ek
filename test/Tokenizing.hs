@@ -24,7 +24,12 @@ tests = test
             @?= [ Token "struct" (SourcePos "tokenize.hs" 1 1) StructKw
                 , Token "object" (SourcePos "tokenize.hs" 1 8) TextIdentifier
                 ]
-        
+
+        getJustTokens (tokenizer "tokenize.hs" "42.5")
+            @?= [
+                Token "42.5" (SourcePos "tokenize.hs" 1 1) FloatLiter
+                ]
+
         getJustTokens (tokenizer "tokenize.hs" "fn two = 2")
             @?= [ Token "fn" (SourcePos "tokenize.hs" 1 1) FnKw
                 , Token "two" (SourcePos "tokenize.hs" 1 4) TextIdentifier

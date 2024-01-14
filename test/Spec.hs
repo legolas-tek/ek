@@ -12,9 +12,11 @@ import qualified Executing
 import qualified EKAstShowing
 import qualified EKParsing
 import qualified EKTyping
+import qualified EKResolving
 import qualified Compilation
 import qualified Tokenizing
 import qualified Serializing
+import qualified Optimizing
 
 tests :: Test
 tests = test
@@ -23,9 +25,11 @@ tests = test
   , "EK Ast Show" ~: EKAstShowing.tests
   , "EK Parsing" ~: EKParsing.tests
   , "EK Typing" ~: EKTyping.tests
+  , "EK Resolving" ~: EKResolving.tests
   , "Compilation" ~: Compilation.tests
   , "Tokenize" ~: Tokenizing.tests
   , "Serializing" ~: Serializing.tests
+  , "Optimizing" ~: Optimizing.tests
   ]
 
 main :: IO ()

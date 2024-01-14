@@ -1,0 +1,46 @@
+//
+// RUN: ekrun %s
+//
+
+import std
+import list
+
+fn test1 = 1 cons (2 cons (3 cons empty))
+
+fn main =
+   assert (test1 head == 1) message "head test1"
+>> assert (test1 tail == 2 cons (3 cons empty)) message "tail test1"
+>> assert (test1 length == 3) message "length test1"
+>> assert (test1 take 0 == empty) message "take 0 test1"
+>> assert (test1 take 1 == 1 cons empty) message "take 1 test1"
+>> assert (test1 take 2 == 1 cons (2 cons empty)) message "take 2 test1"
+>> assert (test1 take 3 == test1) message "take 3 test1"
+>> assert (test1 take 4 == test1) message "take 4 test1"
+>> assert (test1 drop 0 == test1) message "drop 0 test1"
+>> assert (test1 drop 1 == 2 cons (3 cons empty)) message "drop 1 test1"
+>> assert (test1 drop 2 == 3 cons empty) message "drop 2 test1"
+>> assert (test1 drop 3 == empty) message "drop 3 test1"
+>> assert (test1 drop 4 == empty) message "drop 4 test1"
+>> assert (test1 map (_ * 2) == 2 cons (4 cons (6 cons empty))) message "map test1"
+>> assert (test1 filter (\e = e % 2 == 0) == 2 cons empty) message "filter even test1"
+>> assert (test1 filter (\e = e % 2 != 0) == 1 cons (3 cons empty)) message "filter odd test1"
+>> assert (test1 foldl (_ + _) initial 0 == 6) message "foldl sum test1"
+>> assert (test1 foldl (_ * _) initial 1 == 6) message "foldl product test1"
+>> assert (test1 foldl (_ * _) initial 0 == 0) message "foldl product 0 test1"
+>> assert (test1 foldl (_ * _) initial 2 == 12) message "foldl product 2 test1"
+>> assert (test1 foldr (_ + _) initial 3 == 9) message "foldr sum test1"
+>> assert (test1 foldr (_ * _) initial 3 == 18) message "foldr product test1"
+>> assert (test1 reverse == 3 cons (2 cons (1 cons empty))) message "reverse test1"
+>> assert (test1 <> (7 cons empty) == 1 cons (2 cons (3 cons (7 cons empty)))) message "concat one test1"
+>> assert (test1 <> (7 cons (8 cons empty)) == 1 cons (2 cons (3 cons (7 cons (8 cons empty))))) message "concat two test1"
+>> assert (test1[1] == 2) message "test [] in normal usage"
+>> assert (test1[42] == null) message "test [] with too large index"
+>> assert (empty[4] == null) message "test [] with empty list"
+
+// empty list tests
+
+>> assert (empty length == 0) message "length empty"
+>> assert (empty take 0 == empty) message "take 0 empty"
+>> assert (empty take 42 == empty) message "take 42 empty"
+>> assert (empty drop 0 == empty) message "drop 0 empty"
+>> assert (empty drop 42 == empty) message "drop 42 empty"

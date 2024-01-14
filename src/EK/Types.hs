@@ -9,7 +9,9 @@
 
 module EK.Types
   ( Type(..)
-  , Field(..)
+  , UnionType(..) -- internal but needed for serialize
+  , normalizeLBound
+  , normalizeUBound
   , atomTy
   , functionTy
   , intTy
@@ -30,6 +32,7 @@ import Data.Range ((+=*), (+=+), Bound (boundValue))
 -- | A type is a list of concrete types
 data Type = AnyTy -- ^ The Any type, which can be anything
           | UnionTy UnionType -- ^ A union type, which can be any of the types in the list
+          | UnresolvedTy
           deriving (Eq)
 
 -- | A union type is a list of atoms, functions, integer ranges, and structs
@@ -37,19 +40,17 @@ data UnionType = UnionType
   { atoms :: [String] -- ^ A list of atoms
   , functions :: [(Type, Type)] -- ^ A list of functions
   , ints :: [Range.Range Integer] -- ^ A list of integer ranges
-  , structs :: [(String, [Field])] -- ^ A list of structs
+  , structs :: [String] -- ^ A list of structs
   } deriving (Eq)
 
--- | A field is a name and a type
-data Field = Field String Type
-
 instance Show Type where
-    show AnyTy = "Any"
+    show AnyTy = "any"
     show (UnionTy ts) = show ts
+    show UnresolvedTy = "(unresolved)"
 
 instance Show UnionType where
     show (UnionType atoms functions ints structs) =
-        intercalate " | " (atoms ++ map showFn functions ++ map (showRange . normalizeRange) ints ++ map fst structs)
+        intercalate " | " (atoms ++ map showFn functions ++ map (showRange . normalizeRange) ints ++ structs)
 
 showFn :: (Type, Type) -> String
 showFn (arg, ret) = "(" ++ show arg ++ " -> " ++ show ret ++ ")"
@@ -89,16 +90,12 @@ instance Semigroup Type where
     AnyTy <> _ = AnyTy
     _ <> AnyTy = AnyTy
     UnionTy t1 <> UnionTy t2 = UnionTy (t1 <> t2)
+    UnresolvedTy <> _ = UnresolvedTy
+    _ <> UnresolvedTy = UnresolvedTy
     stimes = stimesIdempotentMonoid
 
 instance Monoid Type where
     mempty = UnionTy mempty
-
-instance Eq Field where
-    Field name1 typ1 == Field name2 typ2 = name1 == name2 && typ1 == typ2
-
-instance Ord Field where
-    compare (Field name1 _) (Field name2 _) = compare name1 name2
 
 -- | Merge two sorted lists, removing duplicates
 merge :: Ord a => [a] -> [a] -> [a]
@@ -117,8 +114,8 @@ intTy :: Integer -> Type
 intTy i = intRangeTy i i
 
 -- | Creates a new struct type with the given name and fields
-structTy :: String -> [Field] -> Type
-structTy name fields = UnionTy $ mempty { structs = [(name, fields)] }
+structTy :: String -> Type
+structTy name = UnionTy $ mempty { structs = [name] }
 
 -- | Creates a new function type with the given argument and return type
 functionTy :: Type -> Type -> Type
@@ -145,6 +142,8 @@ convertible :: Type -> Type -> Bool
 convertible _ AnyTy = True
 convertible AnyTy _ = False
 convertible (UnionTy t1) (UnionTy t2) = convertibleUnion t1 t2
+convertible UnresolvedTy _ = False
+convertible _ UnresolvedTy = False
 
 convertibleUnion :: UnionType -> UnionType -> Bool
 convertibleUnion (UnionType a1 f1 i1 s1) (UnionType a2 f2 i2 s2)
