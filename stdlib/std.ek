@@ -55,6 +55,8 @@ fn _ ++ _ = builtin concat
 fn _ toString = builtin toString
 fn _ toInt = builtin toInt
 fn _ toFloat = builtin toFloat
+fn _ toChar = builtin toChar
+fn _ toCodePoint = builtin toCodePoint
 
 fn _[_] = builtin charAt
 fn _ at _ = builtin charAt
