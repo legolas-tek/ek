@@ -26,7 +26,7 @@ data Arguments = Arguments
   , argOutput :: Maybe String
   , argOutputType :: Maybe OutputType
   , argOptimize :: Bool
-  , argImportPath :: Maybe [String]
+  , argImportPath :: [String]
   }
 
 instance Semigroup Arguments where
@@ -44,7 +44,7 @@ instance Monoid Arguments where
     , argOutput = Nothing
     , argOutputType = Nothing
     , argOptimize = False
-    , argImportPath = Nothing
+    , argImportPath = []
     }
 
 one :: ArgParser String
@@ -78,7 +78,7 @@ withArgOutputType :: OutputType -> Arguments
 withArgOutputType t = mempty { argOutputType = Just t }
 
 withImportPath :: String -> Arguments
-withImportPath i = mempty { argImportPath = Just [i] }
+withImportPath i = mempty { argImportPath = [i] }
 
 withArgInput :: String -> Arguments
 withArgInput i = mempty { argInput = Just i }

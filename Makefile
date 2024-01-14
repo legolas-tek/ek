@@ -5,14 +5,13 @@
 ## Makefile
 ##
 
-CP		=	cp -f
+CP		=	cp
 
 SRC		=	app/Main.hs 		\
 			src/Lib.hs			\
 
-STDLIB	=	stdlib
-
-STDLIB_INSTALL_PATH	=	~/.local/lib/ek
+STDLIB_PATH	=	./stdlib
+STDLIB_INSTALL_PATH	=	$(shell $(STACK) path --local-bin)/../lib/ek
 
 NAME	=	glados ekc ek
 
@@ -37,8 +36,8 @@ tests_run:
 	$(STACK) hpc report --all --destdir test/coverage
 
 install:
-	#$(STACK) install
-	mkdir -p $(STDLIB_INSTALL_PATH)/$(STDLIB)
-	$(CP) ./$(STDLIB)/* $(STDLIB_INSTALL_PATH)/$(STDLIB)
+	$(STACK) install
+	mkdir -p $(STDLIB_INSTALL_PATH)
+	$(CP) -r $(STDLIB_PATH) $(STDLIB_INSTALL_PATH)
 
 .PHONY: all clean fclean re tests_run install

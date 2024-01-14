@@ -17,6 +17,7 @@ import EK.Ast
 import EK.ExprParser
 import Parser
 import Token
+import SourcePos
 import Tokenizer
 import EK.TokenParser
 import Data.Maybe (isJust)
@@ -167,16 +168,19 @@ getImportedTokens stmts = do
 
 
 parseImportedPaths :: Parser Char String
-parseImportedPaths = many (parseOneIf (/= ':')) <* optional (parseOneIf (==':'))
+parseImportedPaths = many (parseOneIf (/= ':')) <* optional (parseOneIf (== ':'))
 
 findImportPath :: String -> IO String -> IO String
 findImportPath fileName paths = do
     paths' <- paths
-    let parsed = fromRight  ("", "") $ runParser parseImportedPaths paths'
-    res <- try $ readFile (fst parsed ++ fileName ++ ".ek") :: IO (Either IOError String)
-    case res of
-        Right content -> return content
-        Left _ -> findImportPath fileName (return $ snd parsed)
+    case paths' of
+        "" -> return ""
+        _ -> do
+            let parsed = fromRight ("", "") $ runParser parseImportedPaths paths'
+            res <- try $ readFile (fst parsed ++ fileName ++ ".ek") :: IO (Either IOError String)
+            case res of
+                Right content -> return content
+                Left _ -> findImportPath fileName (return $ snd parsed)
 
 handleImportDef :: PartialStmt -> IO ([PartialStmt], [Diagnostic])
 handleImportDef (ImportDef x) = do
@@ -189,6 +193,7 @@ handleImportDef (ImportDef x) = do
 handleImportDef x = return ([x], [])
 
 parseImportedTokens :: String -> String -> Either Diagnostic ([PartialStmt], [Diagnostic])
+parseImportedTokens fileName "" = Left $ Diagnostic {severity = Error, message = "Import not found: " ++ fileName, sourceLocation = SourcePos "" 0 0}
 parseImportedTokens fileName content = do
     (tokens, diagnostics) <- tokenizer fileName content
     (result, diagnostics') <- runParserOnFile document fileName tokens
