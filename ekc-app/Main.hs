@@ -37,7 +37,11 @@ save result Nothing = saveResult result "a.out"
 save result (Just file) = saveResult result file
 
 setDefaultImportsPath :: IO ()
-setDefaultImportsPath = getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" ("./:" ++ curDir ++ "../lib/ek/stdlib/:")) . takeDirectory
+setDefaultImportsPath = do
+    curEnv <- lookupEnv "EK_LIBRARY_PATH"
+    case curEnv of
+        Nothing -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" ("./:" ++ curDir ++ "../lib/ek/stdlib/:")) . takeDirectory
+        Just current -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" (current ++ ":./:" ++ curDir ++ "../lib/ek/stdlib/:")) . takeDirectory
 
 addImportsPath :: [String] -> IO ()
 addImportsPath [] = return ()

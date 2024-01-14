@@ -22,9 +22,19 @@ import EK.Compiler
 import Diagnostic
 import VirtualMachine
 import EK.Resolver
+import System.Environment (setEnv, lookupEnv, getExecutablePath)
+import System.FilePath (takeDirectory)
 
 import Control.Exception (try, catch, IOException)
 import Control.Monad (when)
+
+setDefaultImportsPath :: IO ()
+setDefaultImportsPath = do
+    curEnv <- lookupEnv "EK_LIBRARY_PATH"
+    case curEnv of
+        Nothing -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" ("./:" ++ curDir ++ "../lib/ek/stdlib/:")) . takeDirectory
+        Just current -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" (current ++ ":./:" ++ curDir ++ "../lib/ek/stdlib/:")) . takeDirectory
+
 
 printPrompt :: Bool -> IO ()
 printPrompt new = hIsTerminalDevice stdin >>= \isTerm ->
@@ -43,6 +53,7 @@ printRes a = print a
 
 mainLoop :: [TotalStmt] -> String -> IO ()
 mainLoop env rest = do
+    setDefaultImportsPath
     printPrompt $ null rest
     eofVal <- isEOF
     when eofVal exitSuccess

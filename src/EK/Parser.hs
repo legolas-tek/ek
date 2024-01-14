@@ -135,7 +135,7 @@ findImportPath fileName paths = do
         "" -> return ""
         _ -> do
             let parsed = fromRight ("", "") $ runParser parseImportedPaths paths'
-            res <- try $ readFile (fst parsed ++ fileName ++ ".ek") :: IO (Either IOError String)
+            res <- try $ readFile (fst parsed ++ "/" ++ fileName ++ ".ek") :: IO (Either IOError String)
             case res of
                 Right content -> return content
                 Left _ -> findImportPath fileName (return $ snd parsed)
