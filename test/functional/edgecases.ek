@@ -1,0 +1,11 @@
+//
+// RUN: ekrun %s | FileCheck -v %s
+//
+
+import std
+
+fn (x) = x
+fn _ = 0
+
+// CHECK: OK
+fn main = print "OK"
