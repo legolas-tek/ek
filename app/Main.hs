@@ -32,8 +32,8 @@ setDefaultImportsPath :: IO ()
 setDefaultImportsPath = do
     curEnv <- lookupEnv "EK_LIBRARY_PATH"
     case curEnv of
-        Nothing -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" ("./:" ++ curDir ++ "../lib/ek/stdlib/:")) . takeDirectory
-        Just current -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" (current ++ ":./:" ++ curDir ++ "../lib/ek/stdlib/:")) . takeDirectory
+        Nothing -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" ("./:" ++ curDir ++ "../lib/ek/:")) . takeDirectory
+        Just current -> getExecutablePath >>= (\curDir -> setEnv "EK_LIBRARY_PATH" (current ++ ":./:" ++ curDir ++ "../lib/ek/:")) . takeDirectory
 
 
 printPrompt :: Bool -> IO ()

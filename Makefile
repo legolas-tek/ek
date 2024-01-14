@@ -41,7 +41,7 @@ functional_test:
 install:
 	$(STACK) install
 	mkdir -p $(STDLIB_INSTALL_PATH)
-	$(CP) -r $(STDLIB_PATH) $(STDLIB_INSTALL_PATH)
+	$(CP) $(STDLIB_PATH)/*.ek $(STDLIB_INSTALL_PATH)
 
 
 .PHONY: all clean fclean re tests_run install
