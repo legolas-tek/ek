@@ -34,29 +34,11 @@
 		"languages": [{
 			"id": "ek",
 			"extensions": [".ek"],
-			"aliases": ["EK", "Graphism"],
-			"firstLine": "#requires EK 1.11",
+			"aliases": ["EK"],
 			"configuration": "./language-configuration.json"
 		}],
-		"semanticTokenTypes": [
-			{
-				"id": "command",
-				"superType": "keyword",
-				"description": "A EK #command"
-			}
-		],
-		"semanticTokenScopes": [
-			{
-				"language": "ek",
-				"scopes": {
-					"command": ["keyword.command"]
-				}
-			}
-		],
 		"configurationDefaults": {
 			"[ek]": {
-				"editor.detectIndentation": false,
-				"editor.insertSpaces": false,
 				"files.insertFinalNewline": true
 			}
 		},

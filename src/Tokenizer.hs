@@ -15,7 +15,7 @@ module Tokenizer
 import Token
 import Parser
 
-import Data.Char (isLetter)
+import Data.Char (isLetter, isDigit)
 import Diagnostic
 
 type TokenizerError = Diagnostic
@@ -67,12 +67,17 @@ parseBracketClose = extractTokenType "]" BracketClose
 parseIntLiter :: Parser Char (String, TokenType)
 parseIntLiter = parseInt >>= \integer -> return (show integer, IntLiter)
 
+parseFloatLiter :: Parser Char (String, TokenType)
+parseFloatLiter = parseFloat >>= \float -> return (show float, FloatLiter)
+
 parseStringLiter :: Parser Char (String, TokenType)
 parseStringLiter = parseStringLit >>= \string -> return (string, StringLiter)
 
 parseTextIdentifer :: Parser Char (String, TokenType)
-parseTextIdentifer = some (parseOneIf isLetter) >>= tup
+parseTextIdentifer = (:) <$> identifierHead <*> many identifierChar >>= tup
   where tup identifier = return (identifier, identifyKw identifier)
+        identifierHead = parseOneIf isLetter
+        identifierChar = parseOneIf (\c -> isLetter c || isDigit c || c == '\'')
 
 identifyKw :: String -> TokenType
 identifyKw "atom" = AtomKw
@@ -83,6 +88,7 @@ identifyKw "extern" = ExternKw
 identifyKw "precedence" = PrecedenceKw
 identifyKw "import" = ImportKw
 identifyKw "lazy" = LazyKw
+identifyKw "is" = IsKw
 identifyKw _ = TextIdentifier
 
 parseOperatorId :: Parser Char (String, TokenType)
@@ -101,7 +107,7 @@ identifyOp _ = OperatorIdentifier
 findTokenType :: Parser Char (String, TokenType)
 findTokenType = parseCurlyOpen <|> parseCurlyClose <|> parseComma <|> parseBackslash <|> parseUnderscore <|> parseParenOpen
     <|> parseParenClose <|> parseColonColon <|> parseColon <|> parseBracketOpen
-    <|> parseBracketClose <|> parseIntLiter <|> parseStringLiter <|> parseTextIdentifer <|> parseOperatorId
+    <|> parseBracketClose <|> parseFloatLiter <|> parseIntLiter <|> parseStringLiter <|> parseTextIdentifer <|> parseOperatorId
 
 token :: Parser Char Token
 token = do

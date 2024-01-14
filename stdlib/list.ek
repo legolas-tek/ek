@@ -1,0 +1,69 @@
+//
+// EPITECH PROJECT, 2024
+// Glados
+// File description:
+// EK Standard library - lists
+//
+
+import std
+
+atom empty
+
+struct cons {
+    head: any,
+    tail: list
+}
+
+type list = cons | empty
+
+fn (a) cons (b) = cons { a, b }
+
+fn (l) drop (n) =
+    if l is empty || n == 0 then
+        l
+    else
+        l tail drop (n - 1)
+
+fn (l) take (n) =
+    if l is empty || n == 0 then
+        empty
+    else
+        l head cons (l tail take (n - 1))
+
+fn (l) length =
+    if l is empty then
+        0
+    else
+        1 + l tail length
+
+fn (l) map (f) =
+    if l is empty then
+        empty
+    else
+        (f $ l head) cons (l tail map f)
+
+fn (l) filter (f) =
+    if l is empty then
+        empty
+    else if (f $ l head) then
+        l head cons (l tail filter f)
+    else
+        l tail filter f
+
+fn (l) foldl (f) initial (acc) =
+    if l is empty then
+        acc
+    else
+        l tail foldl f initial (f $ acc $ l head)
+
+fn (l) foldr (f) initial (acc) =
+    if l is empty then
+        acc
+    else
+        (f $ l head $ l tail foldr f initial acc)
+
+fn (l) reverse =
+    l foldl (\ acc x = x cons acc) initial empty
+
+fn (l1) <> (l2) =
+    l1 foldr (\ x acc = x cons acc) initial l2

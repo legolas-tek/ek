@@ -108,16 +108,46 @@ tests = test
         result2 <- catchExec [GetEnv "failure expected"]
         result2 @?= StringValue "user error (Could not find `failure expected' in environment)"
     , "operators" ~: do
-        add <- ex [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Add, Ret] []
-        add @?= IntegerValue 15
-        sub <- ex [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Sub, Ret] []
-        sub @?= IntegerValue (-5)
-        mul <- ex [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Mul, Ret] []
-        mul @?= IntegerValue 50
+        addInts <- ex [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Add, Ret] []
+        addInts @?= IntegerValue 15
+        addFloats <- ex [Push $ FloatValue 10.5, Push $ FloatValue 5.3, CallOp Add, Ret] []
+        addFloats @?= FloatValue 15.8
+        addIntFloat <- ex [Push $ IntegerValue 10, Push $ FloatValue 5.3, CallOp Add, Ret] []
+        addIntFloat @?= FloatValue 15.3
+        addFloatInt <- ex [Push $ FloatValue 10.5, Push $ IntegerValue 5, CallOp Add, Ret] []
+        addFloatInt @?= FloatValue 15.5
+        subInts <- ex [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Sub, Ret] []
+        subInts @?= IntegerValue (-5)
+        subFloats <- ex [Push $ FloatValue 10.5, Push $ FloatValue 5.3, CallOp Sub, Ret] []
+        subFloats @?= FloatValue (-5.2)
+        subFloatInt <- ex [Push $ FloatValue 10.5, Push $ IntegerValue 5, CallOp Sub, Ret] []
+        subFloatInt @?= FloatValue (-5.5)
+        subIntFloat <- ex [Push $ IntegerValue 10, Push $ FloatValue 5.5, CallOp Sub, Ret] []
+        subIntFloat @?= FloatValue (-4.5)
+        mulInts <- ex [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Mul, Ret] []
+        mulInts @?= IntegerValue 50
+        mulFloats <- ex [Push $ FloatValue 1.5, Push $ FloatValue 2.5, CallOp Mul, Ret] []
+        mulFloats @?= FloatValue 3.75
+        mulFloatInt <- ex [Push $ FloatValue 1.5, Push $ IntegerValue 2, CallOp Mul, Ret] []
+        mulFloatInt @?= FloatValue 3
+        mulIntFloat <- ex [Push $ IntegerValue 3, Push $ FloatValue 2.5, CallOp Mul, Ret] []
+        mulIntFloat @?= FloatValue 7.5
         division <- ex [Push $ IntegerValue 5, Push $ IntegerValue 10, CallOp Div, Ret] []
         division @?= IntegerValue 2
         printOp <- catchExec [Push $ IntegerValue 42, CallOp Print, Ret]
         printOp @?= StringValue "user error (No value on stack)"
+        equalityIntsFalse <- ex [Push $ IntegerValue 5, Push $ IntegerValue 10, CallOp Eq, Ret] []
+        equalityIntsFalse @?= AtomValue "false"
+        equalityIntsTrue <- ex [Push $ IntegerValue 5, Push $ IntegerValue 5, CallOp Eq, Ret] []
+        equalityIntsTrue @?= AtomValue "true"
+        equalityFloatsTrue <- ex [Push $ FloatValue 5.5, Push $ FloatValue 5.5, CallOp Eq, Ret] []
+        equalityFloatsTrue @?= AtomValue "true"
+        lessIntsFalse <- ex [Push $ IntegerValue 5, Push $ IntegerValue 10, CallOp Less, Ret] []
+        lessIntsFalse @?= AtomValue "false"
+        lessIntsTrue <- ex [Push $ IntegerValue 7, Push $ IntegerValue 5, CallOp Less, Ret] []
+        lessIntsTrue @?= AtomValue "true"
+        lessFloatsTrue <- ex [Push $ FloatValue 5.5, Push $ FloatValue 5.3, CallOp Less, Ret] []
+        lessFloatsTrue @?= AtomValue "true"
     , "closures" ~: do
         let addition = [ LoadArg 0
                        , LoadArg 1

@@ -8,19 +8,24 @@
 module EK.Ast
   ( Expr
   , Expr'(..)
+  , TExpr
   , Stmt(..)
   , Symbol(..)
   , FunctionName(..)
   , CallItem(..)
-  , StructElem(..)
+  , StructElem
+  , StructElem'(..)
   , Type(..)
   , FuncPattern
   , FuncPattern'(..)
+  , TFuncPattern
   , FuncPatternItem
   , FuncPatternItem'(..)
+  , TFuncPatternItem
   , Prec
-  , TotalStmt
   , PartialStmt
+  , TotalStmt
+  , TypedStmt
   , patternToName
   , patternLazinesses
   , defaultPrec
@@ -31,6 +36,7 @@ import Data.List (intercalate)
 import Data.String (IsString(..))
 import Data.Maybe (fromMaybe)
 import Token
+import qualified EK.Types
 
 data Symbol
   = Symbol String
@@ -42,13 +48,16 @@ data FunctionName = FunctionName [Symbol] Prec
 
 data Expr' typeval
   = IntegerLit Integer
+  | FloatLit Double
   | StringLit String
-  | Call FunctionName [Expr]
-  | Lambda String Expr
-  | StructLit typeval [Expr]
+  | Call FunctionName [Expr' typeval]
+  | Lambda String (Expr' typeval)
+  | StructLit typeval [Expr' typeval]
+  | TypeCheck (Expr' typeval) typeval
   deriving (Eq)
 
 type Expr = Expr' Type
+type TExpr = Expr' EK.Types.Type
 
 data CallItem
   = ExprCall Expr
@@ -59,14 +68,15 @@ data Stmt expr typeval
   = AtomDef String
   | TypeDef String typeval
   | ImportDef String
-  | StructDef String [StructElem]
+  | StructDef String [StructElem' typeval]
   | FuncDef (FuncPattern' typeval) expr
   | ExternDef (FuncPattern' typeval)
   deriving (Eq)
 
 
-data StructElem = StructElem String Type
+data StructElem' typeval = StructElem String typeval
   deriving (Eq)
+type StructElem = StructElem' Type
 
 data Type
   = TypeName String
@@ -77,6 +87,7 @@ data Type
 
 type PartialStmt = Stmt [Token] Type
 type TotalStmt = Stmt Expr Type
+type TypedStmt = Stmt (Expr' EK.Types.Type) EK.Types.Type
 
 type Prec = Int
 
@@ -94,6 +105,9 @@ data FuncPatternItem' typeval
 
 type FuncPattern = FuncPattern' Type
 type FuncPatternItem = FuncPatternItem' Type
+
+type TFuncPattern = FuncPattern' EK.Types.Type
+type TFuncPatternItem = FuncPatternItem' EK.Types.Type
 
 patternToName :: FuncPattern' typeval -> FunctionName
 patternToName (FuncPattern items _ prec) = FunctionName (map patternToName' items) (defaultPrec `fromMaybe` prec)
@@ -129,12 +143,14 @@ instance Show Symbol where
 
 instance Show typeval => Show (Expr' typeval) where
   show (IntegerLit i) = show i
+  show (FloatLit i) = show i
   show (StringLit s) = show s
   show (Call (FunctionName name _) items) = "(" ++ unwords (showCall name items) ++ ")"
   show (Lambda arg expr) = "(\\" ++ arg ++ " = " ++ show expr ++ ")"
   show (StructLit s elems) = show s ++ " { " ++ intercalate ", " (show <$> elems) ++ " }"
+  show (TypeCheck expr t) = "(" ++ show expr ++ " is " ++ show t ++ ")"
 
-showCall :: [Symbol] -> [Expr] -> [String]
+showCall :: Show typeval => [Symbol] -> [Expr' typeval] -> [String]
 showCall ((Symbol s):xs) i = s : showCall xs i
 showCall (Placeholder:xs) (e:is) = show e : showCall xs is
 showCall [] _ = []
@@ -149,7 +165,7 @@ instance (Show expr, Show typeval) => Show (Stmt expr typeval) where
   show (ExternDef pattern) = "extern fn " ++ show pattern
   show (ImportDef s) = "import " ++ s
 
-instance Show StructElem where
+instance Show ty => Show (StructElem' ty) where
   show (StructElem s t) = s ++ " : " ++ show t
 
 instance Show Type where
@@ -173,4 +189,3 @@ instance Show typeval => Show (FuncPatternItem' typeval) where
   show (ArgPattern lazy s Nothing) = "(" ++ (if lazy then "lazy " else "") ++ s ++ ")"
   show (SymbolPattern s) = s
   show PlaceholderPattern = "_"
-

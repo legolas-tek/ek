@@ -7,8 +7,8 @@
 ;;   :type 'file)
 
 (defvar ek-keywords
-  (let* ((ek-keywords '("atom" "struct" "type" "fn" "extern" "lazy" "precedence" "import"))
-         (ek-types '("bool" "int" "true" "false" "string" "void" "any" "never"))
+  (let* ((ek-keywords '("atom" "struct" "type" "fn" "extern" "lazy" "precedence" "import" "is"))
+         (ek-types '("bool" "int" "true" "false" "string" "void" "any" "never" "float"))
          (ek-keywords-regexp (regexp-opt ek-keywords 'words))
          (ek-types-regexp (regexp-opt ek-types 'words)))
     `(("//.*" . font-lock-comment-face)
