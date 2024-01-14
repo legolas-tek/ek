@@ -18,7 +18,7 @@ module EK.Optimizer
 import VirtualMachine
 import EK.Compiler
 
-import qualified Data.Map as Map (lookup, filterWithKey, keys, map)
+import qualified Data.Map as Map (lookup, filterWithKey, keys, map, mapWithKey)
 import qualified Data.Set as Set
 import Data.List (nub)
 
@@ -85,16 +85,19 @@ changeFuncNameInInsts name namesToChange = Map.map (updateFuncName name namesToC
 
 convertLoadArgs :: Insts -> VMValue -> Insts
 convertLoadArgs (LoadArg 0: xs) value = Push value : convertLoadArgs xs value
+convertLoadArgs (Ret: xs) value = convertLoadArgs xs value
 convertLoadArgs (x: xs) value = x : convertLoadArgs xs value
 convertLoadArgs [] _ = []
 
 inlineResult :: Result -> Result
-inlineResult res = fmap (`inlineInsts` res) res
+inlineResult res = Map.mapWithKey (\fn insts -> inlineInsts insts res fn) res
 
-inlineInsts :: Insts -> Result -> Insts
-inlineInsts [] _ = []
-inlineInsts (GetEnv fn : Push value : Call : xs) env =
+inlineInsts :: Insts -> Result -> String -> Insts
+inlineInsts [] _ _ = []
+inlineInsts (GetEnv fn : Push value : Call : xs) env currFn
+  | fn == currFn = [GetEnv fn, Push value, Call] ++ inlineInsts xs env currFn
+  | otherwise =
   case Map.lookup fn env of
-    Nothing -> [GetEnv fn, Push value, Call] ++ inlineInsts xs env
-    Just insts -> convertLoadArgs insts value ++ inlineInsts xs env
-inlineInsts (x:xs) env = x : inlineInsts xs env
+    Nothing -> [GetEnv fn, Push value, Call] ++ inlineInsts xs env currFn
+    Just insts -> inlineInsts (convertLoadArgs insts value) env currFn ++ inlineInsts xs env currFn
+inlineInsts (x:xs) env currFn = x : inlineInsts xs env currFn

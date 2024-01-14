@@ -16,34 +16,37 @@ tests :: Test
 tests = test
   [ "convertLoadArg" ~: do
     let insts = [LoadArg 0, Push $ IntegerValue 5, CallOp Add, LoadArg 0, CallOp Sub, Ret]
+    let insts' = [LoadArg 1, Push $ IntegerValue 5, CallOp Add, LoadArg 1, CallOp Sub, Ret]
 
     convertLoadArgs insts (IntegerValue 10) @?=
-      [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Add, Push $ IntegerValue 10, CallOp Sub, Ret]
+      [Push $ IntegerValue 10, Push $ IntegerValue 5, CallOp Add, Push $ IntegerValue 10, CallOp Sub]
+    convertLoadArgs insts' (IntegerValue 10) @?=
+      [LoadArg 1, Push $ IntegerValue 5, CallOp Add, LoadArg 1, CallOp Sub]
 
---   , "inline" ~: do
---     let env = Map.fromList [("test", [Push $ IntegerValue 5, Ret])]
---     let insts = [Push $ IntegerValue 5, GetEnv $ "test", Push $ AtomValue "void", Call]
---     let res = Map.fromList [("first fn", insts), ("second fn", insts)
---               , ("test", [Push $ IntegerValue 5, Ret])]
---     let recuRes = Map.fromList [("first fn", insts)
---                   , ("second fn", [GetEnv $ "first fn", Push $ AtomValue "void", Call])
---                   , ("test", [Push $ IntegerValue 5, Ret])]
---     let recuRes' = Map.fromList [("first fn", [GetEnv $ "first fn", Push $ AtomValue "void", Call])]
+  , "inline" ~: do
+    let env = Map.fromList [("test", [Push $ IntegerValue 5, Ret])]
+    let insts = [Push $ IntegerValue 5, GetEnv $ "test", Push $ AtomValue "void", Call]
+    let res = Map.fromList [("first fn", insts), ("second fn", insts)
+              , ("test", [Push $ IntegerValue 5])]
+    let recuRes = Map.fromList [("first fn", insts)
+                  , ("second fn", [GetEnv $ "first fn", Push $ AtomValue "void", Call])
+                  , ("test", [Push $ IntegerValue 5])]
+    let recuRes' = Map.fromList [("first fn", [GetEnv $ "first fn", Push $ AtomValue "void", Call])]
 
---     inlineInsts insts env @?=
---       [Push $ IntegerValue 5, Push $ IntegerValue 5, Ret]
---     inlineInsts insts Map.empty @?=
---       insts
---     inlineResult res @?=
---       Map.fromList [("first fn", [Push $ IntegerValue 5, Push $ IntegerValue 5, Ret])
---       , ("second fn", [Push $ IntegerValue 5, Push $ IntegerValue 5, Ret])
---       , ("test", [Push $ IntegerValue 5, Ret])]
---     inlineResult recuRes @?=
---       Map.fromList [("first fn", [Push $ IntegerValue 5, Push $ IntegerValue 5, Ret])
---       , ("second fn", insts)
---       , ("test", [Push $ IntegerValue 5, Ret])]
---     inlineResult recuRes' @?=
---       Map.fromList [("first fn", [GetEnv $ "first fn", Push $ AtomValue "void", Call])]
+    inlineInsts insts env "foo" @?=
+      [Push $ IntegerValue 5, Push $ IntegerValue 5]
+    inlineInsts insts Map.empty "foo" @?=
+      insts
+    inlineResult res @?=
+      Map.fromList [("first fn", [Push $ IntegerValue 5, Push $ IntegerValue 5])
+      , ("second fn", [Push $ IntegerValue 5, Push $ IntegerValue 5])
+      , ("test", [Push $ IntegerValue 5])]
+    inlineResult recuRes @?=
+      Map.fromList [("first fn", [Push $ IntegerValue 5, Push $ IntegerValue 5])
+      , ("second fn", [Push $ IntegerValue 5, Push $ IntegerValue 5])
+      , ("test", [Push $ IntegerValue 5])]
+    inlineResult recuRes' @?=
+      Map.fromList [("first fn", [GetEnv $ "first fn", Push $ AtomValue "void", Call])]
 
   , "delete useless functions" ~: do
       let result = Map.fromList
