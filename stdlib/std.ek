@@ -58,6 +58,8 @@ fn _ toFloat = builtin toFloat
 fn _ toChar = builtin toChar
 fn _ toCodePoint = builtin toCodePoint
 
+fn length _ = builtin length
+
 fn _[_] = builtin charAt
 fn _ at _ = builtin charAt
 

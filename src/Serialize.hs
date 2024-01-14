@@ -122,6 +122,7 @@ instance Serializable Instruction where
   serialize (CallOp CharAt) = B.singleton 27
   serialize (CallOp ToChar) = B.singleton 28
   serialize (CallOp ToCodePoint) = B.singleton 29
+  serialize (CallOp Length) = B.singleton 30
 
   deserialize = exact 1 *> (Push <$> deserialize)
             <|> exact 2 $> Call
@@ -152,6 +153,7 @@ instance Serializable Instruction where
             <|> exact 27 $> CallOp CharAt
             <|> exact 28 $> CallOp ToChar
             <|> exact 29 $> CallOp ToCodePoint
+            <|> exact 30 $> CallOp Length
 
 instance Serializable Type where
   serialize AnyTy = B.singleton 0

@@ -60,6 +60,7 @@ data Operator = Add
               | CharAt
               | ToChar
               | ToCodePoint
+              | Length
               deriving (Eq)
 
 instance Show Operator where
@@ -80,6 +81,7 @@ instance Show Operator where
   show CharAt = "charAt"
   show ToChar = "toChar"
   show ToCodePoint = "toCodePoint"
+  show Length = "length"
 
 data Instruction = Push VMValue
                  | Call
@@ -129,6 +131,8 @@ exec env args (CallOp ReadLine:insts) stack = getLine >>= \line -> exec env args
 exec env args (CallOp ToString:insts) (v:stack) = exec env args insts (StringValue (show v):stack)
 exec env args (CallOp ToChar:insts) (IntegerValue v:stack) = exec env args insts (StringValue [toEnum $ fromIntegral v]:stack)
 exec env args (CallOp ToCodePoint:insts) (StringValue v:stack) = exec env args insts (IntegerValue (toInteger $ ord $ head v):stack)
+exec env args (CallOp Length:insts) (StringValue v:stack) = exec env args insts (IntegerValue (toInteger $ length v):stack)
+exec env args (CallOp Length:insts) (IntegerValue v:stack) = exec env args insts (IntegerValue (toInteger $ length $ show v):stack)
 exec env args (CallOp ToInt:insts) (v:stack) = case v of
   IntegerValue _ -> exec env args insts (v:stack)
   FloatValue f -> exec env args insts (IntegerValue (floor f):stack)

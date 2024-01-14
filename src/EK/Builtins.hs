@@ -40,6 +40,8 @@ builtins = Map.fromList
   , ("builtin charAt\\b", [LoadArg 0, LoadArg 1, CallOp CharAt, Ret])
   , ("builtin toString", [GetEnv "builtin toString\\impl", Ret])
   , ("builtin toString\\impl", [LoadArg 0, CallOp ToString, Ret])
+  , ("builtin length", [GetEnv "builtin length\\impl", Ret])
+  , ("builtin length\\impl", [LoadArg 0, CallOp Length, Ret])
   , ("builtin toInt", [GetEnv "builtin toInt\\impl", Ret])
   , ("builtin toInt\\impl", [LoadArg 0, CallOp ToInt, Ret])
   , ("builtin toFloat", [GetEnv "builtin toFloat\\impl", Ret])

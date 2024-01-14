@@ -30,6 +30,7 @@ extern fn builtin toCodePoint: string -> int
 
 extern fn builtin charAt: string -> int -> string
 extern fn builtin concat: any -> any -> any
+extern fn builtin length: any -> int
 
 extern fn builtin readLine: string
 
