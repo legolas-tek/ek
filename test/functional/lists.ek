@@ -5,7 +5,7 @@
 import std
 import list
 
-fn test1 = 1 cons (2 cons (3 cons empty))
+fn test1 = [1, 2, 3]
 
 fn main =
    assert (test1 head == 1) message "head test1"

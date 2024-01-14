@@ -5,6 +5,7 @@
 -- expression parser for ek
 -}
 
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
 
@@ -117,7 +118,7 @@ primItem :: [FuncItem] -> Parser Token CallItem
 primItem fi = ExprCall <$> prim fi <|> placeholder PlaceholderCall
 
 prim :: [FuncItem] -> Parser Token Expr
-prim funcItems = floatExpr <|> intExpr <|> stringExpr <|> parenExpr funcItems <|> structExpr funcItems <|> lambdaExpr funcItems
+prim funcItems = floatExpr <|> intExpr <|> stringExpr <|> parenExpr funcItems <|> structExpr funcItems <|> lambdaExpr funcItems <|> arrExpr funcItems
 
 intExpr :: Parser Token Expr
 intExpr = IntegerLit <$> intLiteral
@@ -138,6 +139,12 @@ structExprContent funcItems = structExprContent' <|> (pure <$> parsePrec funcIte
 
 structExpr :: [FuncItem] -> Parser Token Expr
 structExpr funcItems = StructLit <$> (TypeName <$> identifier <* parseTokenType CurlyOpen) <*> (structExprContent funcItems <* parseTokenType CurlyClose)
+
+arrLit :: [Expr] -> Expr
+arrLit = foldr (\x acc -> Call "_ cons _" [x, acc]) (Call "empty" [])
+
+arrExpr :: [FuncItem] -> Parser Token Expr
+arrExpr funcItems = arrLit <$> (parseTokenType BracketOpen *> structExprContent funcItems <* parseTokenType BracketClose)
 
 lambdaExpr :: [FuncItem] -> Parser Token Expr
 lambdaExpr funcItems = do
