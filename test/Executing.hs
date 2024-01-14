@@ -151,11 +151,11 @@ tests = test
         concatOp <- ex [Push $ StringValue "World", Push $ StringValue "Hello", CallOp Concat, Ret] []
         concatOp @?= StringValue "HelloWorld"
         concatIntOp <- ex [Push $ IntegerValue 5, Push $ IntegerValue 5, CallOp Concat, Ret] []
-        concatIntOp @?= IntegerValue 55
+        concatIntOp @?= StringValue "55"
         concatFloatOp <- ex [Push $ FloatValue 5.5, Push $ IntegerValue 5, CallOp Concat, Ret] []
-        concatFloatOp @?= FloatValue 55.5
+        concatFloatOp @?= StringValue "55.5"
         concatFloatOp2 <- ex [Push $ IntegerValue 5, Push $ FloatValue 5.5, CallOp Concat, Ret] []
-        concatFloatOp2 @?= FloatValue 5.55
+        concatFloatOp2 @?= StringValue "5.55"
     , "closures" ~: do
         let addition = [ LoadArg 0
                        , LoadArg 1

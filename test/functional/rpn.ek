@@ -95,7 +95,7 @@ fn main =
 // CHECK: true
     >> 42 toString "42" == print
 // CHECK: 4242
-    >> 42 42 concat print
+    >> 42 42 ++ print
 // CHECK: zouzoulindon
     >> "zouzou" "lindon" ++ print
 // CHECK: 42
@@ -104,8 +104,6 @@ fn main =
     >> "42.18" toFloat print
 // CHECK: i
     >> "miss" 1 at print
-// CHECK: s
-    >> [2]"miss" print
 // CHECK: 4
     >> "miss" length print
 // CHECK: 2

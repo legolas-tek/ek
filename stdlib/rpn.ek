@@ -43,7 +43,6 @@ fn (a) (b) min = if a b < then a else b
 fn (a) (b) max = if a b > then a else b
 
 fn _ toString = builtin toString
-fn _ _ concat = builtin concat
 fn _ _ ++ = builtin concat
 fn _ toInt = builtin toInt
 fn _ toFloat = builtin toFloat

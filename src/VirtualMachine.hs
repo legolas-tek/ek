@@ -130,23 +130,22 @@ exec env args (CallOp EPrint:insts) (v:stack) = hPutStr stderr (show v) >> exec 
 exec env args (CallOp ReadLine:insts) stack = getLine >>= \line -> exec env args insts (StringValue line:stack)
 exec env args (CallOp ToString:insts) (v:stack) = exec env args insts (StringValue (show v):stack)
 exec env args (CallOp ToChar:insts) (IntegerValue v:stack) = exec env args insts (StringValue [toEnum $ fromIntegral v]:stack)
-exec env args (CallOp ToCodePoint:insts) (StringValue v:stack) = exec env args insts (IntegerValue (toInteger $ ord $ head v):stack)
-exec env args (CallOp Length:insts) (StringValue v:stack) = exec env args insts (IntegerValue (toInteger $ length v):stack)
-exec env args (CallOp Length:insts) (IntegerValue v:stack) = exec env args insts (IntegerValue (toInteger $ length $ show v):stack)
-exec env args (CallOp ToInt:insts) (v:stack) = case v of
-  IntegerValue _ -> exec env args insts (v:stack)
-  FloatValue f -> exec env args insts (IntegerValue (floor f):stack)
-  StringValue s -> case readMaybe s of
-    Just i -> exec env args insts (IntegerValue i:stack)
-    Nothing -> exec env args insts (AtomValue "null":stack)
-  _ -> exec env args insts (AtomValue "null":stack)
-exec env args (CallOp ToFloat:insts) (v:stack) = case v of
-  IntegerValue i -> exec env args insts (FloatValue (fromIntegral i):stack)
-  FloatValue _ -> exec env args insts (v:stack)
-  StringValue s -> case readMaybe s of
-    Just f -> exec env args insts (FloatValue f:stack)
-    Nothing -> exec env args insts (AtomValue "null":stack)
-  _ -> exec env args insts (AtomValue "null":stack)
+exec env args (CallOp ToCodePoint:insts) (StringValue v:stack) = exec env args insts (IntegerValue (if null v then 0 else toInteger $ ord $ head v):stack)
+exec env args (CallOp Length:insts) (v:stack) = exec env args insts (IntegerValue (toInteger $ length $ show v):stack)
+exec env args (CallOp ToInt:insts) (IntegerValue v:stack) = exec env args insts (IntegerValue v:stack)
+exec env args (CallOp ToInt:insts) (FloatValue f:stack) = exec env args insts (IntegerValue (floor f):stack)
+exec env args (CallOp ToInt:insts) (StringValue s:stack) = case readMaybe s of
+  Just i -> exec env args insts (IntegerValue i:stack)
+  Nothing -> exec env args insts (AtomValue "null":stack)
+exec env args (CallOp ToInt:insts) (AtomValue "true":stack) = exec env args insts (IntegerValue 1:stack)
+exec env args (CallOp ToInt:insts) (AtomValue "false":stack) = exec env args insts (IntegerValue 0:stack)
+exec env args (CallOp ToInt:insts) (_:stack) = exec env args insts (AtomValue "null":stack)
+exec env args (CallOp ToFloat:insts) (FloatValue v:stack) = exec env args insts (FloatValue v:stack)
+exec env args (CallOp ToFloat:insts) (IntegerValue i:stack) = exec env args insts (FloatValue (fromIntegral i):stack)
+exec env args (CallOp ToFloat:insts) (StringValue s:stack) = case readMaybe s of
+  Just f -> exec env args insts (FloatValue f:stack)
+  Nothing -> exec env args insts (AtomValue "null":stack)
+exec env args (CallOp ToFloat:insts) (_:stack) = exec env args insts (AtomValue "null":stack)
 exec _ _ (CallOp Exit:_) ((IntegerValue 0):_) = exitSuccess
 exec _ _ (CallOp Exit:_) ((IntegerValue v):_) = exitWith $ ExitFailure $ fromIntegral v
 exec env args (CallOp op:insts) (v1:v2:stack) =
@@ -209,8 +208,6 @@ applyOp Div (IntegerValue a) (IntegerValue b)
 applyOp Eq a b = Right $ atomicBool $ a == b
 applyOp Less (IntegerValue a) (IntegerValue b)
   = Right $ atomicBool $ a < b
-applyOp Concat (IntegerValue a) (IntegerValue b)
-  = Right $ IntegerValue $ read $ show a ++ show b
 
 -- float float
 applyOp Add (FloatValue a) (FloatValue b)
@@ -239,8 +236,6 @@ applyOp Div (FloatValue a) (IntegerValue b)
   = Right $ FloatValue $ a / fromIntegral b
 applyOp Less (FloatValue a) (IntegerValue b)
   = Right $ atomicBool $ a < fromIntegral b
-applyOp Concat (FloatValue a) (IntegerValue b)
-  = Right $ FloatValue $ read $ show a ++ show b
 
 -- int float
 applyOp Add (IntegerValue a) (FloatValue b)
@@ -255,30 +250,12 @@ applyOp Div (IntegerValue a) (FloatValue b)
   = Right $ FloatValue $ fromIntegral a / b
 applyOp Less (IntegerValue a) (FloatValue b)
   = Right $ atomicBool $ fromIntegral a < b
-applyOp Concat (IntegerValue a) (FloatValue b)
-  = Right $ FloatValue $ read $ show a ++ show b
 
 -- string
-applyOp Concat (StringValue a) (StringValue b)
-  = Right $ StringValue $ a ++ b
-applyOp Concat (StringValue a) (IntegerValue b)
-  = Right $ StringValue $ a ++ show b
-applyOp Concat (IntegerValue a) (StringValue b)
-  = Right $ StringValue $ show a ++ b
-applyOp Add (StringValue a) (FloatValue b)
-  = Right $ StringValue $ a ++ show b
-applyOp Add (FloatValue a) (StringValue b)
-  = Right $ StringValue $ show a ++ b
-applyOp Add (StringValue a) (AtomValue b)
-  = Right $ StringValue $ a ++ b
-applyOp Add (AtomValue a) (StringValue b)
-  = Right $ StringValue $ a ++ b
-applyOp Add (StringValue a) (StructValue b vs)
-  = Right $ StringValue $ a ++ show (StructValue b vs)
-applyOp Add (StructValue a vs) (StringValue b)
-  = Right $ StringValue $ show (StructValue a vs) ++ b
-applyOp Add (StringValue a) (StringValue b)
-  = Right $ StringValue $ a ++ b
+applyOp Concat (FloatValue _) (FloatValue _)
+  = Left "Cannot concatenate float"
+applyOp Concat a b
+  = Right $ StringValue $ show a ++ show b
 applyOp Mul (StringValue a) (IntegerValue b)
   = Right $ StringValue $ concat $ replicate (fromIntegral b) a
 applyOp Mul (IntegerValue a) (StringValue b)
@@ -289,6 +266,4 @@ applyOp Sub (IntegerValue a) (StringValue b)
   = Right $ StringValue $ drop (fromIntegral a) b
 applyOp CharAt (StringValue a) (IntegerValue b)
   = Right $ if b < fromIntegral (length a) then StringValue [a !! fromIntegral b] else AtomValue "null"
-applyOp CharAt (IntegerValue a) (StringValue b)
-  = Right $ if a < fromIntegral (length b) then StringValue [b !! fromIntegral a] else AtomValue "null"
 applyOp _ _ _ = Left "Invalid operands for operator"
