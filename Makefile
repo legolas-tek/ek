@@ -5,8 +5,13 @@
 ## Makefile
 ##
 
+CP		=	cp
+
 SRC		=	app/Main.hs 		\
 			src/Lib.hs			\
+
+STDLIB_PATH	=	./stdlib
+STDLIB_INSTALL_PATH	=	$(shell $(STACK) path --local-bin)/../lib/ek
 
 NAME	=	glados ekc ek
 
@@ -14,7 +19,7 @@ STACK	=	stack
 
 all:
 	$(STACK) build
-	cp "`$(STACK) path --local-install-root`/bin/"* .
+	$(CP) "`$(STACK) path --local-install-root`/bin/"* .
 
 clean:
 	$(RM) $(SRC:.hs=.hi)
@@ -35,6 +40,8 @@ functional_test: all
 
 install:
 	$(STACK) install
+	mkdir -p $(STDLIB_INSTALL_PATH)
+	$(CP) $(STDLIB_PATH)/*.ek $(STDLIB_INSTALL_PATH)
 
 
 .PHONY: all clean fclean re tests_run install

@@ -22,9 +22,11 @@ import EK.Compiler
 import Diagnostic
 import VirtualMachine
 import EK.Resolver
+import Imports
 
 import Control.Exception (try, catch, IOException)
 import Control.Monad (when)
+
 
 printPrompt :: Bool -> IO ()
 printPrompt new = hIsTerminalDevice stdin >>= \isTerm ->
@@ -43,6 +45,7 @@ printRes a = print a
 
 mainLoop :: [TotalStmt] -> String -> IO ()
 mainLoop env rest = do
+    setDefaultImportsPath
     printPrompt $ null rest
     eofVal <- isEOF
     when eofVal exitSuccess

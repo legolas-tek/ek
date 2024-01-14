@@ -18,11 +18,15 @@ import EK.ExprParser
 import EK.TypeParser
 import Parser
 import Token
+import SourcePos
 import Tokenizer
 import EK.TokenParser
 import Data.Maybe (isJust)
 import Control.Monad (liftM2, liftM3)
 import Diagnostic
+import System.Environment (getEnv)
+import Control.Exception (try)
+import Data.Either (fromRight)
 
 parseDocument :: [Token] -> IO ([TotalStmt], [Diagnostic])
 parseDocument = parseDocumentAdding []
@@ -120,10 +124,26 @@ getImportedTokens stmts = do
     let (stmts', diags) = unzip results
     return (concat stmts', concat diags)
 
+
+parseImportedPaths :: Parser Char String
+parseImportedPaths = many (parseOneIf (/= ':')) <* optional (parseOneIf (== ':'))
+
+findImportPath :: String -> IO String -> IO String
+findImportPath fileName paths = do
+    paths' <- paths
+    case paths' of
+        "" -> return ""
+        _ -> do
+            let parsed = fromRight ("", "") $ runParser parseImportedPaths paths'
+            res <- try $ readFile (fst parsed ++ "/" ++ fileName ++ ".ek") :: IO (Either IOError String)
+            case res of
+                Right content -> return content
+                Left _ -> findImportPath fileName (return $ snd parsed)
+
 handleImportDef :: PartialStmt -> IO ([PartialStmt], [Diagnostic])
 handleImportDef (ImportDef x) = do
-    content <- readFile (x ++ ".ek")
-    case parseImportedTokens x content of
+    imports <- findImportPath x $ getEnv "EK_LIBRARY_PATH"
+    case parseImportedTokens x imports of
         Left diag -> return ([], [diag])
         Right (tokens, diagnostics) -> do
             (importedTokens, diagnostics') <- getImportedTokens tokens
@@ -131,6 +151,7 @@ handleImportDef (ImportDef x) = do
 handleImportDef x = return ([x], [])
 
 parseImportedTokens :: String -> String -> Either Diagnostic ([PartialStmt], [Diagnostic])
+parseImportedTokens fileName "" = Left $ Diagnostic {severity = Error, message = "Import not found: " ++ fileName, sourceLocation = SourcePos "" 0 0}
 parseImportedTokens fileName content = do
     (tokens, diagnostics) <- tokenizer fileName content
     (result, diagnostics') <- runParserOnFile document fileName tokens
