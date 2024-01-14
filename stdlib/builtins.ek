@@ -8,7 +8,6 @@
 import bool
 
 atom void
-atom never // not an atom, should be an uninhabited type
 
 type int = [..]
 
