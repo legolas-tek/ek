@@ -12,6 +12,7 @@ module EK.Optimizer
   , inlineResult
   , deleteNotUsedFunc
   , deleteSameInstsOfFunc
+  , convertLoadArgs
   ) where
 
 import VirtualMachine
@@ -82,6 +83,11 @@ updateFuncName name namesToChange (x : xs) = x : updateFuncName name namesToChan
 changeFuncNameInInsts :: String -> [String] -> Result -> Result
 changeFuncNameInInsts name namesToChange = Map.map (updateFuncName name namesToChange)
 
+convertLoadArgs :: Insts -> VMValue -> Insts
+convertLoadArgs (LoadArg 0: xs) value = Push value : convertLoadArgs xs value
+convertLoadArgs (x: xs) value = x : convertLoadArgs xs value
+convertLoadArgs [] _ = []
+
 inlineResult :: Result -> Result
 inlineResult res = fmap (`inlineInsts` res) res
 
@@ -90,5 +96,5 @@ inlineInsts [] _ = []
 inlineInsts (GetEnv fn : Push value : Call : xs) env =
   case Map.lookup fn env of
     Nothing -> [GetEnv fn, Push value, Call] ++ inlineInsts xs env
-    Just insts -> insts ++ inlineInsts xs env
+    Just insts -> convertLoadArgs insts value ++ inlineInsts xs env
 inlineInsts (x:xs) env = x : inlineInsts xs env
