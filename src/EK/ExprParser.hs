@@ -139,6 +139,9 @@ structExprContent funcItems = structExprContent' <|> (pure <$> parsePrec funcIte
 structExpr :: [FuncItem] -> Parser Token Expr
 structExpr funcItems = StructLit <$> (TypeName <$> identifier <* parseTokenType CurlyOpen) <*> (structExprContent funcItems <* parseTokenType CurlyClose)
 
+arrExpr :: [FuncItem] -> Parser Token Expr
+arrExpr funcItems = ArrLit <$> (TypeName <$> identifier <* parseTokenType BracketOpen) <*> (structExprContent funcItems <* parseTokenType BracketClose)
+
 lambdaExpr :: [FuncItem] -> Parser Token Expr
 lambdaExpr funcItems = do
   parseTokenType Backslash

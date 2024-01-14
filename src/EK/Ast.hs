@@ -53,6 +53,7 @@ data Expr' typeval
   | Call FunctionName [Expr' typeval]
   | Lambda String (Expr' typeval)
   | StructLit typeval [Expr' typeval]
+  | ArrLit typeval [Expr' typeval]
   | TypeCheck (Expr' typeval) typeval
   deriving (Eq)
 
@@ -148,6 +149,7 @@ instance Show typeval => Show (Expr' typeval) where
   show (Call (FunctionName name _) items) = "(" ++ unwords (showCall name items) ++ ")"
   show (Lambda arg expr) = "(\\" ++ arg ++ " = " ++ show expr ++ ")"
   show (StructLit s elems) = show s ++ " { " ++ intercalate ", " (show <$> elems) ++ " }"
+  show (ArrLit s elems) = show s ++ " [ " ++ intercalate ", " (show <$> elems) ++ " ]"
   show (TypeCheck expr t) = "(" ++ show expr ++ " is " ++ show t ++ ")"
 
 showCall :: Show typeval => [Symbol] -> [Expr' typeval] -> [String]

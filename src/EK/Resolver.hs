@@ -88,6 +88,7 @@ replaceExpr _ (FloatLit f) = return $ FloatLit f
 replaceExpr types (Call f args) = Call f <$> mapM (replaceExpr types) args
 replaceExpr types (Lambda name body) = Lambda name <$> replaceExpr types body
 replaceExpr types (StructLit ty fields) = StructLit <$> replaceType types ty <*> mapM (replaceExpr types) fields
+replaceExpr types (ArrLit ty fields) = ArrLit <$> replaceType types ty <*> mapM (replaceExpr types) fields
 replaceExpr types (TypeCheck expr ty) = TypeCheck <$> replaceExpr types expr <*> replaceType types ty
 
 diag :: Diagnostic -> State [Diagnostic] ()
