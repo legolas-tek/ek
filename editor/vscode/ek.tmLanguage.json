@@ -32,6 +32,10 @@
 		{
 		  "name": "constant.numeric.ek",
 		  "match": "[0-9]+"
+		},
+		{
+		  "name": "keyword.operator.ek",
+		  "match": "[.=/+*!?%<>&|^~$,_\\-]"
 		}
     ],
     "repository": {
@@ -69,6 +73,14 @@
 			{
 			  "name": "constant.numeric.ek",
 			  "match": "[0-9]+"
+			}
+		  ]
+		},
+		"operators": {
+		  "patterns": [
+			{
+			  "name": "keyword.operator.ek",
+			  "match": "[.=/+*!?%<>&|^~$,_\\-]"
 			}
 		  ]
 		}
