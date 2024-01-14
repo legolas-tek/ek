@@ -16,12 +16,14 @@ module VirtualMachine
     , applyOp
     ) where
 
+import EK.Types
+
 import Data.Map (Map, lookup)
 import System.Exit (exitWith, ExitCode(..), exitSuccess)
 import System.IO (hPutStr, stderr)
 import Data.List (intercalate)
-import EK.Types
 import Text.Read (readMaybe)
+import Data.Char (ord)
 
 data VMValue = IntegerValue Integer
              | FloatValue Double
@@ -56,6 +58,8 @@ data Operator = Add
               | ToInt
               | ToFloat
               | CharAt
+              | ToChar
+              | ToCodePoint
               deriving (Eq)
 
 instance Show Operator where
@@ -74,6 +78,8 @@ instance Show Operator where
   show ToInt = "toInt"
   show ToFloat = "toFloat"
   show CharAt = "charAt"
+  show ToChar = "toChar"
+  show ToCodePoint = "toCodePoint"
 
 data Instruction = Push VMValue
                  | Call
@@ -121,6 +127,8 @@ exec env args (CallOp Print:insts) (v:stack) = print v >> exec env args insts st
 exec env args (CallOp EPrint:insts) (v:stack) = hPutStr stderr (show v) >> exec env args insts stack
 exec env args (CallOp ReadLine:insts) stack = getLine >>= \line -> exec env args insts (StringValue line:stack)
 exec env args (CallOp ToString:insts) (v:stack) = exec env args insts (StringValue (show v):stack)
+exec env args (CallOp ToChar:insts) (IntegerValue v:stack) = exec env args insts (StringValue [toEnum $ fromIntegral v]:stack)
+exec env args (CallOp ToCodePoint:insts) (StringValue v:stack) = exec env args insts (IntegerValue (toInteger $ ord $ head v):stack)
 exec env args (CallOp ToInt:insts) (v:stack) = case v of
   IntegerValue _ -> exec env args insts (v:stack)
   FloatValue f -> exec env args insts (IntegerValue (floor f):stack)

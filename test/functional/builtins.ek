@@ -34,3 +34,7 @@ fn main = print (42 toString)
     >> print (2["hey"])
 // CHECK: l
     >> print "love" at 0
+// CHECK: 97
+    >> print ("a" toCodePoint)
+// CHECK: a
+    >> print (97 toChar)
