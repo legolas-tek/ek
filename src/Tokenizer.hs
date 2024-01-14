@@ -88,6 +88,7 @@ identifyKw "extern" = ExternKw
 identifyKw "precedence" = PrecedenceKw
 identifyKw "import" = ImportKw
 identifyKw "lazy" = LazyKw
+identifyKw "is" = IsKw
 identifyKw _ = TextIdentifier
 
 parseOperatorId :: Parser Char (String, TokenType)
