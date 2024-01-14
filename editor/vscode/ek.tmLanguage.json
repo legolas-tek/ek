@@ -28,7 +28,11 @@
         {
             "name": "storage.type.ek",
             "match": "\\b(bool|int|true|false|string|void|any|never|float)\\b"
-        }
+        },
+		{
+		  "name": "constant.numeric.ek",
+		  "match": "[0-9]+"
+		}
     ],
     "repository": {
         "comment": {
@@ -59,6 +63,14 @@
                     "match": "\\b(bool|int|true|false|string|void|any|never|float)\\b"
                 }
             ]
-        }
+        },
+		"numbers": {
+		  "patterns": [
+			{
+			  "name": "constant.numeric.ek",
+			  "match": "[0-9]+"
+			}
+		  ]
+		}
     }
 }
