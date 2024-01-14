@@ -67,15 +67,17 @@ parseExpr :: [FuncItem] -> [Token] -> Either Diagnostic Expr
 parseExpr fi tokens = fst <$> runParser (parsePrec fi lowestPrec <* eof) tokens
 
 funcItems :: Stmt a b -> [FuncItem]
-funcItems (FuncDef pat _) = [patternToItem pat]
-funcItems (ExternDef pat) = [patternToItem pat]
+funcItems (FuncDef pat _) = patternToItem pat
+funcItems (ExternDef pat) = patternToItem pat
 funcItems (AtomDef name) = [primaryFuncItem name]
 funcItems (StructDef _ items) = map accessorItem items
   where accessorItem (StructElem name _) = FuncItem (FunctionName [Placeholder, Symbol name] primaryPrec) [False]
 funcItems _ = []
 
-patternToItem :: FuncPattern' a -> FuncItem
-patternToItem pat = FuncItem (patternToName pat) (patternLazinesses pat)
+patternToItem :: FuncPattern' a -> [FuncItem]
+patternToItem (FuncPattern [ArgPattern {}]  _ _) = [] -- avoid infinite loop
+patternToItem (FuncPattern [PlaceholderPattern] _ _) = []
+patternToItem pat = [FuncItem (patternToName pat) (patternLazinesses pat)]
 
 parsePrec :: [FuncItem] -> Prec -> Parser Token Expr
 parsePrec fi prec = primItem fi <|> parsePrefix fi prec >>= parseInfix fi prec
