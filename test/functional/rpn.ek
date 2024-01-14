@@ -105,6 +105,6 @@ fn main =
 // CHECK: i
     >> "miss" 1 at print
 // CHECK: 4
-    >> "miss" length print
+    >> "miss" len print
 // CHECK: 2
-    >> 42 length print
+    >> 42 len print

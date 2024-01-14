@@ -50,7 +50,7 @@ fn _ toFloat = builtin toFloat
 fn [_]_ = builtin charAt
 fn _ _ at = builtin charAt
 
-fn _ length = builtin length
+fn _ len = builtin length
 
 fn (a) >> (b) = b
 

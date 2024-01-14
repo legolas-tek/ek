@@ -35,6 +35,6 @@ fn main = print (42 toString)
 // CHECK: a
     >> print (97 toChar)
 // CHECK: 4
-    >> print (length "love")
+    >> print (len "love")
 // CHECK: 3
-    >> print (length 666)
+    >> print (len 666)
