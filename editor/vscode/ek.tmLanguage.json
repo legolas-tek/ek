@@ -23,11 +23,11 @@
         },
         {
             "name": "keyword.control.ek",
-            "match": "\\b(atom|struct|type|fn|lazy|precedence|import|is)\\b"
+            "match": "\\b(atom|struct|type|fn|lazy|precedence|import|is|if|else|then|print|eprint|readLine|exit|panic|assert|clamp|min|max|toString|not|drop|take|length|map|filter|foldl|foldr|reverse|head|tail)\\b"
         },
         {
             "name": "storage.type.ek",
-            "match": "\\b(bool|int|true|false|string|void|any|never|float)\\b"
+            "match": "\\b(bool|int|true|false|string|void|any|never|float|list|empty|const)\\b"
         },
 		{
 		  "name": "constant.numeric.ek",
@@ -60,7 +60,7 @@
             "patterns": [
                 {
                     "name": "keyword.control.ek",
-                    "match": "\\b(atom|struct|type|fn|lazy|precedence|import|is)\\b"
+                    "match": "\\b(atom|struct|type|fn|lazy|precedence|import|is|if|else|then|print|eprint|readLine|exit|panic|assert|clamp|min|max|toString|not|drop|take|length|map|filter|foldl|foldr|reverse|head|tail)\\b"
                 }
             ]
         },
@@ -68,7 +68,7 @@
             "patterns": [
                 {
                     "name": "storage.type.ek",
-                    "match": "\\b(bool|int|true|false|string|void|any|never|float)\\b"
+                    "match": "\\b(bool|int|true|false|string|void|any|never|float|list|empty|const)\\b"
                 }
             ]
         },
