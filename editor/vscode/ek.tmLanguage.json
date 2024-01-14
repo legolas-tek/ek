@@ -1,0 +1,112 @@
+{
+    "name": "EK",
+    "scopeName": "source.ek",
+    "patterns": [
+        {
+            "name": "comment.line.double-slash.ek",
+            "match": "//.*",
+            "captures": {
+                "0": {
+                    "name": "comment.line.ek"
+                }
+            }
+        },
+        {
+            "name": "comment.block.ek",
+            "begin": "/\\*",
+            "end": "\\*/",
+            "captures": {
+                "0": {
+                    "name": "comment.block.ek"
+                }
+            }
+        },
+        {
+            "name": "keyword.control.ek",
+            "match": "\\b(atom|struct|type|fn|lazy|precedence|import|is|if|else|then)\\b"
+        },
+        {
+            "name": "storage.type.ek",
+            "match": "\\b(bool|int|true|false|string|void|any|never|float|list|empty|cons|null)\\b"
+        },
+		{
+		  "name": "constant.numeric.ek",
+		  "match": "[0-9]+"
+		},
+		{
+		  "name": "keyword.operator.ek",
+		  "match": "[.=/+*!?%<>&|^~$,_\\-]"
+		},
+        {
+          "name": "punctuation.delimiter.ek",
+          "match": "[,:]"
+        },
+        {
+            "name": "entity.name.function.ek",
+            "match": "\\b(head|tail|print|eprint|readLine|exit|panic|assert|clamp|min|max|toString|not|drop|take|length|map|filter|foldl|foldr|reverse|head|tail)\\b"
+        }
+    ],
+    "repository": {
+        "comment": {
+            "patterns": [
+                {
+                    "name": "comment.line.ek",
+                    "match": "//.*"
+                },
+                {
+                    "name": "comment.block.ek",
+                    "begin": "/\\*",
+                    "end": "\\*/"
+                }
+            ]
+        },
+        "keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.control.ek",
+                    "match": "\\b(atom|struct|type|fn|lazy|precedence|import|is|if|else|then)\\b"
+                }
+            ]
+        },
+        "types": {
+            "patterns": [
+                {
+                    "name": "storage.type.ek",
+                    "match": "\\b(bool|int|true|false|string|void|any|never|float|list|empty|const)\\b"
+                }
+            ]
+        },
+		"numbers": {
+		  "patterns": [
+			{
+			  "name": "constant.numeric.ek",
+			  "match": "[0-9]+"
+			}
+		  ]
+		},
+		"operators": {
+		  "patterns": [
+			{
+			  "name": "keyword.operator.ek",
+			  "match": "[.=/+*!?%<>&|^~$,_\\-]"
+			}
+		  ]
+		},
+        "delimiters": {
+          "patterns": [
+            {
+              "name": "punctuation.delimiter.ek",
+              "match": "[,:]"
+            }
+          ]
+        },
+        "functions": {
+            "patterns": [
+                {
+                    "name": "entity.name.function.ek",
+                    "match": "\\b(head|tail|print|eprint|readLine|exit|panic|assert|clamp|min|max|toString|not|drop|take|length|map|filter|foldl|foldr|reverse|head|tail)\\b"
+                }
+            ]
+        }
+    }
+}
