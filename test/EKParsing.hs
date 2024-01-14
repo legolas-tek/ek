@@ -108,6 +108,18 @@ tests = test
   , "StructLit trailing comma" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt Comma, tk "foo" StringLiter, tkt Comma, tkt CurlyClose]
         @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit (TypeName "bar") [IntegerLit 42, StringLit "foo"])]
+  , "arrLit" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, tkt BracketOpen, tkt BracketClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (Call "empty" [])]
+  , "arrLit with one int" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, tkt BracketOpen, int 42, tkt BracketClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (Call "_ cons _" [IntegerLit 42, Call "empty" []])]
+  , "arrLit with two int" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, tkt BracketOpen, int 42, tkt Comma, int 43, tkt BracketClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (Call "_ cons _" [IntegerLit 42, Call "_ cons _" [IntegerLit 43, Call "empty" []]])]
+  , "arrLit with two int and comma at the end" ~: do
+      doc [tkt FnKw, idt "foo", tkt Equal, tkt BracketOpen, int 42, tkt Comma, int 43, tkt Comma, tkt BracketClose]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (Call "_ cons _" [IntegerLit 42, Call "_ cons _" [IntegerLit 43, Call "empty" []]])]
   , "function alias" ~: do
       doc [ tkt FnKw, idt "key", tkt Equal, int 42
           , tkt FnKw, idt "alias", tkt Equal, idt "key"
