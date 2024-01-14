@@ -59,7 +59,6 @@ fn _ toCodePoint = builtin toCodePoint
 
 fn len _ = builtin length
 
-fn _[_] = builtin charAt
 fn _ at _ = builtin charAt
 
 fn (f) . (g) = \x = (f $ (g $ x))

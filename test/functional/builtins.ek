@@ -3,6 +3,7 @@
 //
 
 import std
+import list
 
 // CHECK: 42
 fn main = print (42 toString)
@@ -38,3 +39,5 @@ fn main = print (42 toString)
     >> print (len "love")
 // CHECK: 3
     >> print (len 666)
+// CHECK: null
+    >> print ("love" toInt)
