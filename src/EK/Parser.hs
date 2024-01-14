@@ -24,6 +24,7 @@ import Control.Monad (liftM2, liftM3)
 import Diagnostic
 import System.Environment (getEnv)
 import Control.Exception (try)
+import Data.Either (fromRight)
 
 parseDocument :: [Token] -> IO ([TotalStmt], [Diagnostic])
 parseDocument = parseDocumentAdding []
@@ -166,18 +167,16 @@ getImportedTokens stmts = do
 
 
 parseImportedPaths :: Parser Char String
-parseImportedPaths = many (parseOneIf (/= ':')) <* parseOneIf (== ':') <|> many (parseOneIf (/= ';'))
+parseImportedPaths = many (parseOneIf (/= ':')) <* optional (parseOneIf (==':'))
 
 findImportPath :: String -> IO String -> IO String
 findImportPath fileName paths = do
     paths' <- paths
-    case runParser parseImportedPaths paths' of
-        Left _ -> return ""
-        Right parsed -> do
-            res <- try $ readFile (fst parsed ++ fileName ++ ".ek") :: IO (Either IOError String)
-            case res of
-                Right content -> return content
-                Left _ -> findImportPath fileName (return $ snd parsed)
+    let parsed = fromRight  ("", "") $ runParser parseImportedPaths paths'
+    res <- try $ readFile (fst parsed ++ fileName ++ ".ek") :: IO (Either IOError String)
+    case res of
+        Right content -> return content
+        Left _ -> findImportPath fileName (return $ snd parsed)
 
 handleImportDef :: PartialStmt -> IO ([PartialStmt], [Diagnostic])
 handleImportDef (ImportDef x) = do

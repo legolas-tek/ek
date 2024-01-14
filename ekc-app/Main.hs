@@ -16,10 +16,11 @@ import Serialize
 
 import Data.Maybe (fromMaybe)
 
-import System.Environment (getArgs, setEnv)
+import System.Environment (getArgs, setEnv, lookupEnv)
 import System.Exit (exitSuccess)
 import Control.Monad (when)
 import EK.Optimizer (optimizeBytecode)
+import Data.List (intercalate)
 
 import Control.Monad (void)
 
@@ -35,16 +36,18 @@ save :: Result -> Maybe String -> IO ()
 save result Nothing = saveResult result "a.out"
 save result (Just file) = saveResult result file
 
-addImportPath :: Maybe String -> IO ()
-addImportPath Nothing = return ()
-addImportPath (Just path) = setEnv "EK_LIBRARY_PATH" path
+addImportsPath :: Maybe [String] -> IO ()
+addImportsPath Nothing = return ()
+addImportsPath (Just paths) = do
+  oldPath <- fromMaybe "" <$> lookupEnv "EK_LIBRARY_PATH"
+  setEnv "EK_LIBRARY_PATH" $ intercalate ":" $ paths ++ [oldPath]
 
 main :: IO ()
 main = do
   args' <- getArgs
   arg <- either (fail . show) return $ parseArguments args'
   let output o = writeFileOrStdOut (argOutput arg) o >> exitSuccess
-  addImportPath $ argImportPath arg
+  addImportsPath $ argImportPath arg
   content <- readFileOrStdIn $ argInput arg
   (tokens, diags) <- either (fail . show) return $ tokenizer ("stdin" `fromMaybe` argInput arg) content
   when (argOutputType arg == Just OutputTokens) $ output $ unlines $ show <$> tokens

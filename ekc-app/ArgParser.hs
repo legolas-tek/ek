@@ -26,7 +26,7 @@ data Arguments = Arguments
   , argOutput :: Maybe String
   , argOutputType :: Maybe OutputType
   , argOptimize :: Bool
-  , argImportPath :: Maybe String
+  , argImportPath :: Maybe [String]
   }
 
 instance Semigroup Arguments where
@@ -35,7 +35,7 @@ instance Semigroup Arguments where
     , argOutput = argOutput a <|> argOutput b
     , argOutputType = argOutputType a <|> argOutputType b
     , argOptimize = argOptimize a || argOptimize b
-    , argImportPath = argImportPath a <|> argImportPath b
+    , argImportPath = argImportPath a <> argImportPath b
     }
 
 instance Monoid Arguments where
@@ -78,7 +78,7 @@ withArgOutputType :: OutputType -> Arguments
 withArgOutputType t = mempty { argOutputType = Just t }
 
 withImportPath :: String -> Arguments
-withImportPath i = mempty { argImportPath = Just i }
+withImportPath i = mempty { argImportPath = Just [i] }
 
 withArgInput :: String -> Arguments
 withArgInput i = mempty { argInput = Just i }
