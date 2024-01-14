@@ -251,6 +251,22 @@ applyOp Concat (IntegerValue a) (FloatValue b)
 -- string
 applyOp Concat (StringValue a) (StringValue b)
   = Right $ StringValue $ a ++ b
+applyOp Concat (StringValue a) (IntegerValue b)
+  = Right $ StringValue $ a ++ show b
+applyOp Concat (IntegerValue a) (StringValue b)
+  = Right $ StringValue $ show a ++ b
+applyOp Add (StringValue a) (FloatValue b)
+  = Right $ StringValue $ a ++ show b
+applyOp Add (FloatValue a) (StringValue b)
+  = Right $ StringValue $ show a ++ b
+applyOp Add (StringValue a) (AtomValue b)
+  = Right $ StringValue $ a ++ b
+applyOp Add (AtomValue a) (StringValue b)
+  = Right $ StringValue $ a ++ b
+applyOp Add (StringValue a) (StructValue b vs)
+  = Right $ StringValue $ a ++ show (StructValue b vs)
+applyOp Add (StructValue a vs) (StringValue b)
+  = Right $ StringValue $ show (StructValue a vs) ++ b
 applyOp Add (StringValue a) (StringValue b)
   = Right $ StringValue $ a ++ b
 applyOp Mul (StringValue a) (IntegerValue b)
