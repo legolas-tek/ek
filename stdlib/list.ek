@@ -31,10 +31,14 @@ fn (l) take (n) =
         l head cons (l tail take (n - 1))
 
 fn (l) length =
-    if l is empty then
+    if l is string then
+       len l
+    else if l is empty then
         0
-    else
+    else if l is cons then
         1 + l tail length
+    else
+        panic ("cannot get length of non-list" ++ l show)
 
 fn (l) map (f) =
     if l is empty then
@@ -65,7 +69,7 @@ fn (l) foldr (f) initial (acc) =
 fn (l) reverse =
     l foldl (\ acc x = x cons acc) initial empty
 
-fn (l1) <> (l2) =
+fn (l1) <> (l2) precedence 6 =
     l1 foldr (\ x acc = x cons acc) initial l2
 
 fn (a)[(b)] =
@@ -76,3 +80,68 @@ fn (a)[(b)] =
             (a drop b) head
     else
         a at b
+
+fn (l) showList =
+    if l is empty then
+        "[]"
+    else
+        "[" ++ l head show ++ l tail showList'
+
+fn (l) showList' =
+    if l is empty then
+        "]"
+    else
+        ", " ++ l head show ++ l tail showList'
+
+fn (e) show =
+    if e is list then
+        e showList
+    else if e is string then
+        e showString
+    else
+        e toString
+
+fn (str) showString =
+    "\"" ++ str escape ++ "\""
+
+fn (str) escape =
+    str stringToCharList strConcatMap (_ escapeChar)
+
+fn (c) escapeChar =
+    if c == "\n" then
+        "\\n"
+    else if c == "\t" then
+        "\\t"
+    else if c == "\"" then
+        "\\\""
+    else if c == "\\" then
+        "\\\\"
+    else
+        c
+
+fn (str) stringToCharList =
+    if str == "" then
+        empty
+    else
+        str[0] cons ((1 - str) stringToCharList)
+
+fn (l) concat =
+    l foldl (_ ++ _) initial ""
+
+fn (l) strConcatMap (f) =
+    l foldl (\ acc x = acc ++ (f $ x)) initial ""
+
+struct pair {
+    fst: any,
+    snd: any
+}
+
+fn (l) partitionBy (f) =
+    pair { l filter (not _ . f), l filter f }
+
+fn (l) sortBy (f) =
+    if l is empty then []
+    else ((\ part = part fst sortBy f <> [l head] <> part snd sortBy f) $ l tail partitionBy (f $ l head))
+
+fn (l) sort =
+    l sortBy (_ < _)

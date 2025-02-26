@@ -50,7 +50,7 @@ fn clamp (val) min (min) max (max) precedence 5 = if val < min then min else if 
 fn (a) min (b) precedence 4 = if a < b then a else b
 fn (a) max (b) precedence 4 = if a > b then a else b
 
-fn _ ++ _ = builtin concat
+fn _ ++ _ precedence 6 = builtin concat
 fn _ toString = builtin toString
 fn _ toInt = builtin toInt
 fn _ toFloat = builtin toFloat
