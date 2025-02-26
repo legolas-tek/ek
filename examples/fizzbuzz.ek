@@ -1,0 +1,18 @@
+import std
+
+fn repeat (f) from (a) to (b)
+    = if a > b then
+        void
+      else
+        (f $ a) >> repeat f from (a + 1) to (b)
+
+fn fizzbuzz (n)
+    = if n % 3 == 0 && n % 5 == 0
+        then "FizzBuzz"
+      else if n % 3 == 0
+        then "Fizz"
+      else if n % 5 == 0
+        then "Buzz"
+      else n toString
+
+fn main = repeat print _ . fizzbuzz _ from 0 to 100

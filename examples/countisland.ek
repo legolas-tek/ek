@@ -1,0 +1,72 @@
+//
+// EPITECH PROJECT, 2024
+// Count Island
+// File description:
+// A Count Island implementation in EK
+//
+// To run this program, use:
+// ekc countisland.ek -o countisland
+// ./countisland < countisland.input
+//
+
+import std
+import list
+
+struct state {
+    world: list, // list of list of char
+    current: int, // current island number
+}
+
+fn (state) incIsland : state
+   = state { state world, state current + 1 }
+
+fn (w) with [(x)][(y)] to (value)
+   = w with [x] to (w[x] with [y] to value)
+
+fn (l) with [(x)] to (value)
+   = l take x <> [value] <> l drop (x + 1)
+
+fn (state) setting (x) (y) : state
+   = state { state world with [x][y] to (state current)
+           , state current
+           }
+
+fn (state) propagate (x) (y) : state
+   = state setting x y
+     propagateIfPossible (x - 1) y
+     propagateIfPossible (x + 1) y
+     propagateIfPossible x (y - 1)
+     propagateIfPossible x (y + 1)
+
+fn (state) propagateIfPossible (x) (y) : state
+   = if x < 0 || y < 0 || x >= state world length || y >= state world[x] length
+     then state
+     else if state world[x][y] == "X"
+          then state propagate x y
+          else state
+
+fn (state) countIslandsFrom (x) : state
+   = if x >= state world length
+     then state
+     else state propagateLine x 0 countIslandsFrom (x + 1)
+
+fn (state) propagateLine (x) (y) : state
+   = if y >= state world[x] length
+     then state
+     else (if state world[x][y] == "X" then state propagate x y incIsland else state)
+          propagateLine x (y + 1)
+
+fn (w) countIslands : list
+   = state { w, 0 } countIslandsFrom 0 world
+
+fn readWorld : list
+   = readWorldN readLine toInt
+
+fn readWorldN (lineCount) : list
+    = if lineCount == 0
+      then []
+      else readLine stringToCharList cons readWorldN (lineCount - 1)
+
+fn (s) dropFirst = 1 - s
+
+fn main = print readWorld countIslands map (\ line = "\n" ++ line map (_ toString) concat) concat dropFirst
