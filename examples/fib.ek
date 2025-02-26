@@ -1,0 +1,18 @@
+//
+// To run: ekc ./fib.ek && ./a.out
+// Then, type a number and press enter to see the number at the given index
+// in the fibonacci sequence. It is not memoized, so it will be slow for large
+// numbers.
+// Press Ctrl-C or Ctrl-D to exit.
+//
+
+import std
+
+fn fib (n) =
+    if n < 2 then
+        1
+    else
+        fib (n - 1) + fib (n - 2)
+
+
+fn main = loop print fib readLine toInt

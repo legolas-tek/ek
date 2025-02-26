@@ -1,0 +1,9 @@
+//
+// To run: ekc ./cat.ek && ./a.out
+// It behaves like the cat utility with no arguments, reading from stdin and
+// writing to stdout. It is line based.
+//
+
+import std
+
+fn main = loop print readLine
