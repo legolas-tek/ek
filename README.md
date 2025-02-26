@@ -19,13 +19,13 @@ After installing the necessary dependencies, in order to build the project, use 
 - Clone the project:
 
 ```sh
-git clone git@github.com:EpitechPromo2026/B-FUN-500-PAR-5-2-glados-jeremy.elalouf.git
+git clone git@github.com:legolas-tek/ek.git
 ```
 
 - Go to the project directory:
 
 ```sh
-cd B-FUN-500-PAR-5-2-glados-jeremy.elalouf.git
+cd ek
 ```
 
 - Build using Makefile:
@@ -60,7 +60,7 @@ glados> twice 3
 6
 ```
 
-For more information about the language, check out [Getting started with EK](https://github.com/EpitechPromo2026/B-FUN-500-PAR-5-2-glados-jeremy.elalouf/wiki/Getting-Started-with-EK).
+For more information about the language, check out [Getting started with EK](https://github.com/legolas-tek/ek/wiki/Getting-Started-with-EK).
 
 ## Editor Support
 
