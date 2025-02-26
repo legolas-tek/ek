@@ -1,11 +1,5 @@
 import std
 
-fn repeat (f) from (a) to (b)
-    = if a > b then
-        void
-      else
-        (f $ a) >> repeat f from (a + 1) to (b)
-
 fn fizzbuzz (n)
     = if n % 3 == 0 && n % 5 == 0
         then "FizzBuzz"

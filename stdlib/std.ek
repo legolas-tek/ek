@@ -62,3 +62,15 @@ fn len _ = builtin length
 fn _ at _ = builtin charAt
 
 fn (f) . (g) = \x = (f $ (g $ x))
+
+// Loop utilities
+
+/// Loop action forever
+fn loop (lazy action) = action >> loop action
+
+/// Repeat function `f`, called with values from `a` to `b` (inclusive)
+fn repeat (f) from (a) to (b)
+    = if a > b then
+        void
+      else
+        (f $ a) >> repeat f from (a + 1) to (b)

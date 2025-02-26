@@ -60,7 +60,7 @@ glados> twice 3
 6
 ```
 
-For more information about the language, check out [Getting started with EK](https://github.com/legolas-tek/ek/wiki/Getting-Started-with-EK).
+For more information about the language, check out [Getting started with EK](https://github.com/legolas-tek/ek/wiki/Getting-Started-with-EK). Example programs can be found in the [examples](examples) directory.
 
 ## Editor Support
 
