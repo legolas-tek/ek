@@ -17,13 +17,13 @@ jobs:
       - name: "Install needed dependencies"
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgmp-dev llvm-12-tools
+          sudo apt-get install -y libgmp-dev llvm-15-tools
           pip install lit
-          echo "/usr/lib/llvm-12/bin" >> $GITHUB_PATH
+          echo "/usr/lib/llvm-15/bin" >> $GITHUB_PATH
 
       - uses: haskell-actions/setup@v2
         with:
-            ghc-version: '9.4.7'
+            ghc-version: '9.6.7'
             enable-stack: true
             stack-no-global: true
             stack-version: 'latest'
