@@ -12,7 +12,7 @@ fn main = print (42 toString)
 // ERROR: hello
     >> eprint "hello"
 // CHECK: bahencore
-    >> print "bah" ++ "encore"
+    >> print ("bah" ++ "encore")
 // CHECK: 42
     >> print ("42" toInt)
 // CHECK: lindo
