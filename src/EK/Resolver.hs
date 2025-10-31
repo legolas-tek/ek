@@ -18,6 +18,7 @@ import EK.Types
 import qualified EK.Ast as Ast
 import Data.Maybe (fromMaybe)
 import Control.Monad.State
+import Control.Monad (when)
 import SourcePos
 
 resolveTypes :: [TotalStmt] -> ([TypedStmt], [Diagnostic])
