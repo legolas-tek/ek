@@ -22,7 +22,8 @@ module EK.Ast
   , FuncPatternItem
   , FuncPatternItem'(..)
   , TFuncPatternItem
-  , Prec
+  , Assoc(..)
+  , Prec(..)
   , PartialStmt
   , TotalStmt
   , TypedStmt
@@ -30,6 +31,7 @@ module EK.Ast
   , patternLazinesses
   , defaultPrec
   , precedence
+  , lprecedence
   ) where
 
 import Data.List (intercalate)
@@ -89,7 +91,12 @@ type PartialStmt = Stmt [Token] Type
 type TotalStmt = Stmt Expr Type
 type TypedStmt = Stmt (Expr' EK.Types.Type) EK.Types.Type
 
-type Prec = Int
+data Assoc = LeftAssoc | RightAssoc | NonAssoc deriving (Eq)
+
+data Prec = Prec Int Assoc deriving (Eq)
+
+instance Ord Prec where
+  compare (Prec p1 _) (Prec p2 _) = compare p1 p2
 
 data FuncPattern' typeval = FuncPattern
   { funcPatternItems :: [FuncPatternItem' typeval]
@@ -123,7 +130,7 @@ patternLazinesses = concatMap patternLazyness . funcPatternItems
         patternLazyness PlaceholderPattern = [False]
 
 defaultPrec :: Prec
-defaultPrec = 9 -- same as haskell
+defaultPrec = Prec 9 LeftAssoc -- same as haskell
 
 instance IsString FunctionName where
   fromString str = FunctionName (unshow <$> words str) defaultPrec
@@ -134,8 +141,19 @@ instance Show FunctionName where
   show (FunctionName symbols prec) = unwords (show <$> symbols)
     ++ (if prec /= defaultPrec then " precedence " ++ show prec else "")
 
+lprecedence :: FunctionName -> Int -> FunctionName
+lprecedence (FunctionName symbols _) p = FunctionName symbols (Prec p LeftAssoc)
+
 precedence :: FunctionName -> Prec -> FunctionName
 precedence (FunctionName symbols _) = FunctionName symbols
+
+instance Show Prec where
+  show (Prec p assoc) = show p ++ show assoc
+
+instance Show Assoc where
+  show LeftAssoc = "l"
+  show RightAssoc = "r"
+  show NonAssoc = "n"
 
 instance Show Symbol where
   show (Symbol s) = s
