@@ -41,7 +41,7 @@ pat :: [FuncPatternItem] -> FuncPattern
 pat a = FuncPattern a Nothing Nothing
 
 cons :: FunctionName
-cons = "_ cons _" `precedence` Prec 8 RightAssoc
+cons = "_ cons _" `precedence` Prec 5 RightAssoc
 
 tests :: Test
 tests = test
@@ -92,7 +92,7 @@ tests = test
         @?= Right [FuncDef (pat [SymbolPattern "key"]) (IntegerLit 42)]
   , "Empty StructLit" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, tkt CurlyClose]
-        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit (TypeName"bar") [])]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit (TypeName "bar") [])]
   , "one int in StructLit" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, idt "bar", tkt CurlyOpen, int 42, tkt CurlyClose]
         @?= Right [FuncDef (pat [SymbolPattern "foo"]) (StructLit (TypeName "bar") [IntegerLit 42])]
@@ -407,8 +407,8 @@ tests = test
           ]
         @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "-", PlaceholderPattern] Nothing (Just (Prec 6 LeftAssoc)))
                   , FuncDef (pat [SymbolPattern "test"])
-                    (Call ("_ - _" `precedence` (Prec 6 LeftAssoc))
-                     [ Call ("_ - _" `precedence` (Prec 6 LeftAssoc))
+                    (Call ("_ - _" `precedence` Prec 6 LeftAssoc)
+                     [ Call ("_ - _" `precedence` Prec 6 LeftAssoc)
                        [ IntegerLit 10, IntegerLit 3 ]
                      , IntegerLit 2
                      ]
@@ -420,8 +420,8 @@ tests = test
           ]
         @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "-", PlaceholderPattern] Nothing (Just (Prec 6 LeftAssoc)))
                   , FuncDef (pat [SymbolPattern "test"])
-                    (Call ("_ - _" `precedence` (Prec 6 LeftAssoc))
-                     [ Call ("_ - _" `precedence` (Prec 6 LeftAssoc))
+                    (Call ("_ - _" `precedence` Prec 6 LeftAssoc)
+                     [ Call ("_ - _" `precedence` Prec 6 LeftAssoc)
                        [ IntegerLit 10, IntegerLit 3 ]
                      , IntegerLit 2
                      ]
@@ -433,9 +433,9 @@ tests = test
           ]
         @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "^", PlaceholderPattern] Nothing (Just (Prec 8 RightAssoc)))
                   , FuncDef (pat [SymbolPattern "test"])
-                    (Call ("_ ^ _" `precedence` (Prec 8 RightAssoc))
+                    (Call ("_ ^ _" `precedence` Prec 8 RightAssoc)
                      [ IntegerLit 2
-                     , Call ("_ ^ _" `precedence` (Prec 8 RightAssoc))
+                     , Call ("_ ^ _" `precedence` Prec 8 RightAssoc)
                        [ IntegerLit 3, IntegerLit 4 ]
                      ]
                     )
@@ -446,11 +446,11 @@ tests = test
           ]
         @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "^", PlaceholderPattern] Nothing (Just (Prec 8 RightAssoc)))
                   , FuncDef (pat [SymbolPattern "test"])
-                    (Call ("_ ^ _" `precedence` (Prec 8 RightAssoc))
+                    (Call ("_ ^ _" `precedence` Prec 8 RightAssoc)
                      [ IntegerLit 2
-                     , Call ("_ ^ _" `precedence` (Prec 8 RightAssoc))
+                     , Call ("_ ^ _" `precedence` Prec 8 RightAssoc)
                        [ IntegerLit 3
-                       , Call ("_ ^ _" `precedence` (Prec 8 RightAssoc))
+                       , Call ("_ ^ _" `precedence` Prec 8 RightAssoc)
                          [ IntegerLit 4, IntegerLit 5 ]
                        ]
                      ]
@@ -467,7 +467,7 @@ tests = test
           ]
         @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "==", PlaceholderPattern] Nothing (Just (Prec 4 NonAssoc)))
                   , FuncDef (pat [SymbolPattern "test"])
-                    (Call ("_ == _" `precedence` (Prec 4 NonAssoc))
+                    (Call ("_ == _" `precedence` Prec 4 NonAssoc)
                      [ IntegerLit 1, IntegerLit 2 ]
                     )
                   ]
@@ -479,10 +479,10 @@ tests = test
         @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "=", PlaceholderPattern] Nothing (Just (Prec 1 RightAssoc)))
                   , ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern] Nothing (Just (Prec 6 LeftAssoc)))
                   , FuncDef (pat [SymbolPattern "test"])
-                    (Call ("_ = _" `precedence` (Prec 1 RightAssoc))
+                    (Call ("_ = _" `precedence` Prec 1 RightAssoc)
                      [ IntegerLit 1
-                     , Call ("_ = _" `precedence` (Prec 1 RightAssoc))
-                       [ Call ("_ + _" `precedence` (Prec 6 LeftAssoc))
+                     , Call ("_ = _" `precedence` Prec 1 RightAssoc)
+                       [ Call ("_ + _" `precedence` Prec 6 LeftAssoc)
                          [ IntegerLit 2, IntegerLit 3 ]
                        , IntegerLit 4
                        ]

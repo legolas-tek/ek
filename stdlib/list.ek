@@ -16,7 +16,7 @@ struct cons {
 
 type list = cons | empty
 
-fn (a) cons (b) precedence 8r = cons { a, b }
+fn (a) cons (b) precedence 5r = cons { a, b }
 
 fn (l) drop (n) =
     if l is empty || n == 0 then
@@ -69,7 +69,7 @@ fn (l) foldr (f) initial (acc) =
 fn (l) reverse =
     l foldl (\ acc x = x cons acc) initial empty
 
-fn (l1) <> (l2) precedence 6 =
+fn (l1) <> (l2) precedence 5r =
     l1 foldr (\ x acc = x cons acc) initial l2
 
 fn (a)[(b)] =

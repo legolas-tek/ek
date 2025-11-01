@@ -161,7 +161,7 @@ structExpr :: [FuncItem] -> Parser Token Expr
 structExpr funcItems = StructLit <$> (TypeName <$> identifier <* parseTokenType CurlyOpen) <*> (structExprContent funcItems <* parseTokenType CurlyClose)
 
 arrLit :: [Expr] -> Expr
-arrLit = foldr (\x acc -> Call ("_ cons _" `precedence` Prec 8 RightAssoc) [x, acc]) (Call "empty" [])
+arrLit = foldr (\x acc -> Call ("_ cons _" `precedence` Prec 5 RightAssoc) [x, acc]) (Call "empty" [])
 
 arrExpr :: [FuncItem] -> Parser Token Expr
 arrExpr funcItems = arrLit <$> (parseTokenType BracketOpen *> structExprContent funcItems <* parseTokenType BracketClose)
