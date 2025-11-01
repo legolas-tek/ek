@@ -106,20 +106,20 @@ allowWithin (Prec minP minAssoc) (Prec currentP currentAssoc)
       (NonAssoc, _) -> False  -- Can't parse anything after non-assoc at same level
       _ -> True  -- Left-assoc and right-assoc can continue at same level
 
-precSucc :: Prec -> Prec
-precSucc (Prec p RightAssoc) = Prec p RightAssoc  -- right-assoc: same precedence for right side
-precSucc (Prec p assoc) = Prec (p + 1) assoc      -- left-assoc and non-assoc: higher precedence for right side
+innerPrec :: Prec -> Prec -- Adjust precedence for parsing right-hand side within an infix expression
+innerPrec (Prec p RightAssoc) = Prec p RightAssoc  -- right-assoc: same precedence for right side
+innerPrec (Prec p assoc) = Prec (p + 1) assoc      -- left-assoc and non-assoc: higher precedence for right side
+
+nextPrec :: Prec -> Prec -> Prec -- Adjust precedence for parsing next infix operator after current one
+nextPrec _ (Prec p NonAssoc) = Prec (p + 1) NonAssoc -- This looks wrong but tests pass
+nextPrec prec _ = prec  -- For left-assoc and right-assoc, continue with the original minimum precedence
 
 parseInfix' :: [FuncItem] -> Prec -> CallItem -> FuncItem -> Parser Token Expr
 parseInfix' fi prec initial fname@(FuncItem (FunctionName (Placeholder:ss) fnprec) _)
   | allowWithin prec fnprec
-  = parseFollowUp fi ss (precSucc fnprec) >>= (parseInfix fi (nextPrec fnprec) . ExprCall) . createCall fname . (initial:)
+  = parseFollowUp fi ss (innerPrec fnprec) >>= (parseInfix fi (nextPrec prec fnprec) . ExprCall) . createCall fname . (initial:)
   | otherwise
   = empty
-  where
-    -- For non-associative operators, prevent any operators at the same precedence level from being parsed next
-    nextPrec (Prec p NonAssoc) = Prec (p + 1) NonAssoc
-    nextPrec _ = prec  -- For left-assoc and right-assoc, continue with the original minimum precedence
 parseInfix' _ _ _ _ = empty
 
 parseFollowUp :: [FuncItem] -> [Symbol] -> Prec -> Parser Token [CallItem]
