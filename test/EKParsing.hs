@@ -40,6 +40,9 @@ doc = parseSimpleDocument
 pat :: [FuncPatternItem] -> FuncPattern
 pat a = FuncPattern a Nothing Nothing
 
+cons :: FunctionName
+cons = "_ cons _" `precedence` Prec 8 RightAssoc
+
 tests :: Test
 tests = test
   [ "atom" ~: do
@@ -113,13 +116,13 @@ tests = test
         @?= Right [FuncDef (pat [SymbolPattern "foo"]) (Call "empty" [])]
   , "arrLit with one int" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, tkt BracketOpen, int 42, tkt BracketClose]
-        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (Call "_ cons _" [IntegerLit 42, Call "empty" []])]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (Call cons [IntegerLit 42, Call "empty" []])]
   , "arrLit with two int" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, tkt BracketOpen, int 42, tkt Comma, int 43, tkt BracketClose]
-        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (Call "_ cons _" [IntegerLit 42, Call "_ cons _" [IntegerLit 43, Call "empty" []]])]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (Call cons [IntegerLit 42, Call cons [IntegerLit 43, Call "empty" []]])]
   , "arrLit with two int and comma at the end" ~: do
       doc [tkt FnKw, idt "foo", tkt Equal, tkt BracketOpen, int 42, tkt Comma, int 43, tkt Comma, tkt BracketClose]
-        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (Call "_ cons _" [IntegerLit 42, Call "_ cons _" [IntegerLit 43, Call "empty" []]])]
+        @?= Right [FuncDef (pat [SymbolPattern "foo"]) (Call cons [IntegerLit 42, Call cons [IntegerLit 43, Call "empty" []]])]
   , "function alias" ~: do
       doc [ tkt FnKw, idt "key", tkt Equal, int 42
           , tkt FnKw, idt "alias", tkt Equal, idt "key"
@@ -255,8 +258,8 @@ tests = test
           , tkt ExternKw, tkt FnKw, tkt UnderScore, idt "+", tkt UnderScore, tkt PrecedenceKw, int 6
           , tkt FnKw, idt "test", tkt Equal, int 1, idt "+", int 2, idt "*", int 3, idt "+", int 4
           ]
-        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "*", PlaceholderPattern] Nothing (Just 7))
-                  , ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern] Nothing (Just 6))
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "*", PlaceholderPattern] Nothing (Just (Prec 7 LeftAssoc)))
+                  , ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern] Nothing (Just (Prec 6 LeftAssoc)))
                   , FuncDef (pat [SymbolPattern "test"])
                     (Call ("_ + _" `precedence` 6)
                      [ Call ("_ + _" `precedence` 6)
@@ -273,8 +276,8 @@ tests = test
           , tkt ExternKw, tkt FnKw, tkt UnderScore, idt "+", tkt UnderScore, tkt PrecedenceKw, int 6
           , tkt FnKw, idt "test", tkt Equal, int 1, idt "+", int 2, idt "*", tkt ParenOpen, int 3, idt "+", int 4, tkt ParenClose
           ]
-        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "*", PlaceholderPattern] Nothing (Just 7))
-                  , ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern] Nothing (Just 6))
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "*", PlaceholderPattern] Nothing (Just (Prec 7 LeftAssoc)))
+                  , ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern] Nothing (Just (Prec 6 LeftAssoc)))
                   , FuncDef (pat [SymbolPattern "test"])
                     (Call ("_ + _" `precedence` 6)
                      [ IntegerLit 1
@@ -293,7 +296,7 @@ tests = test
           , tkt ExternKw, tkt FnKw, idt "not", tkt UnderScore
           , tkt FnKw, idt "test", tkt Equal, idt "not", int 1, idt "and", int 2
           ]
-        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "and", PlaceholderPattern] Nothing (Just 3))
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "and", PlaceholderPattern] Nothing (Just (Prec 3 LeftAssoc)))
                   , ExternDef (pat [SymbolPattern "not", PlaceholderPattern])
                   , FuncDef (pat [SymbolPattern "test"])
                     (Call ("_ and _" `precedence` 3)
@@ -307,8 +310,8 @@ tests = test
           , tkt ExternKw, tkt FnKw, idt "not", tkt UnderScore, tkt PrecedenceKw, int 2
           , tkt FnKw, idt "test", tkt Equal, idt "not", int 1, idt "and", int 2
           ]
-        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "and", PlaceholderPattern] Nothing (Just 3))
-                  , ExternDef (FuncPattern [SymbolPattern "not", PlaceholderPattern] Nothing (Just 2))
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "and", PlaceholderPattern] Nothing (Just (Prec 3 LeftAssoc)))
+                  , ExternDef (FuncPattern [SymbolPattern "not", PlaceholderPattern] Nothing (Just (Prec 2 LeftAssoc)))
                   , FuncDef (pat [SymbolPattern "test"])
                     (Call ("not _" `precedence` 2)
                      [ Call ("_ and _" `precedence` 3)
@@ -321,8 +324,8 @@ tests = test
           , tkt ExternKw, tkt FnKw, idt "if", tkt UnderScore, idt "then", tkt UnderScore, idt "else", tkt UnderScore, tkt PrecedenceKw, int 1
           , tkt FnKw, idt "test", tkt Equal, idt "if", int 1, idt "eq", int 2, idt "then", int 3, idt "else", int 4
           ]
-        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "eq", PlaceholderPattern] Nothing (Just 4))
-                  , ExternDef (FuncPattern [SymbolPattern "if", PlaceholderPattern, SymbolPattern "then", PlaceholderPattern, SymbolPattern "else", PlaceholderPattern] Nothing (Just 1))
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "eq", PlaceholderPattern] Nothing (Just (Prec 4 LeftAssoc)))
+                  , ExternDef (FuncPattern [SymbolPattern "if", PlaceholderPattern, SymbolPattern "then", PlaceholderPattern, SymbolPattern "else", PlaceholderPattern] Nothing (Just (Prec 1 LeftAssoc)))
                   , FuncDef (pat [SymbolPattern "test"])
                     (Call ("if _ then _ else _" `precedence` 1)
                      [ Call ("_ eq _" `precedence` 4)
@@ -397,4 +400,98 @@ tests = test
         @?= Right [ FuncDef (pat [SymbolPattern "k"])
                     (TypeCheck (IntegerLit 42) (TypeName "int"))
                   ]
+  -- Associativity tests - verify left-assoc, right-assoc, and non-assoc work correctly
+  , "left-assoc explicit: a - b - c should parse as (a - b) - c" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "-", tkt UnderScore, tkt PrecedenceKw, int 6, idt "l"
+          , tkt FnKw, idt "test", tkt Equal, int 10, idt "-", int 3, idt "-", int 2
+          ]
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "-", PlaceholderPattern] Nothing (Just (Prec 6 LeftAssoc)))
+                  , FuncDef (pat [SymbolPattern "test"])
+                    (Call ("_ - _" `precedence` (Prec 6 LeftAssoc))
+                     [ Call ("_ - _" `precedence` (Prec 6 LeftAssoc))
+                       [ IntegerLit 10, IntegerLit 3 ]
+                     , IntegerLit 2
+                     ]
+                    )
+                  ]
+  , "left-assoc implicit (default): a - b - c should parse as (a - b) - c" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "-", tkt UnderScore, tkt PrecedenceKw, int 6
+          , tkt FnKw, idt "test", tkt Equal, int 10, idt "-", int 3, idt "-", int 2
+          ]
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "-", PlaceholderPattern] Nothing (Just (Prec 6 LeftAssoc)))
+                  , FuncDef (pat [SymbolPattern "test"])
+                    (Call ("_ - _" `precedence` (Prec 6 LeftAssoc))
+                     [ Call ("_ - _" `precedence` (Prec 6 LeftAssoc))
+                       [ IntegerLit 10, IntegerLit 3 ]
+                     , IntegerLit 2
+                     ]
+                    )
+                  ]
+  , "right-assoc: a ^ b ^ c should parse as a ^ (b ^ c)" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "^", tkt UnderScore, tkt PrecedenceKw, int 8, idt "r"
+          , tkt FnKw, idt "test", tkt Equal, int 2, idt "^", int 3, idt "^", int 4
+          ]
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "^", PlaceholderPattern] Nothing (Just (Prec 8 RightAssoc)))
+                  , FuncDef (pat [SymbolPattern "test"])
+                    (Call ("_ ^ _" `precedence` (Prec 8 RightAssoc))
+                     [ IntegerLit 2
+                     , Call ("_ ^ _" `precedence` (Prec 8 RightAssoc))
+                       [ IntegerLit 3, IntegerLit 4 ]
+                     ]
+                    )
+                  ]
+  , "right-assoc with four operators: a ^ b ^ c ^ d should parse as a ^ (b ^ (c ^ d))" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "^", tkt UnderScore, tkt PrecedenceKw, int 8, idt "r"
+          , tkt FnKw, idt "test", tkt Equal, int 2, idt "^", int 3, idt "^", int 4, idt "^", int 5
+          ]
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "^", PlaceholderPattern] Nothing (Just (Prec 8 RightAssoc)))
+                  , FuncDef (pat [SymbolPattern "test"])
+                    (Call ("_ ^ _" `precedence` (Prec 8 RightAssoc))
+                     [ IntegerLit 2
+                     , Call ("_ ^ _" `precedence` (Prec 8 RightAssoc))
+                       [ IntegerLit 3
+                       , Call ("_ ^ _" `precedence` (Prec 8 RightAssoc))
+                         [ IntegerLit 4, IntegerLit 5 ]
+                       ]
+                     ]
+                    )
+                  ]
+  , "non-assoc: a == b == c should fail to parse" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "==", tkt UnderScore, tkt PrecedenceKw, int 4, idt "n"
+          , tkt FnKw, idt "test", tkt Equal, int 1, idt "==", int 2, idt "==", int 3
+          ]
+        @?= Left (Diagnostic Error "Unexpected trailing token" (SourcePos "" 1 1))
+  , "non-assoc: a == b (single use) should parse correctly" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "==", tkt UnderScore, tkt PrecedenceKw, int 4, idt "n"
+          , tkt FnKw, idt "test", tkt Equal, int 1, idt "==", int 2
+          ]
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "==", PlaceholderPattern] Nothing (Just (Prec 4 NonAssoc)))
+                  , FuncDef (pat [SymbolPattern "test"])
+                    (Call ("_ == _" `precedence` (Prec 4 NonAssoc))
+                     [ IntegerLit 1, IntegerLit 2 ]
+                    )
+                  ]
+  , "mixed associativity: right-assoc = with left-assoc +" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "=", tkt UnderScore, tkt PrecedenceKw, int 1, idt "r"
+          , tkt ExternKw, tkt FnKw, tkt UnderScore, idt "+", tkt UnderScore, tkt PrecedenceKw, int 6, idt "l"
+          , tkt FnKw, idt "test", tkt Equal, int 1, idt "=", int 2, idt "+", int 3, idt "=", int 4
+          ]
+        @?= Right [ ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "=", PlaceholderPattern] Nothing (Just (Prec 1 RightAssoc)))
+                  , ExternDef (FuncPattern [PlaceholderPattern, SymbolPattern "+", PlaceholderPattern] Nothing (Just (Prec 6 LeftAssoc)))
+                  , FuncDef (pat [SymbolPattern "test"])
+                    (Call ("_ = _" `precedence` (Prec 1 RightAssoc))
+                     [ IntegerLit 1
+                     , Call ("_ = _" `precedence` (Prec 1 RightAssoc))
+                       [ Call ("_ + _" `precedence` (Prec 6 LeftAssoc))
+                         [ IntegerLit 2, IntegerLit 3 ]
+                       , IntegerLit 4
+                       ]
+                     ]
+                    )
+                  ]
+  -- Error handling tests
+  , "invalid associativity specifier 'x' should produce error" ~: do
+      doc [ tkt ExternKw, tkt FnKw, tkt UnderScore, idt "+", tkt UnderScore, tkt PrecedenceKw, int 6, idt "x"
+          ]
+        @?= Left (Diagnostic Error "Unexpected trailing token" (SourcePos "" 1 1))
   ]

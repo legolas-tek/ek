@@ -16,7 +16,7 @@ struct cons {
 
 type list = cons | empty
 
-fn (a) cons (b) = cons { a, b }
+fn (a) cons (b) precedence 8r = cons { a, b }
 
 fn (l) drop (n) =
     if l is empty || n == 0 then
