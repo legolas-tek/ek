@@ -114,7 +114,16 @@ argumentPatternItem = do
   return $ ArgPattern (isJust lazy) name t
 
 precedenceClause :: Parser Token Prec
-precedenceClause = parseTokenType PrecedenceKw >> fromInteger <$> intLiteral
+precedenceClause = do
+  parseTokenType PrecedenceKw
+  prec <- intLiteral
+  assoc <- optional textIdentifier
+  case assoc of
+    Nothing  -> return $ Prec (fromInteger prec) LeftAssoc  -- default to left-associative
+    Just "l" -> return $ Prec (fromInteger prec) LeftAssoc
+    Just "r" -> return $ Prec (fromInteger prec) RightAssoc
+    Just "n" -> return $ Prec (fromInteger prec) NonAssoc
+    Just _ -> fail "Invalid associativity specifier"
 
 -- Import Handling
 

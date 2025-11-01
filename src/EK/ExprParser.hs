@@ -34,7 +34,7 @@ data FuncItem = FuncItem
   } deriving (Eq, Show)
 
 lowestPrec :: Prec
-lowestPrec = 0
+lowestPrec = Prec 0 LeftAssoc
 
 primaryPrec :: Prec
 primaryPrec = defaultPrec
@@ -96,12 +96,30 @@ parseInfix fi prec initial = typeCheck fi prec initial <|> getAlt (foldMap (Alt 
   where noInfix (ExprCall i) = return i
         noInfix PlaceholderCall = fail "Invalid placeholder"
 
+allowWithin :: Prec -> Prec -> Bool
+allowWithin (Prec minP minAssoc) (Prec currentP currentAssoc)
+  | currentP > minP = True  -- Higher precedence always allowed
+  | currentP < minP = False -- Lower precedence never allowed
+  | otherwise = case (minAssoc, currentAssoc) of  -- Same precedence level
+      (NonAssoc, NonAssoc) -> False  -- Non-assoc operators can't chain with themselves
+      (_, NonAssoc) -> False  -- Can't parse non-assoc after something at same level
+      (NonAssoc, _) -> False  -- Can't parse anything after non-assoc at same level
+      _ -> True  -- Left-assoc and right-assoc can continue at same level
+
+precSucc :: Prec -> Prec
+precSucc (Prec p RightAssoc) = Prec p RightAssoc  -- right-assoc: same precedence for right side
+precSucc (Prec p assoc) = Prec (p + 1) assoc      -- left-assoc and non-assoc: higher precedence for right side
+
 parseInfix' :: [FuncItem] -> Prec -> CallItem -> FuncItem -> Parser Token Expr
 parseInfix' fi prec initial fname@(FuncItem (FunctionName (Placeholder:ss) fnprec) _)
-  | prec <= fnprec
-  = parseFollowUp fi ss (succ fnprec) >>= (parseInfix fi prec . ExprCall) . createCall fname . (initial:)
+  | allowWithin prec fnprec
+  = parseFollowUp fi ss (precSucc fnprec) >>= (parseInfix fi (nextPrec fnprec) . ExprCall) . createCall fname . (initial:)
   | otherwise
   = empty
+  where
+    -- For non-associative operators, prevent any operators at the same precedence level from being parsed next
+    nextPrec (Prec p NonAssoc) = Prec (p + 1) NonAssoc
+    nextPrec _ = prec  -- For left-assoc and right-assoc, continue with the original minimum precedence
 parseInfix' _ _ _ _ = empty
 
 parseFollowUp :: [FuncItem] -> [Symbol] -> Prec -> Parser Token [CallItem]
@@ -143,7 +161,7 @@ structExpr :: [FuncItem] -> Parser Token Expr
 structExpr funcItems = StructLit <$> (TypeName <$> identifier <* parseTokenType CurlyOpen) <*> (structExprContent funcItems <* parseTokenType CurlyClose)
 
 arrLit :: [Expr] -> Expr
-arrLit = foldr (\x acc -> Call "_ cons _" [x, acc]) (Call "empty" [])
+arrLit = foldr (\x acc -> Call ("_ cons _" `precedence` Prec 8 RightAssoc) [x, acc]) (Call "empty" [])
 
 arrExpr :: [FuncItem] -> Parser Token Expr
 arrExpr funcItems = arrLit <$> (parseTokenType BracketOpen *> structExprContent funcItems <* parseTokenType BracketClose)

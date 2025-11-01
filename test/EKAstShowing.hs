@@ -41,11 +41,11 @@ tests = test
       show' (FuncDef (FuncPattern [SymbolPattern "foo"] (Just (TypeName "bar")) Nothing) (IntegerLit 42)) @?= "fn foo : bar = 42"
       show' (FuncDef (FuncPattern [SymbolPattern "foo", SymbolPattern "bar"] Nothing Nothing) (IntegerLit 42)) @?= "fn foo bar = 42"
       show' (FuncDef (FuncPattern [ArgPattern False "a" Nothing, SymbolPattern "+", ArgPattern False "b" Nothing] Nothing Nothing) (IntegerLit 42)) @?= "fn (a) + (b) = 42"
-      show' (FuncDef (FuncPattern [ArgPattern False "a" Nothing, SymbolPattern "+", ArgPattern False "b" Nothing] Nothing (Just 6)) (IntegerLit 42)) @?= "fn (a) + (b) precedence 6 = 42"
-      show' (FuncDef (FuncPattern [ArgPattern False "a" Nothing, SymbolPattern "+", ArgPattern False "b" Nothing] (Just $ TypeName "int") (Just 6)) (IntegerLit 42)) @?= "fn (a) + (b) : int precedence 6 = 42"
+      show' (FuncDef (FuncPattern [ArgPattern False "a" Nothing, SymbolPattern "+", ArgPattern False "b" Nothing] Nothing (Just (Prec 6 LeftAssoc))) (IntegerLit 42)) @?= "fn (a) + (b) precedence 6l = 42"
+      show' (FuncDef (FuncPattern [ArgPattern False "a" Nothing, SymbolPattern "+", ArgPattern False "b" Nothing] (Just $ TypeName "int") (Just (Prec 6 LeftAssoc))) (IntegerLit 42)) @?= "fn (a) + (b) : int precedence 6l = 42"
       show' (FuncDef (FuncPattern [ArgPattern True "a" Nothing, SymbolPattern "+", ArgPattern True "b" Nothing] Nothing Nothing) (IntegerLit 42)) @?= "fn (lazy a) + (lazy b) = 42"
-      show' (FuncDef (FuncPattern [ArgPattern True "a" Nothing, SymbolPattern "+", ArgPattern True "b" Nothing] Nothing (Just 6)) (IntegerLit 42)) @?= "fn (lazy a) + (lazy b) precedence 6 = 42"
-      show' (FuncDef (FuncPattern [ArgPattern True "a" Nothing, SymbolPattern "+", ArgPattern True "b" Nothing] (Just $ TypeName "int") (Just 6)) (IntegerLit 42)) @?= "fn (lazy a) + (lazy b) : int precedence 6 = 42"
+      show' (FuncDef (FuncPattern [ArgPattern True "a" Nothing, SymbolPattern "+", ArgPattern True "b" Nothing] Nothing (Just (Prec 6 LeftAssoc))) (IntegerLit 42)) @?= "fn (lazy a) + (lazy b) precedence 6l = 42"
+      show' (FuncDef (FuncPattern [ArgPattern True "a" Nothing, SymbolPattern "+", ArgPattern True "b" Nothing] (Just $ TypeName "int") (Just 6)) (IntegerLit 42)) @?= "fn (lazy a) + (lazy b) : int precedence 6l = 42"
   , "extern def" ~: do
       show' (ExternDef (FuncPattern [SymbolPattern "exit", ArgPattern False "code" (Just $ TypeName "int")] (Just $ TypeName "never") Nothing)) @?= "extern fn exit (code : int) : never"
   , "function names" ~: do
@@ -58,5 +58,5 @@ tests = test
       show ("foo _" :: FunctionName) @?= "foo _"
       show ("foo _ bar" :: FunctionName) @?= "foo _ bar"
       show ("_ + _" :: FunctionName) @?= "_ + _"
-      show ("_ + _" `precedence` 6) @?= "_ + _ precedence 6"
+      show ("_ + _" `precedence` 6) @?= "_ + _ precedence 6l"
   ]

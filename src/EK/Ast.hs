@@ -22,7 +22,8 @@ module EK.Ast
   , FuncPatternItem
   , FuncPatternItem'(..)
   , TFuncPatternItem
-  , Prec
+  , Assoc(..)
+  , Prec(..)
   , PartialStmt
   , TotalStmt
   , TypedStmt
@@ -89,7 +90,20 @@ type PartialStmt = Stmt [Token] Type
 type TotalStmt = Stmt Expr Type
 type TypedStmt = Stmt (Expr' EK.Types.Type) EK.Types.Type
 
-type Prec = Int
+data Assoc = LeftAssoc | RightAssoc | NonAssoc deriving (Eq)
+
+data Prec = Prec Int Assoc deriving (Eq)
+
+instance Ord Prec where
+  compare (Prec p1 _) (Prec p2 _) = compare p1 p2
+
+instance Num Prec where -- just for fromInteger which we use in a lot of places
+  fromInteger n = Prec (fromInteger n) LeftAssoc
+  (+) = error "Prec does not support addition"
+  (*) = error "Prec does not support multiplication"
+  abs = error "Prec does not support abs"
+  signum = error "Prec does not support signum"
+  negate = error "Prec does not support negation"
 
 data FuncPattern' typeval = FuncPattern
   { funcPatternItems :: [FuncPatternItem' typeval]
@@ -123,7 +137,7 @@ patternLazinesses = concatMap patternLazyness . funcPatternItems
         patternLazyness PlaceholderPattern = [False]
 
 defaultPrec :: Prec
-defaultPrec = 9 -- same as haskell
+defaultPrec = Prec 9 LeftAssoc -- same as haskell
 
 instance IsString FunctionName where
   fromString str = FunctionName (unshow <$> words str) defaultPrec
@@ -136,6 +150,15 @@ instance Show FunctionName where
 
 precedence :: FunctionName -> Prec -> FunctionName
 precedence (FunctionName symbols _) = FunctionName symbols
+
+
+instance Show Prec where
+  show (Prec p assoc) = show p ++ show assoc
+
+instance Show Assoc where
+  show LeftAssoc = "l"
+  show RightAssoc = "r"
+  show NonAssoc = "n"
 
 instance Show Symbol where
   show (Symbol s) = s
