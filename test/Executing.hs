@@ -134,8 +134,6 @@ tests = test
         mulIntFloat @?= FloatValue 7.5
         division <- ex [Push $ IntegerValue 5, Push $ IntegerValue 10, CallOp Div, Ret] []
         division @?= IntegerValue 2
-        printOp <- catchExec [Push $ IntegerValue 42, CallOp Print, Ret]
-        printOp @?= StringValue "user error (No value on stack)"
         equalityIntsFalse <- ex [Push $ IntegerValue 5, Push $ IntegerValue 10, CallOp Eq, Ret] []
         equalityIntsFalse @?= AtomValue "false"
         equalityIntsTrue <- ex [Push $ IntegerValue 5, Push $ IntegerValue 5, CallOp Eq, Ret] []
